@@ -1,0 +1,32 @@
+
+--- Job DQ_main_19_hexagon_regions_multi_ds_no_control_1012.gms Start 10/26/21 12:49:44 24.9.2 r64480 WEX-WEI x86 64bit/MS Windows
+GAMS 24.9.2   Copyright (C) 1987-2017 GAMS Development. All rights reserved
+Licensee: Small MUD - 5 User License                     G161020:1349AO-WIN
+          University of Washington, Seattle, Civil and EnvironmentalDC12815
+          License for teaching and research at degree granting institutions
+          License Admin: Xuegang Ban, banx@uw.edu                          
+--- Starting compilation
+--- DQ_main_19_hexagon_regions_multi_ds_no_control_1012.gms(10) 2 Mb
+--- .DQ_network_19_hexagon_regions_multi_ds_no_control_1012.gms(20) 3 Mb
+--- GDXin=D:\OneDrive\Works with Ohay\Ohay的各種檔案\出國讀書課程資料\CET 800 - PhD Dissertation\Codes\MFD_Codes_DQ\MFD-DQ\MtoG2.gdx
+--- .DQ_network_19_hexagon_regions_multi_ds_no_control_1012.gms(113) 3 Mb
+--- DQ_main_19_hexagon_regions_multi_ds_no_control_1012.gms(34) 3 Mb
+--- Starting execution: elapsed 0:00:00.005
+--- DQ_main_19_hexagon_regions_multi_ds_no_control_1012.gms(139) 4 Mb
+--- Generating MCP model mfd
+--- DQ_main_19_hexagon_regions_multi_ds_no_control_1012.gms(145) 6 Mb
+---   721 rows  721 columns  1,764 non-zeroes
+---   0 nl-code  0 nl-non-zeroes
+--- DQ_main_19_hexagon_regions_multi_ds_no_control_1012.gms(145) 4 Mb
+--- Executing PATH: elapsed 0:00:00.048
+*** Error at line 145: Problem extracting short path, result contains extended ASCII codes: D:\OneDrive\WORKSW~1\OHAY的~1\出國讀~1\CET800~1\Codes\MFD_CO~1\MFD-DQ\225a\ (maybe 8.3 form is disabled)
+--- DQ_main_19_hexagon_regions_multi_ds_no_control_1012.gms(145) 4 Mb 1 Error
+*** Error at line 145: Problem extracting short path, result contains extended ASCII codes: D:\OneDrive\WORKSW~1\OHAY的~1\出國讀~1\CET800~1\Codes\MFD_CO~1\MFD-DQ\ (maybe 8.3 form is disabled)
+--- DQ_main_19_hexagon_regions_multi_ds_no_control_1012.gms(145) 4 Mb 2 Errors
+*** Error at line 145: Problem extracting short path, result contains extended ASCII codes: D:\OneDrive\WORKSW~1\OHAY的~1\出國讀~1\CET800~1\Codes\MFD_CO~1\MFD-DQ\225a\gamscntr.dat (maybe 8.3 form is disabled)
+--- DQ_main_19_hexagon_regions_multi_ds_no_control_1012.gms(145) 4 Mb 3 Errors
+*** Problem(s) writing next script
+--- DQ_main_19_hexagon_regions_multi_ds_no_control_1012.gms(145) 4 Mb 3 Errors
+*** Status: Execution error(s)
+--- Job DQ_main_19_hexagon_regions_multi_ds_no_control_1012.gms Stop 10/26/21 12:49:44 elapsed 0:00:00.058
+Exit code = 3

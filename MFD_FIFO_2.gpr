@@ -1,0 +1,335 @@
+[PROJECT]
+
+[GDXDISP: demand Par 2]
+PlaneDim=0
+RowDim=2
+Squeeze=1
+SqTrail0=0
+Order=1,2
+Decim=7
+PlaneRownr=-1
+
+[GDXDISP: MFD_Para Par 2]
+PlaneDim=0
+RowDim=2
+Squeeze=1
+SqTrail0=0
+Order=1,2
+Decim=7
+PlaneRownr=-1
+
+[GDXDISP: n Par 2]
+PlaneDim=0
+RowDim=2
+Squeeze=1
+SqTrail0=0
+Order=1,2
+Decim=7
+PlaneRownr=-1
+
+[GDXDISP: q Par 3]
+PlaneDim=0
+RowDim=3
+Squeeze=1
+SqTrail0=0
+Order=1,2,3
+Decim=7
+PlaneRownr=-1
+
+[GDXDISP: coff Set 1]
+PlaneDim=0
+RowDim=1
+Squeeze=1
+SqTrail0=0
+Order=1
+Decim=7
+PlaneRownr=-1
+
+[GDXDISP: eta Var 2]
+PlaneDim=0
+RowDim=2
+Squeeze=1
+SqTrail0=0
+Order=1,2,3
+Decim=7
+PlaneRownr=-1
+
+[GDXDISP: p Var 3]
+PlaneDim=0
+RowDim=3
+Squeeze=1
+SqTrail0=0
+Order=1,2,3,4
+Decim=7
+PlaneRownr=-1
+
+[GDXDISP: p_com Equ 3]
+PlaneDim=0
+RowDim=3
+Squeeze=1
+SqTrail0=0
+Order=1,2,3,4
+Decim=7
+PlaneRownr=-1
+
+[GDXDISP: region_communi Set 2]
+PlaneDim=0
+RowDim=2
+Squeeze=1
+SqTrail0=0
+Order=1,2
+Decim=7
+PlaneRownr=-1
+
+[GDXDISP: SameAs Set 2]
+PlaneDim=0
+RowDim=2
+Squeeze=1
+SqTrail0=0
+Order=1,2
+Decim=7
+PlaneRownr=-1
+
+[GDXDISP: nodes Set 1]
+PlaneDim=0
+RowDim=1
+Squeeze=1
+SqTrail0=0
+Order=1
+Decim=7
+PlaneRownr=-1
+
+[GDXDISP: mu_com Equ 2]
+PlaneDim=0
+RowDim=2
+Squeeze=1
+SqTrail0=0
+Order=1,2,3
+Decim=7
+PlaneRownr=-1
+
+[GDXDISP: mu Var 2]
+PlaneDim=0
+RowDim=2
+Squeeze=1
+SqTrail0=0
+Order=1,2,3
+Decim=7
+PlaneRownr=-1
+
+[GDXDISP: lamda_com Equ 2]
+PlaneDim=0
+RowDim=2
+Squeeze=1
+SqTrail0=0
+Order=1,2,3
+Decim=7
+PlaneRownr=-1
+
+[GDXDISP: lamda Var 2]
+PlaneDim=0
+RowDim=2
+Squeeze=1
+SqTrail0=0
+Order=1,2,3
+Decim=7
+PlaneRownr=-1
+
+[GDXDISP: k Alias 1]
+PlaneDim=0
+RowDim=1
+Squeeze=1
+SqTrail0=0
+Order=1
+Decim=7
+PlaneRownr=-1
+
+[GDXDISP: j Alias 1]
+PlaneDim=0
+RowDim=1
+Squeeze=1
+SqTrail0=0
+Order=1
+Decim=7
+PlaneRownr=-1
+
+[GDXDISP: y Var 2]
+PlaneDim=0
+RowDim=2
+Squeeze=1
+SqTrail0=0
+Order=1,2,3
+Decim=7
+PlaneRownr=-1
+
+[GDXDISP: Usolstat Par 0]
+PlaneDim=0
+RowDim=0
+Squeeze=1
+SqTrail0=0
+Order=
+Decim=7
+PlaneRownr=-1
+
+[GDXDISP: Umodstat Par 0]
+PlaneDim=0
+RowDim=0
+Squeeze=1
+SqTrail0=0
+Order=
+Decim=7
+PlaneRownr=-1
+
+[GDXDISP: u_bar Par 2]
+PlaneDim=0
+RowDim=2
+Squeeze=1
+SqTrail0=0
+Order=1,2
+Decim=7
+PlaneRownr=-1
+
+[GDXDISP: Tsolstat Par 0]
+PlaneDim=0
+RowDim=0
+Squeeze=1
+SqTrail0=0
+Order=
+Decim=7
+PlaneRownr=-1
+
+[GDXDISP: i Alias 1]
+PlaneDim=0
+RowDim=1
+Squeeze=1
+SqTrail0=0
+Order=1
+Decim=7
+PlaneRownr=-1
+
+[GDXDISP: h Alias 1]
+PlaneDim=0
+RowDim=1
+Squeeze=1
+SqTrail0=0
+Order=1
+Decim=7
+PlaneRownr=-1
+
+[GDXDISP: eta_com Equ 2]
+PlaneDim=0
+RowDim=2
+Squeeze=1
+SqTrail0=0
+Order=1,2,3
+Decim=7
+PlaneRownr=-1
+
+[GDXDISP: desti Set 1]
+PlaneDim=0
+RowDim=1
+Squeeze=1
+SqTrail0=0
+Order=1
+Decim=7
+PlaneRownr=-1
+
+[GDXDISP: theta Var 3]
+PlaneDim=0
+RowDim=3
+Squeeze=1
+SqTrail0=0
+Order=1,2,3,4
+Decim=7
+PlaneRownr=-1
+
+[GDXDISP: theta_com Equ 3]
+PlaneDim=0
+RowDim=3
+Squeeze=1
+SqTrail0=0
+Order=1,2,3,4
+Decim=7
+PlaneRownr=-1
+
+[GDXDISP: Tmodstat Par 0]
+PlaneDim=0
+RowDim=0
+Squeeze=1
+SqTrail0=0
+Order=
+Decim=7
+PlaneRownr=-1
+
+[GDXDISP: v Par 3]
+PlaneDim=0
+RowDim=3
+Squeeze=1
+SqTrail0=0
+Order=1,2,3
+Decim=7
+PlaneRownr=-1
+
+[GDXDISP: y_com Equ 2]
+PlaneDim=0
+RowDim=2
+Squeeze=1
+SqTrail0=0
+Order=1,2,3
+Decim=7
+PlaneRownr=-1
+
+[RP:NETWORK_19_HEXAGON_REGIONS_MULTI_DS_NO_CONTROL_1012]
+1=
+
+[RP:MAIN_19_HEXAGON_REGIONS_MULTI_DS_NO_CONTROL_1012]
+1=
+
+[RP:NETWORK_19_HEXAGON_REGIONS_MULTI_DS_1012]
+1=
+
+[RP:NETWORK_OR]
+1=
+
+[GDXDISP: d_av Par 3]
+PlaneDim=0
+RowDim=3
+Squeeze=1
+SqTrail0=0
+Order=1,2,3
+Decim=7
+PlaneRownr=-1
+
+[RP:NETWORK]
+1=
+
+[RP:MPEC]
+1=
+
+[RP:MAIN_19_HEXAGON_REGIONS_MULTI_DS_1012]
+1=
+
+[RP:DQ_NETWORK_19_HEXAGON_REGIONS_MULTI_DS_NO_CONTROL_1012]
+1=
+
+[RP:DQ_MAIN_19_HEXAGON_REGIONS_MULTI_DS_NO_CONTROL_1012]
+1=
+
+[MRUFILES]
+1=D:\OneDrive\Works with Ohay\Ohay的各種檔案\出國讀書課程資料\CET 800 - PhD Dissertation\Codes\MFD_Codes_DQ\MFD-DQ\DQ_main_19_hexagon_regions_multi_ds_no_control_1012.lst
+2=D:\OneDrive\Works with Ohay\Ohay的各種檔案\出國讀書課程資料\CET 800 - PhD Dissertation\Codes\MFD_Codes_DQ\MFD-DQ\main_19_hexagon_regions_multi_ds_1012.lst
+3=D:\OneDrive\Works with Ohay\Ohay的各種檔案\出國讀書課程資料\CET 800 - PhD Dissertation\Codes\MFD_Codes_DQ\MFD-DQ\main_19_hexagon_regions_multi_ds_1012.gms
+4=D:\OneDrive\Works with Ohay\Ohay的各種檔案\出國讀書課程資料\CET 800 - PhD Dissertation\Codes\MFD_Codes_DQ\MFD-DQ\DQ_network_19_hexagon_regions_multi_ds_no_control_1012.gms
+5=D:\OneDrive\Works with Ohay\Ohay的各種檔案\出國讀書課程資料\CET 800 - PhD Dissertation\Codes\MFD_Codes_DQ\MFD-DQ\DQ_main_19_hexagon_regions_multi_ds_no_control_1012.gms
+6=D:\OneDrive\Works with Ohay\Ohay的各種檔案\出國讀書課程資料\CET 800 - PhD Dissertation\Codes\MFD_Codes_DQ\MFD-DQ\DQ_network_19_hexagon_regions_multi_ds_no_control_1012.lst
+7=G:\My Drive\02_Research\06_Mixed flow route choice\Codes\MtoG.gdx
+8=C:\Users\guoqq17\Desktop\Codes\MFD_Codes_v4\network_19_hexagon_regions_multi_ds_1012.gms
+
+[OPENWINDOW_1]
+FILE0=D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\DQ_main_19_hexagon_regions_multi_ds_no_control_1012.gms
+FILE1=D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\DQ_main_19_hexagon_regions_multi_ds_no_control_1012.gms
+MAXIM=0
+TOP=0
+LEFT=0
+HEIGHT=946
+WIDTH=1394

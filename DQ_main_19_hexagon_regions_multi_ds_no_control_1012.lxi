@@ -1,0 +1,9 @@
+B 2 C o m p i l a t i o n
+B 173 Include File Summary
+B 195 Equation Listing    SOLVE mfd Using MCP From line 145
+D 196 theta_com
+D 1138 tau0_com
+B 1766 Column Listing      SOLVE mfd Using MCP From line 145
+E 1767 theta
+E 2172 tau0
+B 3258 Model Statistics    SOLVE mfd Using MCP From line 145

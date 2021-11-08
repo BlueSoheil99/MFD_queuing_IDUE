@@ -1,0 +1,163 @@
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows 10/26/21 12:00:51 Page 1
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+      Network configuration data file
+      region and link sets are defined in this file, together with the data need
+      ed to define the MFD function
+   5   
+   6  set nodes 'nodes set' /1*19/;
+   7  alias(nodes, i, j, h, k);
+   8  set desti(i) 'destination set' /13, 14, 15, 16, 17, 18, 19/;
+   9  alias(desti, d, d2);
+  10  set coff 'cofficient set' / m3, m2, m1, length, n_bar, m0/;
+  11   
+  12  parameter
+  13           n(i,d) 'vehicle numbers in region i with destination d',
+  14           qU(i,j,d) 'upstream queued vehicle numbers at the boundary of (i,
+      j) with destination d',
+  15           qD(i,j,d) 'downstream queued vehicle numbers at the boundary of (
+      i,j) with destination d',
+  16           demand(i,d) 'demand from region i to d',
+  17           MFD_Para(i, coff) 'cost parameter table';
+  18   
+GDXIN   D:\OneDrive\Works with Ohay\Ohay的各種檔案\出國讀書課程資料\CET 800 - Ph
+        D Dissertation\Codes\MFD_Codes_DQ\MFD-DQ\MtoG2.gdx
+--- LOAD  n = 1:n
+--- LOAD  qU = 2:qU
+--- LOAD  qD = 3:qD
+--- LOAD  demand = 5:demand
+--- LOAD  MFD_Para = 6:MFD_Para
+  21   
+  22  MFD_Para(j, 'm3')$(sum(d2, n(j,d2))>10000)=0;
+  23  MFD_Para(j, 'm2')$(sum(d2, n(j,d2))>10000)=0;
+  24  MFD_Para(j, 'm1')$(sum(d2, n(j,d2))>10000)=0;
+  25  MFD_Para(j, 'm0')$(sum(d2, n(j,d2))>10000)=4256;
+  26   
+  27  set region_communi(i,j) /
+  28  1.2
+  29  1.12
+  30  1.13
+  31  2.1
+  32  2.3
+  33  2.13
+  34  2.14
+  35  3.2
+  36  3.4
+  37  3.14
+  38  4.3
+  39  4.5
+  40  4.14
+  41  4.15
+  42  5.4
+  43  5.6
+  44  5.15
+  45  6.5
+  46  6.7
+  47  6.15
+  48  6.16
+  49  7.6
+  50  7.8
+  51  7.16
+  52  8.7
+  53  8.9
+  54  8.16
+  55  8.17
+  56  9.8
+  57  9.10
+  58  9.17
+  59  10.9
+  60  10.11
+  61  10.17
+  62  10.18
+  63  11.10
+  64  11.12
+  65  11.18
+  66  12.1
+  67  12.11
+  68  12.13
+  69  12.18
+  70  13.1
+  71  13.2
+  72  13.12
+  73  13.14
+  74  13.18
+  75  13.19
+  76  14.2
+  77  14.3
+  78  14.4
+  79  14.13
+  80  14.15
+  81  14.19
+  82  15.4
+  83  15.5
+  84  15.6
+  85  15.14
+  86  15.16
+  87  15.19
+  88  16.6
+  89  16.7
+  90  16.8
+  91  16.15
+  92  16.17
+  93  16.19
+  94  17.8
+  95  17.9
+  96  17.10
+  97  17.16
+  98  17.18
+  99  17.19
+ 100  18.10
+ 101  18.11
+ 102  18.12
+ 103  18.13
+ 104  18.17
+ 105  18.19
+ 106  19.13
+ 107  19.14
+ 108  19.15
+ 109  19.16
+ 110  19.17
+ 111  19.18
+ 112  /;
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows 10/26/21 12:00:51 Page 2
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Include File Summary
+
+
+   SEQ   GLOBAL TYPE      PARENT   LOCAL  FILENAME
+
+     1        1 INPUT          0       0  D:\OneDrive\Works with Ohay\Ohay的各種
+                                          檔案\出國讀書課程資料\CET 800 - PhD Di
+                                          ssertation\Codes\MFD_Codes_DQ\MFD-DQ\D
+                                          Q_network_19_hexagon_regions_multi_ds_
+                                          no_control_1012.gms
+     2       19 GDXIN          1      19  D:\OneDrive\Works with Ohay\Ohay的各種
+                                          檔案\出國讀書課程資料\CET 800 - PhD Di
+                                          ssertation\Codes\MFD_Codes_DQ\MFD-DQ\M
+                                          toG2.gdx
+
+
+COMPILATION TIME     =        0.031 SECONDS      3 MB  24.9.2 r64480 WEX-WEI
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows 10/26/21 12:00:51 Page 3
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+E x e c u t i o n
+
+
+EXECUTION TIME       =        0.000 SECONDS      4 MB  24.9.2 r64480 WEX-WEI
+
+
+USER: Small MUD - 5 User License                     G161020:1349AO-WIN
+      University of Washington, Seattle, Civil and EnvironmentalDC12815
+      License for teaching and research at degree granting institutions
+
+
+**** FILE SUMMARY
+
+Input      D:\OneDrive\Works with Ohay\Ohay的各種檔案\出國讀書課程資料\CET 800 -
+           PhD Dissertation\Codes\MFD_Codes_DQ\MFD-DQ\DQ_network_19_hexagon_regi
+           ons_multi_ds_no_control_1012.gms
+Output     D:\OneDrive\Works with Ohay\Ohay的各種檔案\出國讀書課程資料\CET 800 -
+           PhD Dissertation\Codes\MFD_Codes_DQ\MFD-DQ\DQ_network_19_hexagon_regi
+           ons_multi_ds_no_control_1012.lst

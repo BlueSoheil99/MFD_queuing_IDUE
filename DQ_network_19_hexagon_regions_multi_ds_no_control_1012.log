@@ -1,0 +1,15 @@
+
+--- Job DQ_network_19_hexagon_regions_multi_ds_no_control_1012.gms Start 10/26/21 12:00:51 24.9.2 r64480 WEX-WEI x86 64bit/MS Windows
+GAMS 24.9.2   Copyright (C) 1987-2017 GAMS Development. All rights reserved
+Licensee: Small MUD - 5 User License                     G161020:1349AO-WIN
+          University of Washington, Seattle, Civil and EnvironmentalDC12815
+          License for teaching and research at degree granting institutions
+          License Admin: Xuegang Ban, banx@uw.edu                          
+--- Starting compilation
+--- DQ_network_19_hexagon_regions_multi_ds_no_control_1012.gms(19) 3 Mb
+--- GDXin=D:\OneDrive\Works with Ohay\Ohay的各種檔案\出國讀書課程資料\CET 800 - PhD Dissertation\Codes\MFD_Codes_DQ\MFD-DQ\MtoG2.gdx
+--- DQ_network_19_hexagon_regions_multi_ds_no_control_1012.gms(112) 3 Mb
+--- Starting execution: elapsed 0:00:00.027
+--- DQ_network_19_hexagon_regions_multi_ds_no_control_1012.gms(25) 4 Mb
+*** Status: Normal completion
+--- Job DQ_network_19_hexagon_regions_multi_ds_no_control_1012.gms Stop 10/26/21 12:00:51 elapsed 0:00:00.027

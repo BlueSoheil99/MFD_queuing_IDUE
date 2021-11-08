@@ -1,0 +1,22 @@
+
+--- Job DQ_main_19_hexagon_regions_multi_ds_no_control_1012.gms Start 10/26/21 11:29:44 36.2.0 r433180e WEX-WEI x86 64bit/MS Windows
+--- Applying:
+    D:\tools\GAMS\36\gmsprmNT.txt
+--- GAMS Parameters defined
+    Input "D:\OneDrive\Works with Ohay\Ohay���U���ɮ�\�X��Ū�ѽҵ{����\CET 800 - PhD Dissertation\Codes\MFD_Codes_DQ\MFD-DQ\DQ_main_19_hexagon_regions_multi_ds_no_control_1012.gms"
+    PageSize 0
+    ScrDir "D:\OneDrive\Works with Ohay\Ohay���U���ɮ�\�X��Ū�ѽҵ{����\CET 800 - PhD Dissertation\Codes\MFD_Codes_DQ\MFD-DQ\225a\"
+    SysDir D:\tools\GAMS\36\
+    LogOption 3
+    ErrMsg 1
+    ErrorLog 99
+    IDE 1
+    LstTitleLeftAligned 1
+*** License file too old for this version of GAMS.
+*** Maintenance expired 1387 days ago.
+*** More than 30 days since expiration, sorry...
+*** Run an older GAMS system or renew the license
+*** Status: Terminated due to a licensing error
+***         License file: D:\tools\GAMS\36\gamslice.txt
+***         Inspect listing file for more information.
+--- Job DQ_main_19_hexagon_regions_multi_ds_no_control_1012.gms Stop 10/26/21 11:29:44 elapsed 0:00:00.004

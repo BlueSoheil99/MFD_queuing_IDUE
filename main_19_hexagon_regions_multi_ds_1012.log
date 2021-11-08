@@ -1,0 +1,22 @@
+
+--- Job main_19_hexagon_regions_multi_ds_1012.gms Start 10/26/21 12:16:25 24.9.2 r64480 WEX-WEI x86 64bit/MS Windows
+GAMS 24.9.2   Copyright (C) 1987-2017 GAMS Development. All rights reserved
+Licensee: Small MUD - 5 User License                     G161020:1349AO-WIN
+          University of Washington, Seattle, Civil and EnvironmentalDC12815
+          License for teaching and research at degree granting institutions
+          License Admin: Xuegang Ban, banx@uw.edu                          
+--- Starting compilation
+--- main_19_hexagon_regions_multi_ds_1012.gms(10) 2 Mb
+--- .network_19_hexagon_regions_multi_ds_1012.gms(19) 3 Mb
+--- GDXin=D:\OneDrive\Works with Ohay\Ohay的各種檔案\出國讀書課程資料\CET 800 - PhD Dissertation\Codes\MFD_Codes_DQ\MFD-DQ\MtoG2.gdx
+--- .network_19_hexagon_regions_multi_ds_1012.gms(20) 3 Mb 1 Error
+*** Error 492 in D:\OneDrive\Works with Ohay\Ohay的各種檔案\出國讀書課程資料\CET 800 - PhD Dissertation\Codes\MFD_Codes_DQ\MFD-DQ\network_19_hexagon_regions_multi_ds_1012.gms
+    Symbol not in GDX
+--- .network_19_hexagon_regions_multi_ds_1012.gms(200) 3 Mb
+--- main_19_hexagon_regions_multi_ds_1012.gms(42) 3 Mb 2 Errors
+*** Error 257 in D:\OneDrive\Works with Ohay\Ohay的各種檔案\出國讀書課程資料\CET 800 - PhD Dissertation\Codes\MFD_Codes_DQ\MFD-DQ\main_19_hexagon_regions_multi_ds_1012.gms
+    Solve statement not checked because of previous errors
+--- main_19_hexagon_regions_multi_ds_1012.gms(44) 3 Mb 2 Errors
+*** Status: Compilation error(s)
+--- Job main_19_hexagon_regions_multi_ds_1012.gms Stop 10/26/21 12:16:25 elapsed 0:00:00.025
+Exit code = 2
