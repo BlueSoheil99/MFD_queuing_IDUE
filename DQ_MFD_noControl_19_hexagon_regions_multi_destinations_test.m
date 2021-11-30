@@ -67,11 +67,9 @@ for t=1:T:T*N
     end
 
     %% transform the tau0 to match the size of n, qU, and qD_trans in MATLAB matrixes
-    if ~isempty(tau0.val)
-        tau0_trans = zeros(19,19); 
-        for m1 =1:1:size(tau0.val,1)
-            tau0_trans(tau0.val(m1,1), tau0.val(m1,2)) = tau0.val(m1,3);
-        end
+    tau0_trans = zeros(19,19); 
+    for m1 =1:1:size(tau0.val,1)
+        tau0_trans(tau0.val(m1,1), tau0.val(m1,2)) = tau0.val(m1,3);
     end
 
     %% record data for plotting
@@ -80,15 +78,6 @@ for t=1:T:T*N
         theta_region_to_19(i,t) = sum(theta_trans(i,:,19));
         % number of vehicles in each region
         n_region(i,t) = sum(n.val(i,:));
-    end
-
-    %% update the MFD dynamics: update n.div, i.e., nijs by equation (6)
-    for i=1:1:size(region_communi,1)
-        for j=1:1:size(d,2)
-            pairi = region_communi(i,1); 
-            pairj = region_communi(i,2);
-            n_div.val(pairi,pairj,d(j)) = n_div.val(pairi,pairj,d(j)) + T* ( theta_trans(pairi,pairj,d(j)) - p(pairi,pairj,d(j),t) );
-        end
     end
 
     %% update n.val in region i, i.e., nii^(s=i) by equation (5)
@@ -100,20 +89,13 @@ for t=1:T:T*N
         region_in = sum(v_trans(:,i,i,t)) + demand.val(i,i);
         n_div.val(i,i,i) = n_div.val(i,i,i) + region_in - p_region_in(i);
     end
-
-    %% update n.val in other regions, i.e., nijs by equation (5) 
-    for i=1:1:num_reg
-        for j=1:1:size(d,2)
-            n.val(i,d(j)) = sum(n_div.val(i,:,d(j)));
-        end
-    end
     
     %% calculate the pTilda using theta: equation (8)
     for i=1:1:size(region_communi,1)
         pairi = region_communi(i,1);
-        n_regioni = sum(n.val(pairi,:)); % ni
+        pairj = region_communi(i,2);
+        n_regioni = sum(n.val(pairi,d)); % ni
         for j=1:1:size(d,2)
-            pairj = region_communi(i,2);
             pTilda(pairi,pairj,d(j)) = (mfd_common(1)*n_regioni^2+mfd_common(2)*n_regioni+mfd_common(3))/mfd_diff(pairi)*n_div.val(pairi,pairj,d(j));
         end
     end
@@ -133,8 +115,9 @@ for t=1:T:T*N
 
     %% calculate p, i.e., pijs at equation (9)
     for i=1:1:size(region_communi,1)
+        pairi = region_communi(i,1);
+        pairj = region_communi(i,2);
         for j=1:1:size(d,2)
-            pairi = region_communi(i,1);
             if pTilda_all(pairi,pairj) > 0
                 p(pairi,pairj,d(j),t) = pTilda(pairi,pairj,d(j)) / pTilda_all(pairi,pairj) * p_all(pairi,pairj);
             end
@@ -142,6 +125,27 @@ for t=1:T:T*N
         end
         % calculate p_all_plot, i.e., pij
         p_all_plot(pairi,pairj,t) = sum(p(pairi,pairj,:,t));
+    end
+
+    %% update the MFD dynamics: update n.div, i.e., nijs by equation (6)
+    for i=1:1:size(region_communi,1)
+        pairi = region_communi(i,1); 
+        pairj = region_communi(i,2);
+        for j=1:1:size(d,2)
+            n_div.val(pairi,pairj,d(j)) = n_div.val(pairi,pairj,d(j)) + T* ( theta_trans(pairi,pairj,d(j)) - p(pairi,pairj,d(j),t) );
+        end
+    end
+
+    %% update the theta_ijs to match the size of n, qU, and qD_trans in MATLAB matrixes
+    for m1 = 1:1:size(theta.val,1)
+        theta_trans(theta.val(m1,1),theta.val(m1,2),theta.val(m1,3)) = theta.val(m1,4);
+    end
+
+    %% update n.val in other regions, i.e., nijs by equation (5) 
+    for i=1:1:num_reg
+        for j=1:1:size(d,2)
+            n.val(i,d(j)) = sum(n_div.val(i,:,d(j)));
+        end
     end
 
     %% calculate qU, i.e., qUijs: equation (10)
@@ -171,7 +175,7 @@ for t=1:T:T*N
             qD_all(pairi,pairj,t) = sum(qD_trans(pairi,pairj,:,t));
             for j=1:1:size(d,2)
                 % second, calculate v_trans, i.e., vijs
-                if qD_all > 0
+                if qD_all(pairi,pairj,t) > 0
                     v_trans(pairi,pairj,d(j),t) = qD_trans(pairi,pairj,d(j),t) / qD_all(pairi,pairj,t) * v_all(pairi,pairj,t);
                 end
                 % third, calculate qU, i.e., qUijs
@@ -184,19 +188,23 @@ for t=1:T:T*N
         v_all(pairi,pairj,t) = sum(v_trans(pairi,pairj,:,t));
     end
 
-    %% calculate qD, i.e., qD_trans
+    %% calculate qD_trans, i.e., qD
     for i=1:1:size(region_communi,1)
         pairi = region_communi(i,1); 
         pairj = region_communi(i,2);
-        if t > tau0_trans(pairi,pairj)
+        if t > tau0BZ.val(pairi,pairj)
             % equation (12)
             for j=1:1:size(d,2)
-                % first, check if vijs reaches Cbar
-                if v_trans(pairi,pairj,d(j),t) == Cbar_trans(i,3)
+                % first, check if vijs reaches Cbar <-- Cbar^s?
+                if v_trans(pairi,pairj,d(j),t) >= Cbar_trans(i,3)
                     % second, calculate qD_trans
-                    qD_trans(pairi,pairj,d(j),t) = qD_trans(pairi,pairj,d(j),t-1) + T * ( p(pairi,pairj,d(j),t-tau0_trans(pairi,pairj)) - v_trans(pairi,pairj,d(j),t) );
+                    qD_trans(pairi,pairj,d(j),t) = qD_trans(pairi,pairj,d(j),t-1) + T * ( p(pairi,pairj,d(j),t-tau0BZ.val(pairi, pairj)) - v_trans(pairi,pairj,d(j),t) );
+                else
+                    v_trans(pairi,pairj,d(j),t) = p(pairi,pairj,d(j),t-tau0BZ.val(pairi, pairj));
                 end
             end
+            % calculate v_all, i.e., vij
+            v_all(pairi,pairj,t) = sum(v_trans(pairi,pairj,:,t));
         end
     end
 
@@ -204,20 +212,16 @@ for t=1:T:T*N
 
     %% update v.val
     v.val = v_trans(:,:,:,t);
-    
-    %% update the theta_ijs to match the size of n, qU, and qD_trans in MATLAB matrixes
-    for m1 = 1:1:size(theta.val,1)
-        theta_trans(theta.val(m1,1),theta.val(m1,2),theta.val(m1,3)) = theta.val(m1,4);
-    end
 
     n_div.val(19,19,19)
-    n_region(19,t)
+    n_region(1,t)
+    n_div.val(13,19,19)
 
     %% clear tau0 and theta
     theta = [];
     tau0 = [];
     Cbar = [];
-    n.val(n.val<=1e-4) = 0.0001;
+    n.val(n.val<=0.0001) = 0.0001;
     
     % show the time step
     t
