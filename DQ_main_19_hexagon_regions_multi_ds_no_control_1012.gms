@@ -20,8 +20,8 @@ equations
 
 
 * the DCS formulation
-theta_com(i,j,d)$region_communi(i,j) ..          MFD_Para(i, 'length')*sum(d2, n(i,d2))/(MFD_Para(i, 'm3')*power(sum(d2, n(i,d2)),3)+MFD_Para(i, 'm2')*power(sum(d2, n(i,d2)),2)+MFD_Para(i, 'm1')*sum(d2, n(i,d2)) + MFD_Para(i, 'm0'))+ sum(d2, qD(i,j,d2))/10+tau0(j,d)-tau0(i,d) =g= 0;
-tau0_com(i,d)..                                  sum(region_communi(i,j), theta(i,j,d))-(MFD_Para(i, 'm3')*power(sum(d2, n(i,d2)),3)+MFD_Para(i, 'm2')*power(sum(d2, n(i,d2)),2)+MFD_Para(i, 'm1')*sum(d2, n(i,d2)) + MFD_Para(i, 'm0'))/sum(d2, n(i,d2))*n(i,d)/MFD_Para(i, 'length') =g= 0;
+theta_com(i,j,d)$region_communi(i,j) ..          MFD_Para(i, 'length')*sum(d2, n(i,d2))/(MFD_Para(i, 'm3')*power(sum(d2, n(i,d2)),3)+MFD_Para(i, 'm2')*power(sum(d2, n(i,d2)),2)+MFD_Para(i, 'm1')*sum(d2, n(i,d2)) + MFD_Para(i, 'm0')) + tau0BZ(i,j) + sum(d2, qD(i,j,d2))/Cbar(i,j) + tau0(j,d) - tau0(i,d) =g= 0;
+tau0_com(i,d)..                                  sum(region_communi(i,j), theta(i,j,d))-sum(region_communi(k,i), v(k,i,d))-demand(i,d) =g= 0;
 
 tau0.fx(i,d)$(sameas(i,d))=0;
 

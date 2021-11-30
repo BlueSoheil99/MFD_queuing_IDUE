@@ -5,7 +5,7 @@
 %% parameter setting
 T = 1;          % simulate time interval (s)
 N = 7200;       % simulate steps
-cut = 2700;     % demand stop time
+cut = 5;%2700;     % demand stop time
 % cut = 1800;     % demand stop time
 num_reg = 19;   % region number
 d = [13, 14, 15, 16, 17, 18, 19];       % destination
@@ -16,7 +16,7 @@ d = [13, 14, 15, 16, 17, 18, 19];       % destination
 %length1
 % len = [7000, 6500, 6000, 5000, 4500, 2500];
 % length2
-len = [6100, 5800, 5500, 4800, 4500, 3600];
+len = [6100, 5800, 5500, 4800, 4500, 3600]; % trip length
 mfd_common =[1.4877e-7, -2.9815e-3, 15.0912];
 mfd_diff = [len(1), len(1), len(1), len(2), len(2), len(2), len(3), len(3), len(3), len(2), len(2), len(2),...
     len(4), len(4), len(5), len(5), len(5), len(5), len(6)];
@@ -97,7 +97,7 @@ n.val(19,19) = n_rural_suburban;
 % n.val(18,13:17) = n_rural_far_suburban;
 % n.val(19,13:18) = n_rural_far_suburban;
 
-%initial destinatino and boundary specified vehicle
+%initial destination and boundary specified vehicle
 j1.name = 'j1';
 j1.uels = {'1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19'};
 j2.name = 'j2';
@@ -112,7 +112,7 @@ n_div.val = zeros(19,19,19);
 
  for i=1:1:num_reg
     for j=1:1:size(d,2)
-        n.val(i,d(j)) = sum(n_div.val(i,:,d(j))) + 0.1;
+        n.val(i,d(j)) = sum(n_div.val(i,:,d(j))) + 1e-19;
     end
 end
 
@@ -124,17 +124,13 @@ k2.name = 'k2';
 k2.uels = {'1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19'};
 k3.name = 'k3';
 k3.uels = {'1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19'};
-qU.name = 'qU';
-qU.type = 'parameter';
-qU.form = 'full';
-qU.uels = {k1.uels, k2.uels, k3.uels};
-qU.val = zeros(19,19,19);
 qD.name = 'qD';
 qD.type = 'parameter';
 qD.form = 'full';
 qD.uels = {k1.uels, k2.uels, k3.uels};
-qD.val = zeros(19,19,19);
+qD.val = ones(19,19,19);
 
+%initial exit flow at the boundaries
 %initial exit flow at the boundaries
 l1.name = 'l1';
 l1.uels = {'1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19'};
@@ -148,26 +144,25 @@ v.form = 'full';
 v.uels = {l1.uels, l2.uels, l3.uels};
 v.val = zeros(19,19,19);
 
+% the minimum travel time at each boundary
+% assume all the buffe zones share the same travel time
+m1.name = 'm1';
+m1.uels = {'1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19'};
+m2.name = 'm2';
+m2.uels = {'1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19'};
+m3.name = 'm3';
+m3.uels = {'1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19'};
+tau0BZ.name = 'tau0BZ';
+tau0BZ.type = 'parameter';
+tau0BZ.form = 'full';
+tau0BZ.uels = {m1.uels, m2.uels};
+tau0BZ.val = ones(19,19); % 1 seconds
+
 % demand
 demand.name = 'demand';
 demand.type = 'parameter';
 demand.form = 'full';
 demand.uels = {i1.uels,i2.uels};
 demand.val = zeros(19,19);
-
-%initialize the record matrix
-n_data = [];
-theta_data = [];
-p_data = [];
-pTilda_data = [];
-qU_data = [];
-qD_data = [];
-nbar_n_data = [];
-n_data_sep = [];   
-qU_data_all = [];
-qD_data_all = [];
-theta_data_all = []; 
-p_data_all = [];
-pTilda_data_all = [];
     
                         

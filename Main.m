@@ -15,8 +15,8 @@ demand_choice =[0.3, 0.25, 0.15];
 
 queueType = 'DQ'; % PQ
 
-for ite_num =1:length(limit_n)
-    for ite_dem =1:size(demand_choice,1)
+for ite_num =1:1:length(limit_n)
+    for ite_dem =1:1:size(demand_choice,1)
         % define the MFD parameter (change the average trip length)
         region.name = 'i';
         region.uels = {'1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19'};
@@ -53,15 +53,15 @@ for ite_num =1:length(limit_n)
         d_medi = demand_choice(ite_dem, 2); %0.1 0.2 0.3
         d_low = demand_choice(ite_dem, 3); % 0.1 0.1 0.2
 
+        filename = '';
         if strcmp(queueType,'DQ')
             run DQ_MFD_noControl_19_hexagon_regions_multi_destinations_test.m
+            filename = strcat('n_19_hexagon_regions_multi_ds_withdemand_7200_',num2str(ite_dem+1),'_', num2str(limit_n(ite_num)),'_new.mat');
         elseif strcmp(queueType,'PQ')
-            run PQ_MFD_noControl_19_hexagon_regions_multi_destinations.m
-        else %strcmp(queueType,'PQ-control')
             run PQ_MFD_Control_19_hexagon_regions_multi_destinations.m
+            filename = strcat('n_19_hexagon_regions_multi_ds_withdemand_7200_',num2str(ite_dem+1),'_', num2str(limit_n(ite_num)),'_PQ.mat');
         end
 
-        filename = strcat('n_19_hexagon_regions_multi_ds_withdemand_7200_',num2str(ite_dem+1),'_', num2str(limit_n(ite_num)),'_new.mat');
         save(filename)
         clearvars -except limit_n ite_num ite_dem demand_choice
     end

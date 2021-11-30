@@ -282,12 +282,6 @@ PlaneRownr=-1
 [RP:NETWORK_19_HEXAGON_REGIONS_MULTI_DS_NO_CONTROL_1012]
 1=
 
-[RP:MAIN_19_HEXAGON_REGIONS_MULTI_DS_NO_CONTROL_1012]
-1=
-
-[RP:NETWORK_19_HEXAGON_REGIONS_MULTI_DS_1012]
-1=
-
 [RP:NETWORK_OR]
 1=
 
@@ -306,7 +300,13 @@ PlaneRownr=-1
 [RP:MPEC]
 1=
 
+[RP:MAIN_19_HEXAGON_REGIONS_MULTI_DS_NO_CONTROL_1012]
+1=
+
 [RP:MAIN_19_HEXAGON_REGIONS_MULTI_DS_1012]
+1=
+
+[RP:NETWORK_19_HEXAGON_REGIONS_MULTI_DS_1012]
 1=
 
 [RP:DQ_NETWORK_19_HEXAGON_REGIONS_MULTI_DS_NO_CONTROL_1012]
@@ -316,20 +316,22 @@ PlaneRownr=-1
 1=
 
 [MRUFILES]
-1=D:\OneDrive\Works with Ohay\Ohay的各種檔案\出國讀書課程資料\CET 800 - PhD Dissertation\Codes\MFD_Codes_DQ\MFD-DQ\DQ_main_19_hexagon_regions_multi_ds_no_control_1012.lst
-2=D:\OneDrive\Works with Ohay\Ohay的各種檔案\出國讀書課程資料\CET 800 - PhD Dissertation\Codes\MFD_Codes_DQ\MFD-DQ\main_19_hexagon_regions_multi_ds_1012.lst
+1=D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\DQ_main_19_hexagon_regions_multi_ds_no_control_1012.lst
+2=D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\main_19_hexagon_regions_multi_ds_no_control_1012.gms
 3=D:\OneDrive\Works with Ohay\Ohay的各種檔案\出國讀書課程資料\CET 800 - PhD Dissertation\Codes\MFD_Codes_DQ\MFD-DQ\main_19_hexagon_regions_multi_ds_1012.gms
-4=D:\OneDrive\Works with Ohay\Ohay的各種檔案\出國讀書課程資料\CET 800 - PhD Dissertation\Codes\MFD_Codes_DQ\MFD-DQ\DQ_network_19_hexagon_regions_multi_ds_no_control_1012.gms
-5=D:\OneDrive\Works with Ohay\Ohay的各種檔案\出國讀書課程資料\CET 800 - PhD Dissertation\Codes\MFD_Codes_DQ\MFD-DQ\DQ_main_19_hexagon_regions_multi_ds_no_control_1012.gms
-6=D:\OneDrive\Works with Ohay\Ohay的各種檔案\出國讀書課程資料\CET 800 - PhD Dissertation\Codes\MFD_Codes_DQ\MFD-DQ\DQ_network_19_hexagon_regions_multi_ds_no_control_1012.lst
-7=G:\My Drive\02_Research\06_Mixed flow route choice\Codes\MtoG.gdx
-8=C:\Users\guoqq17\Desktop\Codes\MFD_Codes_v4\network_19_hexagon_regions_multi_ds_1012.gms
+4=D:\OneDrive\Works with Ohay\Ohay的各種檔案\出國讀書課程資料\CET 800 - PhD Dissertation\Codes\MFD_Codes_DQ\MFD-DQ\DQ_network_19_hexagon_regions_multi_ds_no_control_1012.lst
+5=D:\OneDrive\Works with Ohay\Ohay的各種檔案\出國讀書課程資料\CET 800 - PhD Dissertation\Codes\MFD_Codes_DQ\MFD-DQ\DQ_network_19_hexagon_regions_multi_ds_no_control_1012.gms
+6=D:\OneDrive\Works with Ohay\Ohay的各種檔案\出國讀書課程資料\CET 800 - PhD Dissertation\Codes\MFD_Codes_DQ\MFD-DQ\DQ_main_19_hexagon_regions_multi_ds_no_control_1012.gms
 
 [OPENWINDOW_1]
 FILE0=D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\DQ_main_19_hexagon_regions_multi_ds_no_control_1012.gms
-FILE1=D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\DQ_main_19_hexagon_regions_multi_ds_no_control_1012.gms
+FILE1=D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\DQ_network_19_hexagon_regions_multi_ds_no_control_1012.gms
+FILE2=D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\DQ_network_19_hexagon_regions_multi_ds_no_control_1012.lst
+FILE3=D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\main_19_hexagon_regions_multi_ds_1012.gms
+FILE4=D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\network_19_hexagon_regions_multi_ds_1012.gms
+FILE5=D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\main_19_hexagon_regions_multi_ds_1012.gms
 MAXIM=0
 TOP=0
 LEFT=0
 HEIGHT=946
-WIDTH=1394
+WIDTH=1916
