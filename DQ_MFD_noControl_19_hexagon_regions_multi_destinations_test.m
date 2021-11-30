@@ -18,6 +18,7 @@ p_all = zeros(19,19); % pij
 p = zeros(19,19,19,N); % pijst
 v_trans = zeros(19,19,19,N); % vijst
 v_all = zeros(19,19,N); % vijN
+p_all_plot = zeros(19,19,N);
 qU = zeros(19,19,19,N); % qUijst
 qD_trans = zeros(19,19,19,N); % qDijst
 qU_all = zeros(19,19,N); % qUijt
@@ -139,6 +140,8 @@ for t=1:T:T*N
             end
             withheld(pairi,pairj,d(j),t) = pTilda(pairi,pairj,d(j)) - p(pairi,pairj,d(j),t);
         end
+        % calculate p_all_plot, i.e., pij
+        p_all_plot(pairi,pairj,t) = sum(p(pairi,pairj,:,t));
     end
 
     %% calculate qU, i.e., qUijs: equation (10)
@@ -153,9 +156,9 @@ for t=1:T:T*N
                 % update qU_all, i.e., qUij
                 qU_all(pairi,pairj,t) = sum(qU(pairi,pairj,:,t));
                 % calculate exit flow
-                if t > round(tau0_trans(pairi, pairj)) && round(tau0_trans(pairi, pairj)) > 0
+                if t > tau0BZ.val(pairi, pairj)
                     for j=1:1:size(d,2)
-                        v_trans(pairi,pairj,d(j),t) = p(pairi,pairj,d(j),t-round(tau0_trans(pairi, pairj)));
+                        v_trans(pairi,pairj,d(j),t) = p(pairi,pairj,d(j),t-tau0BZ.val(pairi, pairj));
                     end
                 end
             else
