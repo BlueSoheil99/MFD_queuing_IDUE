@@ -4,8 +4,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% parameter setting
 T = 1;          % simulate time interval (s)
-N = 7200;       % simulate steps
-cut = 200;%2700;     % demand stop time
+N = 2000;%7200;       % simulate steps
+cut = 1000;%2700;     % demand stop time
 % cut = 1800;     % demand stop time
 num_reg = 19;   % region number
 d = [13, 14, 15, 16, 17, 18, 19];       % destination
@@ -17,7 +17,7 @@ d = [13, 14, 15, 16, 17, 18, 19];       % destination
 % len = [7000, 6500, 6000, 5000, 4500, 2500];
 % length2
 len = [6100, 5800, 5500, 4800, 4500, 3600]; % trip length
-mfd_common =[1.4877e-7, -2.9815e-3, 15.0912];
+mfd_common =[1.4877e-7, -2.9815e-3, 15.0912]*100;
 mfd_diff = [len(1), len(1), len(1), len(2), len(2), len(2), len(3), len(3), len(3), len(2), len(2), len(2),...
     len(4), len(4), len(5), len(5), len(5), len(5), len(6)];
 % mfd_14 =[1.4877e-7, -2.9815e-3, 15.0912, len(1), n_bar(14)];
@@ -128,9 +128,8 @@ qD.name = 'qD';
 qD.type = 'parameter';
 qD.form = 'full';
 qD.uels = {k1.uels, k2.uels, k3.uels};
-qD.val = ones(19,19,19);
+qD.val = ones(19,19,19)*0.00001;%zeros(19,19,19);%ones(19,19,19);
 
-%initial exit flow at the boundaries
 %initial exit flow at the boundaries
 l1.name = 'l1';
 l1.uels = {'1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19'};
@@ -156,7 +155,7 @@ tau0BZ.name = 'tau0BZ';
 tau0BZ.type = 'parameter';
 tau0BZ.form = 'full';
 tau0BZ.uels = {m1.uels, m2.uels};
-tau0BZ.val = ones(19,19); % 1 seconds
+tau0BZ.val = ones(19,19); % 1 second
 
 % demand
 demand.name = 'demand';

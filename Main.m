@@ -55,8 +55,8 @@ for ite_num =1:1:length(limit_n)
 
         filename = '';
         if strcmp(queueType,'DQ')
-            run DQ_MFD_noControl_19_hexagon_regions_multi_destinations_test.m
-            filename = strcat('n_19_hexagon_regions_multi_ds_withdemand_7200_',num2str(ite_dem+1),'_', num2str(limit_n(ite_num)),'_new.mat');
+            run DQ_MFD_noControl_19_hexagon_regions_multi_destinations_new.m
+            filename = strcat('n_19_hexagon_regions_multi_ds_withdemand_7200_',num2str(ite_dem+1),'_', num2str(limit_n(ite_num)),'_DQ.mat');
         elseif strcmp(queueType,'PQ')
             run PQ_MFD_Control_19_hexagon_regions_multi_destinations.m
             filename = strcat('n_19_hexagon_regions_multi_ds_withdemand_7200_',num2str(ite_dem+1),'_', num2str(limit_n(ite_num)),'_PQ.mat');
