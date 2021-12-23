@@ -45,9 +45,6 @@ for t=1:T:T*N
     %% run the GAMS and get the route flow, i.e., theta
     wgdx('MtoG2', n, qD, v, demand, MFD_Para, tau0BZ);
     system 'gams DQ_main_19_hexagon_regions_multi_ds_no_control_1012_new lo=3 gdx=GtoM2';
-
-    %n.val(n.val<=0.0001) = 0;
-    %qD.val(qD.val<=0.0001) = 0;
     
     theta.name = 'theta';
     theta = rgdx('GtoM2', theta);
@@ -64,7 +61,6 @@ for t=1:T:T*N
         % record inflow of each region with destination 19
         theta_region_to_19(theta.val(m1,1),theta.val(m1,2),theta.val(m1,3),t) = theta.val(m1,4);
     end
-    %theta_trans(theta_trans<=0.0001) = 0;
 
     %% record data for plotting
     for i=1:1:num_reg
@@ -158,13 +154,6 @@ for t=1:T:T*N
                                                     (p_all(pairi,pairj,t-tau0BZFix(pairi, pairj)) + qD_all(pairi,pairj,t-1)) * ...
                                                     v_all(pairi,pairj,t);
                 end
-                %
-%                 if qD_all(pairi,pairj,t-1) > 0
-%                     v_trans(pairi,pairj,d(j),t) = qD_trans(pairi,pairj,d(j),t-1) / qD_all(pairi,pairj,t-1) * v_all(pairi,pairj,t);
-%                 elseif qD_all(pairi,pairj,t-1) == 0
-%                     v_trans(pairi,pairj,d(j),t) = 1. / size(d,2) * v_all(pairi,pairj,t);
-%                 end
-                %
             end
         end
     end
@@ -230,11 +219,7 @@ for t=1:T:T*N
         pairj = region_communi(i,2);
         for j=1:1:size(d,2)
             if t > tau0BZFix(pairi,pairj)
-                %if Cbar_trans(i,3) >= v_all(pairi,pairj,t)
-                %   qD_trans(pairi,pairj,d(j),t) = 0;
-                %else
-                    qD_trans(pairi,pairj,d(j),t) = qD_trans(pairi,pairj,d(j),t-1) + T * ( p(pairi,pairj,d(j),t-tau0BZFix(pairi, pairj)) - v_trans(pairi,pairj,d(j),t) );
-                %end
+                qD_trans(pairi,pairj,d(j),t) = qD_trans(pairi,pairj,d(j),t-1) + T * ( p(pairi,pairj,d(j),t-tau0BZFix(pairi, pairj)) - v_trans(pairi,pairj,d(j),t) );
             end
             if qD_trans(pairi,pairj,d(j),t) < 0
                 qD_trans(pairi,pairj,d(j),t) = 0;
@@ -266,13 +251,9 @@ for t=1:T:T*N
     tau0 = [];
     Cbar = [];
     tau0BZ.val = tau0BZFix;
-    %n.val(n.val<=0.0001) = 0.00001;
-    %qD.val(qD.val<=0.0001) = 0.00001;
     
     % show the time step
     t
 end
-
-'s'
     
                         

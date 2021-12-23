@@ -1,10 +1,11 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%plot the figures needed for paper
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% close all
-% clear
+close all
+clear
 
-load('n_19_hexagon_regions_multi_ds_withdemand_7200_2_5300_new.mat');
+load('n_19_hexagon_regions_multi_ds_withdemand_7200_2_5300_DQ.mat');
+% load('n_19_hexagon_regions_multi_ds_withdemand_1000_2_5300_DQ_backup.mat');
 
 %% temp
 pp = zeros(1,N);
@@ -22,9 +23,10 @@ plot(1:N,qqU)
 hold off
 
 %% MFD functions
-a = 1.4877e-7;
-b = -2.9815e-3;
-c = 15.0912;
+coef = 100;
+a = 1.4877e-7*coef;
+b = -2.9815e-3*coef;
+c = 15.0912*coef;
 
 x = 0:100:10000;
 
@@ -44,17 +46,147 @@ t6 = 13000*1./(a*x.^2 + b*x + c);
 
 figure(1)
 plot(x, s1, x, s2, x, s3, x, s4, x, s5, x, s6)
-% plot(x, s1)
 set(gca, 'FontName', 'Times New Roman', 'FontSize', 12);
 set(gcf,'unit','centimeters','position',[10 5 15 10]);
 %set(gca,'Position',[.1 .1 .7 .65]);
-xlabel('vehicle number [veh]');
-ylabel('completion rate [veh/s]');
+xlabel('Density [veh/m]');
+ylabel('Completion rate [veh/s]');
 legend('region 19', 'region 15/16/17/18', 'region 13/14', 'region 7/8/9', 'region 4/5/6/10/11/12', 'region 1/2/3')
-ylimit = get(gca, 'Ylim');
-hold on
-plot([4000,4000], ylimit);
+%ylimit = get(gca, 'Ylim');
+%hold on
+%plot([4000,4000], ylimit);
 
+%% Flow rates and Queues
+figure(2)
+in = 13;
+out = 19;
+for t = 1:N
+    plot_p(t) = p_all(in,out,t);
+    plot_v(t) = v_all(in,out,t);
+    plot_qD(t) = qD_all(in,out,t);
+    plot_qU(t) = qU_all(in,out,t);
+    plot_withheld(t) = sum(withheld(in,out,:,t));
+end
+hold on
+yyaxis left
+plot(plot_p,'LineWidth',1.5,'LineStyle','--','Marker','*','Color','b');
+plot(plot_v,'LineWidth',1.5,'LineStyle','--','Marker','+','Color','k');
+plot(plot_withheld,'LineWidth',1.5,'LineStyle','--','Marker','square','Color','[0.5 0 0.8]');
+ylimit = 5;
+plot(1:N, ones(1,N)*ylimit,'LineStyle','--','Color',[0.5,0.5,0.5]);
+ylabel('Flow rate[veh/s]');
+ylim([0,6]);
+
+yyaxis right
+plot(plot_qD,'LineWidth',1.5,'LineStyle','--','Marker','v','Color','r');
+plot(plot_qU,'LineWidth',1.5,'LineStyle','--','Marker','^','Color','#00841a');
+set(gca, 'FontName', 'Times New Roman', 'FontSize', 18);
+set(gcf,'unit','centimeters','position',[10 5 15 10]);
+xlabel('Time [s]');
+ylabel('Queue length [veh]');
+legend('Buffer zone inflow via link (13,19)', 'Buffer zone outflow via link (13,19)',...
+        'Withheld flow via link (13,19)', 'Flow capacity of link (13,19)',...
+        'Buffer zone qD via link (13,19)', 'Buffer zone qU via link (13,19)')
+hold off
+
+%% number of vehicles over time
+figure(3)
+plot(n_region(1,:),'LineWidth',1.5,'LineStyle','-.')
+hold on
+for ix = 2:num_reg
+    if ix <= 12
+        if mod(ix,2) == 1
+            plot(n_region(ix,:),'LineWidth',1.5,'LineStyle','-.')
+        else
+            plot(n_region(ix,:),'LineWidth',1.5,'LineStyle','--')
+        end
+    else
+        plot(n_region(ix,:),'LineWidth',1.5)
+    end
+end
+hold off
+set(gca, 'FontName', 'Times New Roman', 'FontSize', 18);
+set(gcf,'unit','centimeters','position',[11 6 15 9]);
+legend('region 1', 'region 2', 'region 3', 'region 4', 'region 5', 'region 6', 'region 7', 'region 8', 'region 9', ...
+    'region 10', 'region 11', 'region 12', 'region 13', 'region 14', 'region 15', 'region 16', 'region 17', 'region 18', ...
+    'region 19')
+xlim([0 N])
+%ylim([0 6000])
+xlabel('Time [s]');
+ylabel('Vehicle number [veh]');
+
+%% IDUE flow rates
+figure(4)
+from = 2;
+to1 = 13;
+to2 = 14;
+dest = 19;
+for t = 1:N
+    plot_theta_13(t) = theta_region_to_19(from,to1,dest,t)*3600;
+    plot_theta_14(t) = theta_region_to_19(from,to2,dest,t)*3600;
+end
+plot(plot_theta_13,'LineWidth',1.5)
+set(gca, 'FontName', 'Times New Roman', 'FontSize', 18);
+set(gcf,'unit','centimeters','position',[11 6 15 9]);
+xlabel('Time [s]');
+ylabel('\theta^{19}_{2,13} [veh/h]');
+
+figure(5)
+plot(plot_theta_14,'LineWidth',1.5)
+set(gca, 'FontName', 'Times New Roman', 'FontSize', 18);
+set(gcf,'unit','centimeters','position',[11 6 15 9]);
+xlabel('Time [s]');
+ylabel('\theta^{19}_{2,14} [veh/h]');
+
+%% TODO: shortest path
+
+%% Real MFD
+figure(6)
+flow = n_region./T*3600;
+for t = 1:N
+    for ir = 1:num_reg
+        density(ir,t) = n_region(ir,t)/mfd_diff(ir)*1000;
+    end
+    plot(density(:,t),flow(:,t),'kx');
+    hold on
+end
+hold off
+
+
+
+%%
+for i = 1:19
+    for t = 1:7200
+        plot_p(i,t) = sum(p_all(i,:,t));
+        plot_v(i,t) = sum(v_all(i,:,t));
+    end
+end
+plot(plot_p','LineWidth',1.5);
+hold on
+plot(plot_v','LineWidth',1.5);
+hold off
+
+for t = 1:7200
+    plot_qD(t) = sum(qD_all(13,:,t));
+    plot_qU(t) = sum(qU_all(13,:,t));
+end
+plot(plot_qD,'LineWidth',1.5);
+hold on
+plot(plot_qU,'LineWidth',1.5);
+hold off
+%%
+for i = 1:19
+    for t = 1:7200
+        plot_qD(i,t) = sum(qD_all(i,:,t));
+        plot_qU(i,t) = sum(qU_all(i,:,t));
+    end
+end
+plot(plot_qD','LineWidth',1.5);
+hold on
+plot(plot_qU','LineWidth',1.5);
+hold off
+
+%%
 figure(2)
 plot(x, t1, x, t2, x, t3, x, t4, x, t5, x, t6)
 %% plot vehicle number in each region
