@@ -37,7 +37,7 @@ tauOBZ = tau0BZ.val * 2;
 tau0BZFix = tau0BZ.val;
 
 %% begin
-qD_trans(:,:,:,1) = qD.val;
+qD_trans(:,:,:,1) = 0;
 for t=1:T:T*N
     %% specify the demand
     run TimeVariant_demand_loading_new;
@@ -46,7 +46,8 @@ for t=1:T:T*N
     wgdx('MtoG2', n, qD, v, demand, MFD_Para, tau0BZ);
     system 'gams DQ_main_19_hexagon_regions_multi_ds_no_control_1012_new lo=3 gdx=GtoM2';
 
-    n.val(n.val<=0.0001) = 0;
+    %n.val(n.val<=0.0001) = 0;
+    %qD.val(qD.val<=0.0001) = 0;
     
     theta.name = 'theta';
     theta = rgdx('GtoM2', theta);
@@ -69,6 +70,12 @@ for t=1:T:T*N
     for i=1:1:num_reg
         % number of vehicles in each region
         n_region(i,t) = sum(n.val(i,:));
+    end
+
+    %% prepare Cbar_trans_trans for calculating v
+    Cbar_trans_trans = zeros(19,19);
+    for m1 = 1:1:size(Cbar.val,1)
+        Cbar_trans_trans(Cbar.val(m1,1),Cbar.val(m1,2)) = Cbar.val(m1,3);
     end
 
     %% calculate Qbar, i.e., Qbar_ij
@@ -142,12 +149,22 @@ for t=1:T:T*N
         pairi = region_communi(i,1);
         pairj = region_communi(i,2);
         if t > tau0BZFix(pairi, pairj)
+            % use capacity to distribute the flow
+            total_cap_downstream = sum(Cbar_trans_trans(pairj,d));
             for j=1:1:size(d,2)
-                if qD_all(pairi,pairj,t-1) > 0
-                    v_trans(pairi,pairj,d(j),t) = qD_trans(pairi,pairj,d(j),t-1) / qD_all(pairi,pairj,t-1) * v_all(pairi,pairj,t);
-                elseif qD_all(pairi,pairj,t-1) == 0
-                    v_trans(pairi,pairj,d(j),t) = 1. / size(d,2) * v_all(pairi,pairj,t);
+                if v_all(pairi,pairj,t) > 0
+                    % need to distribute the v
+                    v_trans(pairi,pairj,d(j),t) = (p(pairi,pairj,d(j),t-tau0BZFix(pairi, pairj)) + qD_trans(pairi,pairj,d(j),t-1)) / ...
+                                                    (p_all(pairi,pairj,t-tau0BZFix(pairi, pairj)) + qD_all(pairi,pairj,t-1)) * ...
+                                                    v_all(pairi,pairj,t);
                 end
+                %
+%                 if qD_all(pairi,pairj,t-1) > 0
+%                     v_trans(pairi,pairj,d(j),t) = qD_trans(pairi,pairj,d(j),t-1) / qD_all(pairi,pairj,t-1) * v_all(pairi,pairj,t);
+%                 elseif qD_all(pairi,pairj,t-1) == 0
+%                     v_trans(pairi,pairj,d(j),t) = 1. / size(d,2) * v_all(pairi,pairj,t);
+%                 end
+                %
             end
         end
     end
@@ -194,7 +211,7 @@ for t=1:T:T*N
                 qU(:,:,:,t) = qU(:,:,:,t-1) + T*p(:,:,:,t);
             else
                 % equation (9)
-                qU(:,:,:,t) = T*p(:,:,:,t) + ones(19,19,19)*0.00001;
+                qU(:,:,:,t) = T*p(:,:,:,t);% + ones(19,19,19)*0.00001;
             end
         else
             for j=1:1:size(d,2)
@@ -216,7 +233,7 @@ for t=1:T:T*N
                 %if Cbar_trans(i,3) >= v_all(pairi,pairj,t)
                 %   qD_trans(pairi,pairj,d(j),t) = 0;
                 %else
-                    qD_trans(pairi,pairj,d(j),t) = qD_trans(pairi,pairj,d(j),t-1) + T * ( p(pairi,pairj,d(j),t-tau0BZFix(pairi, pairj)) - v.val(pairi,pairj,d(j)) );
+                    qD_trans(pairi,pairj,d(j),t) = qD_trans(pairi,pairj,d(j),t-1) + T * ( p(pairi,pairj,d(j),t-tau0BZFix(pairi, pairj)) - v_trans(pairi,pairj,d(j),t) );
                 %end
             end
             if qD_trans(pairi,pairj,d(j),t) < 0
@@ -249,7 +266,8 @@ for t=1:T:T*N
     tau0 = [];
     Cbar = [];
     tau0BZ.val = tau0BZFix;
-    n.val(n.val<=0.0001) = 0.00001;
+    %n.val(n.val<=0.0001) = 0.00001;
+    %qD.val(qD.val<=0.0001) = 0.00001;
     
     % show the time step
     t
