@@ -26,8 +26,8 @@ equations
 
 
 * the DCS formulation
-theta_com(i,j,d)$region_communi(i,j) ..          MFD_Para(i, 'length')*sum(d2, n(i,d2))/(MFD_Para(i, 'm3')*power(sum(d2, n(i,d2)),3)+MFD_Para(i, 'm2')*power(sum(d2, n(i,d2)),2)+MFD_Para(i, 'm1')*sum(d2, n(i,d2)) + MFD_Para(i, 'm0'))+ sum(d2, q(i,j,d2))/(y(i,j)*(MFD_Para(j, 'n_bar')-sum(d2, n(j,d2)))+0.1)+eta(j,d)-eta(i,d) =g= 0;
-eta_com(i,d)..                                   sum(region_communi(i,j), theta(i,j,d))-sum(region_communi(k,i), v(k,i,d))-demand(i,d) =g= 0;
+theta_com(i,j,d)$region_communi(i,j) ..          MFD_Para(i, 'length')*sum(d2, n(i,d2))/(MFD_Para(i, 'm3')*power(sum(d2, n(i,d2)),3)+MFD_Para(i, 'm2')*power(sum(d2, n(i,d2)),2)+MFD_Para(i, 'm1')*sum(d2, n(i,d2)) + MFD_Para(i, 'm0'))+ sum(d2, q(i,j,d2))/(y(i,j)*(MFD_Para(j, 'n_bar')-sum(d2, n(j,d2)))+0.0001)+eta(j,d)-eta(i,d) =g= 0;
+eta_com(i,d)..                                   sum(region_communi(i,j), theta(i,j,d))-sum(region_communi(i,k), v(i,k,d))-demand(i,d) =g= 0;
 *eta_com(i,d)..                                   (MFD_Para(i, 'm3')*power(sum(d2, n(i,d2)),3)+MFD_Para(i, 'm2')*power(sum(d2, n(i,d2)),2)+MFD_Para(i, 'm1')*sum(d2, n(i,d2)) + MFD_Para(i, 'm0'))/sum(d2, n(i,d2))*n(i,d)/MFD_Para(i, 'length') - sum(region_communi(i,j), p(i,j,d))=g= 0;
 y_com(i,j)$region_communi(i,j)..                 (lamda(i,j)-mu(i,j)-1)*(MFD_Para(j, 'n_bar')-sum(d2, n(j,d2))) =g= 0;
 lamda_com(i,j)$region_communi(i,j)..             u_bar(i,j)-y(i,j)*(MFD_Para(j, 'n_bar')-sum(d2, n(j,d2))) =g= 0;

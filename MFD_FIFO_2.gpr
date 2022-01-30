@@ -279,9 +279,6 @@ Order=1,2,3
 Decim=7
 PlaneRownr=-1
 
-[RP:NETWORK_19_HEXAGON_REGIONS_MULTI_DS_NO_CONTROL_1012]
-1=
-
 [RP:NETWORK_OR]
 1=
 
@@ -300,38 +297,58 @@ PlaneRownr=-1
 [RP:MPEC]
 1=
 
-[RP:MAIN_19_HEXAGON_REGIONS_MULTI_DS_NO_CONTROL_1012]
+[RP:DQ_MAIN_19_HEXAGON_REGIONS_MULTI_DS_NO_CONTROL_1012]
 1=
 
-[RP:MAIN_19_HEXAGON_REGIONS_MULTI_DS_1012]
+[RP:DQ_NETWORK_19_HEXAGON_REGIONS_MULTI_DS_NO_CONTROL_1012_NEW]
+1=
+
+[RP:DQ_MAIN_19_HEXAGON_REGIONS_MULTI_DS_CONTROL_1012_NEW_REDUCECBAR]
+1=
+
+[RP:DQ_NETWORK_19_HEXAGON_REGIONS_MULTI_DS_NO_CONTROL_1012_NEW_REDUCECBAR]
+1=
+
+[RP:DQ_MAIN_19_HEXAGON_REGIONS_MULTI_DS_NOCONTROL_1012_NEW_REDUCECBAR]
+1=
+
+[RP:DQ_MAIN_19_HEXAGON_REGIONS_MULTI_DS_NO_CONTROL_1012_NEW]
+1=
+
+[RP:MAIN_19_HEXAGON_REGIONS_MULTI_DS_NO_CONTROL_1012]
 1=
 
 [RP:NETWORK_19_HEXAGON_REGIONS_MULTI_DS_1012]
 1=
 
+[RP:NETWORK_19_HEXAGON_REGIONS_MULTI_DS_NO_CONTROL_1012]
+1=
+
+[RP:MAIN_19_HEXAGON_REGIONS_MULTI_DS_1012]
+1=
+
 [RP:DQ_NETWORK_19_HEXAGON_REGIONS_MULTI_DS_NO_CONTROL_1012]
 1=
 
-[RP:DQ_MAIN_19_HEXAGON_REGIONS_MULTI_DS_NO_CONTROL_1012]
-1=
-
 [MRUFILES]
-1=D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\DQ_main_19_hexagon_regions_multi_ds_no_control_1012.lst
-2=D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\main_19_hexagon_regions_multi_ds_no_control_1012.gms
-3=D:\OneDrive\Works with Ohay\Ohay的各種檔案\出國讀書課程資料\CET 800 - PhD Dissertation\Codes\MFD_Codes_DQ\MFD-DQ\main_19_hexagon_regions_multi_ds_1012.gms
-4=D:\OneDrive\Works with Ohay\Ohay的各種檔案\出國讀書課程資料\CET 800 - PhD Dissertation\Codes\MFD_Codes_DQ\MFD-DQ\DQ_network_19_hexagon_regions_multi_ds_no_control_1012.lst
-5=D:\OneDrive\Works with Ohay\Ohay的各種檔案\出國讀書課程資料\CET 800 - PhD Dissertation\Codes\MFD_Codes_DQ\MFD-DQ\DQ_network_19_hexagon_regions_multi_ds_no_control_1012.gms
-6=D:\OneDrive\Works with Ohay\Ohay的各種檔案\出國讀書課程資料\CET 800 - PhD Dissertation\Codes\MFD_Codes_DQ\MFD-DQ\DQ_main_19_hexagon_regions_multi_ds_no_control_1012.gms
+1=D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\main_19_hexagon_regions_multi_ds_no_control_1012.gms
+2=D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\DQ_network_19_hexagon_regions_multi_ds_no_control_1012_new_reduceCbar.gms
+3=D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\DQ_main_19_hexagon_regions_multi_ds_control_1012_new_reduceCbar.gms
+4=D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\DQ_network_19_hexagon_regions_multi_ds_no_control_1012_new.gms
+5=D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\DQ_main_19_hexagon_regions_multi_ds_no_control_1012.gms
+6=D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\DQ_main_19_hexagon_regions_multi_ds_no_control_1012_new.log
 
 [OPENWINDOW_1]
-FILE0=D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\DQ_main_19_hexagon_regions_multi_ds_no_control_1012.gms
-FILE1=D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\DQ_network_19_hexagon_regions_multi_ds_no_control_1012.gms
-FILE2=D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\DQ_network_19_hexagon_regions_multi_ds_no_control_1012.lst
-FILE3=D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\main_19_hexagon_regions_multi_ds_1012.gms
-FILE4=D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\network_19_hexagon_regions_multi_ds_1012.gms
-FILE5=D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\main_19_hexagon_regions_multi_ds_1012.gms
-MAXIM=0
-TOP=0
-LEFT=0
-HEIGHT=946
-WIDTH=1916
+FILE0=D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\DQ_main_19_hexagon_regions_multi_ds_no_control_1012.lst
+FILE1=D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\DQ_main_19_hexagon_regions_multi_ds_no_control_1012_new.gms
+FILE2=D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\DQ_main_19_hexagon_regions_multi_ds_nocontrol_1012_new_reduceCbar.gms
+FILE3=D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\DQ_network_19_hexagon_regions_multi_ds_no_control_1012.gms
+FILE4=D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\main_19_hexagon_regions_multi_ds_1012.gms
+FILE5=D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\network_19_hexagon_regions_multi_ds_1012.gms
+FILE6=D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\network_19_hexagon_regions_multi_ds_no_control_1012.gms
+FILE7=D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\DQ_main_19_hexagon_regions_multi_ds_nocontrol_1012_new_reduceCbar.gms
+MAXIM=1
+TOP=-6
+LEFT=59
+HEIGHT=884
+WIDTH=1556

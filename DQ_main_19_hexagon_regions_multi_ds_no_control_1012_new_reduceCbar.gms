@@ -7,7 +7,7 @@ $offtext
 * settings and import parameters
 option limrow = 300, limcol = 100, solprint = on;
 
-$include DQ_network_19_hexagon_regions_multi_ds_no_control_1012_new.gms
+$include DQ_network_19_hexagon_regions_multi_ds_no_control_1012_new_reduceCbar.gms
 
 *variables
 nonnegative variable

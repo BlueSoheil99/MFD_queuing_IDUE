@@ -1,4 +1,4 @@
-GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows 10/26/21 12:49:44 Page 1
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows 12/07/21 14:49:57 Page 1
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 C o m p i l a t i o n
 
@@ -13,9 +13,8 @@ C o m p i l a t i o n
    7  * settings and import parameters
    8  option limrow = 300, limcol = 100, solprint = on;
    9   
-INCLUDE    D:\OneDrive\Works with Ohay\Ohayªº¦UºØÀÉ®×\¥X°êÅª®Ñ½Òµ{¸ê®Æ\CET 800 -
-           PhD Dissertation\Codes\MFD_Codes_DQ\MFD-DQ\DQ_network_19_hexagon_regi
-           ons_multi_ds_no_control_1012.gms
+INCLUDE    D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\DQ_network_19_hexagon_regions_multi_
+           ds_no_control_1012_new.gms
       Network configuration data file
       region and link sets are defined in this file, together with the data need
       ed to define the MFD function
@@ -28,148 +27,235 @@ INCLUDE    D:\OneDrive\Works with Ohay\Ohayªº¦UºØÀÉ®×\¥X°êÅª®Ñ½Òµ{¸ê®Æ\CET 800 -
   21   
   22  parameter
   23           n(i,d) 'vehicle numbers in region i with destination d',
-  24           qU(i,j,d) 'upstream queued vehicle numbers at the boundary of (i,
-      j) with destination d',
-  25           qD(i,j,d) 'downstream queued vehicle numbers at the boundary of (
+  24           qD(i,j,d) 'downstream queued vehicle numbers at the boundary of (
       i,j) with destination d',
+  25           v(i,j,d) 'region-inflow of region j from region i for vehicles wi
+      th destination d',
   26           demand(i,d) 'demand from region i to d',
-  27           MFD_Para(i, coff) 'cost parameter table',
-  28           Cbar(i,j) 'capacity';
+  27           MFD_Para(i, coff) 'cost parameter table'
+  28           tau0BZ(i,j) 'minimum travel time in buffer zone (i,j)';
   29   
-GDXIN   D:\OneDrive\Works with Ohay\Ohayªº¦UºØÀÉ®×\¥X°êÅª®Ñ½Òµ{¸ê®Æ\CET 800 - Ph
-        D Dissertation\Codes\MFD_Codes_DQ\MFD-DQ\MtoG2.gdx
+GDXIN   D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\MtoG2.gdx
 --- LOAD  n = 1:n
---- LOAD  qU = 2:qU
---- LOAD  qD = 3:qD
---- LOAD  demand = 5:demand
---- LOAD  MFD_Para = 6:MFD_Para
+--- LOAD  qD = 2:qD
+--- LOAD  v = 3:v
+--- LOAD  demand = 4:demand
+--- LOAD  MFD_Para = 5:MFD_Para
+--- LOAD  tau0BZ = 6:tau0BZ
   32   
   33  MFD_Para(j, 'm3')$(sum(d2, n(j,d2))>10000)=0;
   34  MFD_Para(j, 'm2')$(sum(d2, n(j,d2))>10000)=0;
   35  MFD_Para(j, 'm1')$(sum(d2, n(j,d2))>10000)=0;
   36  MFD_Para(j, 'm0')$(sum(d2, n(j,d2))>10000)=4256;
   37   
-  38  set region_communi(i,j) /
-  39  1.2
-  40  1.12
-  41  1.13
-  42  2.1
-  43  2.3
-  44  2.13
-  45  2.14
-  46  3.2
-  47  3.4
-  48  3.14
-  49  4.3
-  50  4.5
-  51  4.14
-  52  4.15
-  53  5.4
-  54  5.6
-  55  5.15
-  56  6.5
-  57  6.7
-  58  6.15
-  59  6.16
-  60  7.6
-  61  7.8
-  62  7.16
-  63  8.7
-  64  8.9
-  65  8.16
-  66  8.17
-  67  9.8
-  68  9.10
-  69  9.17
-  70  10.9
-  71  10.11
-  72  10.17
-  73  10.18
-  74  11.10
-  75  11.12
-  76  11.18
-  77  12.1
-  78  12.11
-  79  12.13
-  80  12.18
-  81  13.1
-  82  13.2
-  83  13.12
-  84  13.14
-  85  13.18
-  86  13.19
-  87  14.2
-  88  14.3
-  89  14.4
-  90  14.13
-  91  14.15
-  92  14.19
-  93  15.4
-  94  15.5
-  95  15.6
-  96  15.14
-  97  15.16
-  98  15.19
-  99  16.6
- 100  16.7
- 101  16.8
- 102  16.15
- 103  16.17
- 104  16.19
- 105  17.8
- 106  17.9
- 107  17.10
- 108  17.16
- 109  17.18
- 110  17.19
- 111  18.10
- 112  18.11
- 113  18.12
- 114  18.13
- 115  18.17
- 116  18.19
- 117  19.13
- 118  19.14
- 119  19.15
- 120  19.16
- 121  19.17
- 122  19.18
- 123  /;
- 124   
- 125  *variables
- 126  nonnegative variable
- 127           theta(i,j,d) 'the queue inflow of the boundary (i,j)',
- 128           tau0(i,d) 'the minimum travel time from region i to destination';
- 129   
- 130  equations
- 131           theta_com(i,j,d) 'the complimentary term of theta(i,j,d)',
- 132           tau0_com(i,d) 'the complimentary term of tau0(i,d)';
- 133   
- 134   
- 135  * the DCS formulation
- 136  theta_com(i,j,d)$region_communi(i,j) ..          MFD_Para(i, 'length')*sum
+  38  parameter Cbar(i,j) 'capacity of each buffer zone (i,j)'
+  39  /
+  40  1.2   3
+  41  1.12  3
+  42  1.13  3
+  43  2.1   3
+  44  2.3   3
+  45  2.13  3
+  46  2.14  3
+  47  3.2   3
+  48  3.4   3
+  49  3.14  3
+  50  4.3   3
+  51  4.5   3
+  52  4.14  3
+  53  4.15  3
+  54  5.4   3
+  55  5.6   3
+  56  5.15  3
+  57  6.5   3
+  58  6.7   3
+  59  6.15  3
+  60  6.16  3
+  61  7.6   3
+  62  7.8   3
+  63  7.16  3
+  64  8.7   3
+  65  8.9   3
+  66  8.16  3
+  67  8.17  3
+  68  9.8   3
+  69  9.10  3
+  70  9.17  3
+  71  10.9  3
+  72  10.11 3
+  73  10.17 3
+  74  10.18 3
+  75  11.10 3
+  76  11.12 3
+  77  11.18 3
+  78  12.1  3
+  79  12.11 3
+  80  12.13 3
+  81  12.18 3
+  82  13.1  3
+  83  13.2  3
+  84  13.12 3
+  85  13.14 4
+  86  13.18 4
+  87  13.19 5
+  88  14.2  3
+  89  14.3  3
+  90  14.4  3
+  91  14.13 4
+  92  14.15 4
+  93  14.19 4
+  94  15.4  3
+  95  15.5  3
+  96  15.6  3
+  97  15.14 4
+  98  15.16 4
+  99  15.19 5
+ 100  16.6  3
+ 101  16.7  3
+ 102  16.8  3
+ 103  16.15 4
+ 104  16.17 5
+ 105  16.19 5
+ 106  17.8  3
+ 107  17.9  3
+ 108  17.10 3
+ 109  17.16 4
+ 110  17.18 4
+ 111  17.19 5
+ 112  18.10 3
+ 113  18.11 3
+ 114  18.12 3
+ 115  18.13 4
+ 116  18.17 4
+ 117  18.19 5
+ 118  19.13 5
+ 119  19.14 5
+ 120  19.15 5
+ 121  19.16 5
+ 122  19.17 5
+ 123  19.18 5
+ 124  /;
+ 125   
+ 126  set region_communi(i,j) /
+ 127  1.2
+ 128  1.12
+ 129  1.13
+ 130  2.1
+ 131  2.3
+ 132  2.13
+ 133  2.14
+ 134  3.2
+ 135  3.4
+ 136  3.14
+ 137  4.3
+ 138  4.5
+ 139  4.14
+ 140  4.15
+ 141  5.4
+ 142  5.6
+ 143  5.15
+ 144  6.5
+ 145  6.7
+ 146  6.15
+ 147  6.16
+ 148  7.6
+ 149  7.8
+ 150  7.16
+ 151  8.7
+ 152  8.9
+ 153  8.16
+ 154  8.17
+ 155  9.8
+ 156  9.10
+ 157  9.17
+ 158  10.9
+ 159  10.11
+ 160  10.17
+ 161  10.18
+ 162  11.10
+ 163  11.12
+ 164  11.18
+ 165  12.1
+ 166  12.11
+ 167  12.13
+ 168  12.18
+ 169  13.1
+ 170  13.2
+ 171  13.12
+ 172  13.14
+ 173  13.18
+ 174  13.19
+ 175  14.2
+ 176  14.3
+ 177  14.4
+ 178  14.13
+ 179  14.15
+ 180  14.19
+ 181  15.4
+ 182  15.5
+ 183  15.6
+ 184  15.14
+ 185  15.16
+ 186  15.19
+ 187  16.6
+ 188  16.7
+ 189  16.8
+ 190  16.15
+ 191  16.17
+ 192  16.19
+ 193  17.8
+ 194  17.9
+ 195  17.10
+ 196  17.16
+ 197  17.18
+ 198  17.19
+ 199  18.10
+ 200  18.11
+ 201  18.12
+ 202  18.13
+ 203  18.17
+ 204  18.19
+ 205  19.13
+ 206  19.14
+ 207  19.15
+ 208  19.16
+ 209  19.17
+ 210  19.18
+ 211  /;
+ 212   
+ 213  *variables
+ 214  nonnegative variable
+ 215           theta(i,j,d) 'the queue inflow of the boundary (i,j)',
+ 216           tau0(i,d) 'the minimum travel time from region i to destination';
+ 217   
+ 218  equations
+ 219           theta_com(i,j,d) 'the complimentary term of theta(i,j,d)',
+ 220           tau0_com(i,d) 'the complimentary term of tau0(i,d)';
+ 221   
+ 222   
+ 223  * the DCS formulation
+ 224  theta_com(i,j,d)$region_communi(i,j) ..          MFD_Para(i, 'length')*sum
       (d2, n(i,d2))/(MFD_Para(i, 'm3')*power(sum(d2, n(i,d2)),3)+MFD_Para(i, 'm2
       ')*power(sum(d2, n(i,d2)),2)+MFD_Para(i, 'm1')*sum(d2, n(i,d2)) + MFD_Para
-      (i, 'm0'))+ sum(d2, qD(i,j,d2))/10+tau0(j,d)-tau0(i,d) =g= 0;
- 137  tau0_com(i,d)..                                  sum(region_communi(i,j), 
-      theta(i,j,d))-(MFD_Para(i, 'm3')*power(sum(d2, n(i,d2)),3)+MFD_Para(i, 'm2
-      ')*power(sum(d2, n(i,d2)),2)+MFD_Para(i, 'm1')*sum(d2, n(i,d2)) + MFD_Para
-      (i, 'm0'))/sum(d2, n(i,d2))*n(i,d)/MFD_Para(i, 'length') =g= 0;
- 138   
- 139  tau0.fx(i,d)$(sameas(i,d))=0;
- 140   
- 141  * solve the problem
- 142  model mfd / theta_com.theta, tau0_com.tau0 /;
- 143  solve mfd using mcp
- 144   
- 145  scalar Umodstat, Usolstat,Tmodstat, Tsolstat;
- 146  Umodstat = mfd.Modelstat;
- 147  Usolstat = mfd.solvestat;
+      (i, 'm0')) + tau0BZ(i,j) + (sum(d2, qD(i,j,d2))/Cbar(i,j)) + tau0(j,d) - t
+      au0(i,d) =g= 0;
+ 225  tau0_com(i,d)..                                  sum(region_communi(i,j), 
+      theta(i,j,d))-sum(region_communi(k,i), v(k,i,d))-demand(i,d) =g= 0;
+ 226   
+ 227  tau0.fx(i,d)$(sameas(i,d))=0;
+ 228   
+ 229  * solve the problem
+ 230  model mfd / theta_com.theta, tau0_com.tau0 /;
+ 231  solve mfd using mcp
+ 232   
+ 233  scalar Umodstat, Usolstat,Tmodstat, Tsolstat;
+ 234  Umodstat = mfd.Modelstat;
+ 235  Usolstat = mfd.solvestat;
 
 **** LIST OF STRAY NAMES - CHECK DECLARATIONS FOR SPURIOUS COMMAS
 **** STRAY NAME Tmodstat OF TYPE PARAM
 **** STRAY NAME Tsolstat OF TYPE PARAM
-GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows 10/26/21 12:49:44 Page 2
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows 12/07/21 14:49:57 Page 2
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
 Include File Summary
 
@@ -179,1592 +265,1497 @@ Include File Summary
      1        1 INPUT          0       0  D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\DQ_ma
                                           in_19_hexagon_regions_multi_ds_no_cont
                                           rol_1012.gms
-     2       10 INCLUDE        1      10  .D:\OneDrive\Works with Ohay\Ohayªº¦Uº
-                                           ØÀÉ®×\¥X°êÅª®Ñ½Òµ{¸ê®Æ\CET 800 - PhD 
-                                           Dissertation\Codes\MFD_Codes_DQ\MFD-D
-                                           Q\DQ_network_19_hexagon_regions_multi
-                                           _ds_no_control_1012.gms
-     3       30 GDXIN          2      20  .D:\OneDrive\Works with Ohay\Ohayªº¦Uº
-                                           ØÀÉ®×\¥X°êÅª®Ñ½Òµ{¸ê®Æ\CET 800 - PhD 
-                                           Dissertation\Codes\MFD_Codes_DQ\MFD-D
-                                           Q\MtoG2.gdx
+     2       10 INCLUDE        1      10  .D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\DQ_n
+                                           etwork_19_hexagon_regions_multi_ds_no
+                                           _control_1012_new.gms
+     3       30 GDXIN          2      20  .D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\MtoG
+                                           2.gdx
 
 
 COMPILATION TIME     =        0.000 SECONDS      3 MB  24.9.2 r64480 WEX-WEI
-GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows 10/26/21 12:49:44 Page 3
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows 12/07/21 14:49:57 Page 3
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
-Equation Listing    SOLVE mfd Using MCP From line 145
+Equation Listing    SOLVE mfd Using MCP From line 233
 
 
 ---- theta_com  =G=  the complimentary term of theta(i,j,d)
 
-theta_com(1,2,13)..  - tau0(1,13) + tau0(2,13) =G= -369.301158278126 ; (LHS = 0)
+theta_com(1,2,13)..  - tau0(1,13) + tau0(2,13) =G= -416.385995841312 ; (LHS = 0)
      
-theta_com(1,2,14)..  - tau0(1,14) + tau0(2,14) =G= -369.301158278126 ; (LHS = 0)
+theta_com(1,2,14)..  - tau0(1,14) + tau0(2,14) =G= -416.385995841312 ; (LHS = 0)
      
-theta_com(1,2,15)..  - tau0(1,15) + tau0(2,15) =G= -369.301158278126 ; (LHS = 0)
+theta_com(1,2,15)..  - tau0(1,15) + tau0(2,15) =G= -416.385995841312 ; (LHS = 0)
      
-theta_com(1,2,16)..  - tau0(1,16) + tau0(2,16) =G= -369.301158278126 ; (LHS = 0)
+theta_com(1,2,16)..  - tau0(1,16) + tau0(2,16) =G= -416.385995841312 ; (LHS = 0)
      
-theta_com(1,2,17)..  - tau0(1,17) + tau0(2,17) =G= -369.301158278126 ; (LHS = 0)
+theta_com(1,2,17)..  - tau0(1,17) + tau0(2,17) =G= -416.385995841312 ; (LHS = 0)
      
-theta_com(1,2,18)..  - tau0(1,18) + tau0(2,18) =G= -369.301158278126 ; (LHS = 0)
+theta_com(1,2,18)..  - tau0(1,18) + tau0(2,18) =G= -416.385995841312 ; (LHS = 0)
      
-theta_com(1,2,19)..  - tau0(1,19) + tau0(2,19) =G= -369.301158278126 ; (LHS = 0)
+theta_com(1,2,19)..  - tau0(1,19) + tau0(2,19) =G= -416.385995841312 ; (LHS = 0)
      
-theta_com(1,12,13)..  - tau0(1,13) + tau0(12,13) =G= -369.301158278126 ;
+theta_com(1,12,13)..  - tau0(1,13) + tau0(12,13) =G= -416.385995841312 ;
      
       (LHS = 0)
      
-theta_com(1,12,14)..  - tau0(1,14) + tau0(12,14) =G= -369.301158278126 ;
+theta_com(1,12,14)..  - tau0(1,14) + tau0(12,14) =G= -416.385995841312 ;
      
       (LHS = 0)
      
-theta_com(1,12,15)..  - tau0(1,15) + tau0(12,15) =G= -369.301158278126 ;
+theta_com(1,12,15)..  - tau0(1,15) + tau0(12,15) =G= -416.385995841312 ;
      
       (LHS = 0)
      
-theta_com(1,12,16)..  - tau0(1,16) + tau0(12,16) =G= -369.301158278126 ;
+theta_com(1,12,16)..  - tau0(1,16) + tau0(12,16) =G= -416.385995841312 ;
      
       (LHS = 0)
      
-theta_com(1,12,17)..  - tau0(1,17) + tau0(12,17) =G= -369.301158278126 ;
+theta_com(1,12,17)..  - tau0(1,17) + tau0(12,17) =G= -416.385995841312 ;
      
       (LHS = 0)
      
-theta_com(1,12,18)..  - tau0(1,18) + tau0(12,18) =G= -369.301158278126 ;
+theta_com(1,12,18)..  - tau0(1,18) + tau0(12,18) =G= -416.385995841312 ;
      
       (LHS = 0)
      
-theta_com(1,12,19)..  - tau0(1,19) + tau0(12,19) =G= -369.301158278126 ;
+theta_com(1,12,19)..  - tau0(1,19) + tau0(12,19) =G= -416.385995841312 ;
      
       (LHS = 0)
      
-theta_com(1,13,13)..  - tau0(1,13) + tau0(13,13) =G= -369.301158278126 ;
+theta_com(1,13,13)..  - tau0(1,13) + tau0(13,13) =G= -416.385995841312 ;
      
       (LHS = 0)
      
-theta_com(1,13,14)..  - tau0(1,14) + tau0(13,14) =G= -369.301158278126 ;
+theta_com(1,13,14)..  - tau0(1,14) + tau0(13,14) =G= -416.385995841312 ;
      
       (LHS = 0)
      
-theta_com(1,13,15)..  - tau0(1,15) + tau0(13,15) =G= -369.301158278126 ;
+theta_com(1,13,15)..  - tau0(1,15) + tau0(13,15) =G= -416.385995841312 ;
      
       (LHS = 0)
      
-theta_com(1,13,16)..  - tau0(1,16) + tau0(13,16) =G= -369.301158278126 ;
+theta_com(1,13,16)..  - tau0(1,16) + tau0(13,16) =G= -416.385995841312 ;
      
       (LHS = 0)
      
-theta_com(1,13,17)..  - tau0(1,17) + tau0(13,17) =G= -369.301158278126 ;
+theta_com(1,13,17)..  - tau0(1,17) + tau0(13,17) =G= -416.385995841312 ;
      
       (LHS = 0)
      
-theta_com(1,13,18)..  - tau0(1,18) + tau0(13,18) =G= -369.301158278126 ;
+theta_com(1,13,18)..  - tau0(1,18) + tau0(13,18) =G= -416.385995841312 ;
      
       (LHS = 0)
      
-theta_com(1,13,19)..  - tau0(1,19) + tau0(13,19) =G= -369.301158278126 ;
+theta_com(1,13,19)..  - tau0(1,19) + tau0(13,19) =G= -416.385995841312 ;
      
       (LHS = 0)
      
-theta_com(2,1,13)..  tau0(1,13) - tau0(2,13) =G= -369.301158278126 ; (LHS = 0)
+theta_com(2,1,13)..  tau0(1,13) - tau0(2,13) =G= -416.88109754964 ; (LHS = 0)
      
-theta_com(2,1,14)..  tau0(1,14) - tau0(2,14) =G= -369.301158278126 ; (LHS = 0)
+theta_com(2,1,14)..  tau0(1,14) - tau0(2,14) =G= -416.88109754964 ; (LHS = 0)
      
-theta_com(2,1,15)..  tau0(1,15) - tau0(2,15) =G= -369.301158278126 ; (LHS = 0)
+theta_com(2,1,15)..  tau0(1,15) - tau0(2,15) =G= -416.88109754964 ; (LHS = 0)
      
-theta_com(2,1,16)..  tau0(1,16) - tau0(2,16) =G= -369.301158278126 ; (LHS = 0)
+theta_com(2,1,16)..  tau0(1,16) - tau0(2,16) =G= -416.88109754964 ; (LHS = 0)
      
-theta_com(2,1,17)..  tau0(1,17) - tau0(2,17) =G= -369.301158278126 ; (LHS = 0)
+theta_com(2,1,17)..  tau0(1,17) - tau0(2,17) =G= -416.88109754964 ; (LHS = 0)
      
-theta_com(2,1,18)..  tau0(1,18) - tau0(2,18) =G= -369.301158278126 ; (LHS = 0)
+theta_com(2,1,18)..  tau0(1,18) - tau0(2,18) =G= -416.88109754964 ; (LHS = 0)
      
-theta_com(2,1,19)..  tau0(1,19) - tau0(2,19) =G= -369.301158278126 ; (LHS = 0)
+theta_com(2,1,19)..  tau0(1,19) - tau0(2,19) =G= -416.88109754964 ; (LHS = 0)
      
-theta_com(2,3,13)..  - tau0(2,13) + tau0(3,13) =G= -369.301158278126 ; (LHS = 0)
+theta_com(2,3,13)..  - tau0(2,13) + tau0(3,13) =G= -416.88109754964 ; (LHS = 0)
      
-theta_com(2,3,14)..  - tau0(2,14) + tau0(3,14) =G= -369.301158278126 ; (LHS = 0)
+theta_com(2,3,14)..  - tau0(2,14) + tau0(3,14) =G= -416.88109754964 ; (LHS = 0)
      
-theta_com(2,3,15)..  - tau0(2,15) + tau0(3,15) =G= -369.301158278126 ; (LHS = 0)
+theta_com(2,3,15)..  - tau0(2,15) + tau0(3,15) =G= -416.88109754964 ; (LHS = 0)
      
-theta_com(2,3,16)..  - tau0(2,16) + tau0(3,16) =G= -369.301158278126 ; (LHS = 0)
+theta_com(2,3,16)..  - tau0(2,16) + tau0(3,16) =G= -416.88109754964 ; (LHS = 0)
      
-theta_com(2,3,17)..  - tau0(2,17) + tau0(3,17) =G= -369.301158278126 ; (LHS = 0)
+theta_com(2,3,17)..  - tau0(2,17) + tau0(3,17) =G= -416.88109754964 ; (LHS = 0)
      
-theta_com(2,3,18)..  - tau0(2,18) + tau0(3,18) =G= -369.301158278126 ; (LHS = 0)
+theta_com(2,3,18)..  - tau0(2,18) + tau0(3,18) =G= -416.88109754964 ; (LHS = 0)
      
-theta_com(2,3,19)..  - tau0(2,19) + tau0(3,19) =G= -369.301158278126 ; (LHS = 0)
+theta_com(2,3,19)..  - tau0(2,19) + tau0(3,19) =G= -416.88109754964 ; (LHS = 0)
      
-theta_com(2,13,13)..  - tau0(2,13) + tau0(13,13) =G= -369.301158278126 ;
+theta_com(2,13,13)..  - tau0(2,13) + tau0(13,13) =G= -416.88109754964 ;
      
       (LHS = 0)
      
-theta_com(2,13,14)..  - tau0(2,14) + tau0(13,14) =G= -369.301158278126 ;
+theta_com(2,13,14)..  - tau0(2,14) + tau0(13,14) =G= -416.88109754964 ;
      
       (LHS = 0)
      
-theta_com(2,13,15)..  - tau0(2,15) + tau0(13,15) =G= -369.301158278126 ;
+theta_com(2,13,15)..  - tau0(2,15) + tau0(13,15) =G= -416.88109754964 ;
      
       (LHS = 0)
      
-theta_com(2,13,16)..  - tau0(2,16) + tau0(13,16) =G= -369.301158278126 ;
+theta_com(2,13,16)..  - tau0(2,16) + tau0(13,16) =G= -416.88109754964 ;
      
       (LHS = 0)
      
-theta_com(2,13,17)..  - tau0(2,17) + tau0(13,17) =G= -369.301158278126 ;
+theta_com(2,13,17)..  - tau0(2,17) + tau0(13,17) =G= -416.88109754964 ;
      
       (LHS = 0)
      
-theta_com(2,13,18)..  - tau0(2,18) + tau0(13,18) =G= -369.301158278126 ;
+theta_com(2,13,18)..  - tau0(2,18) + tau0(13,18) =G= -416.88109754964 ;
      
       (LHS = 0)
      
-theta_com(2,13,19)..  - tau0(2,19) + tau0(13,19) =G= -369.301158278126 ;
+theta_com(2,13,19)..  - tau0(2,19) + tau0(13,19) =G= -416.88109754964 ;
      
       (LHS = 0)
      
-theta_com(2,14,13)..  - tau0(2,13) + tau0(14,13) =G= -369.301158278126 ;
+theta_com(2,14,13)..  - tau0(2,13) + tau0(14,13) =G= -416.88109754964 ;
      
       (LHS = 0)
      
-theta_com(2,14,14)..  - tau0(2,14) + tau0(14,14) =G= -369.301158278126 ;
+theta_com(2,14,14)..  - tau0(2,14) + tau0(14,14) =G= -416.88109754964 ;
      
       (LHS = 0)
      
-theta_com(2,14,15)..  - tau0(2,15) + tau0(14,15) =G= -369.301158278126 ;
+theta_com(2,14,15)..  - tau0(2,15) + tau0(14,15) =G= -416.88109754964 ;
      
       (LHS = 0)
      
-theta_com(2,14,16)..  - tau0(2,16) + tau0(14,16) =G= -369.301158278126 ;
+theta_com(2,14,16)..  - tau0(2,16) + tau0(14,16) =G= -416.88109754964 ;
      
       (LHS = 0)
      
-theta_com(2,14,17)..  - tau0(2,17) + tau0(14,17) =G= -369.301158278126 ;
+theta_com(2,14,17)..  - tau0(2,17) + tau0(14,17) =G= -416.88109754964 ;
      
       (LHS = 0)
      
-theta_com(2,14,18)..  - tau0(2,18) + tau0(14,18) =G= -369.301158278126 ;
+theta_com(2,14,18)..  - tau0(2,18) + tau0(14,18) =G= -416.88109754964 ;
      
       (LHS = 0)
      
-theta_com(2,14,19)..  - tau0(2,19) + tau0(14,19) =G= -369.301158278126 ;
+theta_com(2,14,19)..  - tau0(2,19) + tau0(14,19) =G= -416.88109754964 ;
      
       (LHS = 0)
      
-theta_com(3,2,13)..  tau0(2,13) - tau0(3,13) =G= -369.301158278126 ; (LHS = 0)
+theta_com(3,2,13)..  tau0(2,13) - tau0(3,13) =G= -416.385995841311 ; (LHS = 0)
      
-theta_com(3,2,14)..  tau0(2,14) - tau0(3,14) =G= -369.301158278126 ; (LHS = 0)
+theta_com(3,2,14)..  tau0(2,14) - tau0(3,14) =G= -416.385995841311 ; (LHS = 0)
      
-theta_com(3,2,15)..  tau0(2,15) - tau0(3,15) =G= -369.301158278126 ; (LHS = 0)
+theta_com(3,2,15)..  tau0(2,15) - tau0(3,15) =G= -416.385995841311 ; (LHS = 0)
      
-theta_com(3,2,16)..  tau0(2,16) - tau0(3,16) =G= -369.301158278126 ; (LHS = 0)
+theta_com(3,2,16)..  tau0(2,16) - tau0(3,16) =G= -416.385995841311 ; (LHS = 0)
      
-theta_com(3,2,17)..  tau0(2,17) - tau0(3,17) =G= -369.301158278126 ; (LHS = 0)
+theta_com(3,2,17)..  tau0(2,17) - tau0(3,17) =G= -416.385995841311 ; (LHS = 0)
      
-theta_com(3,2,18)..  tau0(2,18) - tau0(3,18) =G= -369.301158278126 ; (LHS = 0)
+theta_com(3,2,18)..  tau0(2,18) - tau0(3,18) =G= -416.385995841311 ; (LHS = 0)
      
-theta_com(3,2,19)..  tau0(2,19) - tau0(3,19) =G= -369.301158278126 ; (LHS = 0)
+theta_com(3,2,19)..  tau0(2,19) - tau0(3,19) =G= -416.385995841311 ; (LHS = 0)
      
-theta_com(3,4,13)..  - tau0(3,13) + tau0(4,13) =G= -369.301158278126 ; (LHS = 0)
+theta_com(3,4,13)..  - tau0(3,13) + tau0(4,13) =G= -416.385995841311 ; (LHS = 0)
      
-theta_com(3,4,14)..  - tau0(3,14) + tau0(4,14) =G= -369.301158278126 ; (LHS = 0)
+theta_com(3,4,14)..  - tau0(3,14) + tau0(4,14) =G= -416.385995841311 ; (LHS = 0)
      
-theta_com(3,4,15)..  - tau0(3,15) + tau0(4,15) =G= -369.301158278126 ; (LHS = 0)
+theta_com(3,4,15)..  - tau0(3,15) + tau0(4,15) =G= -416.385995841311 ; (LHS = 0)
      
-theta_com(3,4,16)..  - tau0(3,16) + tau0(4,16) =G= -369.301158278126 ; (LHS = 0)
+theta_com(3,4,16)..  - tau0(3,16) + tau0(4,16) =G= -416.385995841311 ; (LHS = 0)
      
-theta_com(3,4,17)..  - tau0(3,17) + tau0(4,17) =G= -369.301158278126 ; (LHS = 0)
+theta_com(3,4,17)..  - tau0(3,17) + tau0(4,17) =G= -416.385995841311 ; (LHS = 0)
      
-theta_com(3,4,18)..  - tau0(3,18) + tau0(4,18) =G= -369.301158278126 ; (LHS = 0)
+theta_com(3,4,18)..  - tau0(3,18) + tau0(4,18) =G= -416.385995841311 ; (LHS = 0)
      
-theta_com(3,4,19)..  - tau0(3,19) + tau0(4,19) =G= -369.301158278126 ; (LHS = 0)
+theta_com(3,4,19)..  - tau0(3,19) + tau0(4,19) =G= -416.385995841311 ; (LHS = 0)
      
-theta_com(3,14,13)..  - tau0(3,13) + tau0(14,13) =G= -369.301158278126 ;
+theta_com(3,14,13)..  - tau0(3,13) + tau0(14,13) =G= -416.385995841311 ;
      
       (LHS = 0)
      
-theta_com(3,14,14)..  - tau0(3,14) + tau0(14,14) =G= -369.301158278126 ;
+theta_com(3,14,14)..  - tau0(3,14) + tau0(14,14) =G= -416.385995841311 ;
      
       (LHS = 0)
      
-theta_com(3,14,15)..  - tau0(3,15) + tau0(14,15) =G= -369.301158278126 ;
+theta_com(3,14,15)..  - tau0(3,15) + tau0(14,15) =G= -416.385995841311 ;
      
       (LHS = 0)
      
-theta_com(3,14,16)..  - tau0(3,16) + tau0(14,16) =G= -369.301158278126 ;
+theta_com(3,14,16)..  - tau0(3,16) + tau0(14,16) =G= -416.385995841311 ;
      
       (LHS = 0)
      
-theta_com(3,14,17)..  - tau0(3,17) + tau0(14,17) =G= -369.301158278126 ;
+theta_com(3,14,17)..  - tau0(3,17) + tau0(14,17) =G= -416.385995841311 ;
      
       (LHS = 0)
      
-theta_com(3,14,18)..  - tau0(3,18) + tau0(14,18) =G= -369.301158278126 ;
+theta_com(3,14,18)..  - tau0(3,18) + tau0(14,18) =G= -416.385995841311 ;
      
       (LHS = 0)
      
-theta_com(3,14,19)..  - tau0(3,19) + tau0(14,19) =G= -369.301158278126 ;
+theta_com(3,14,19)..  - tau0(3,19) + tau0(14,19) =G= -416.385995841311 ;
      
       (LHS = 0)
      
-theta_com(4,3,13)..  tau0(3,13) - tau0(4,13) =G= -351.138806231661 ; (LHS = 0)
+theta_com(4,3,13)..  tau0(3,13) - tau0(4,13) =G= -396.428105889914 ; (LHS = 0)
      
-theta_com(4,3,14)..  tau0(3,14) - tau0(4,14) =G= -351.138806231661 ; (LHS = 0)
+theta_com(4,3,14)..  tau0(3,14) - tau0(4,14) =G= -396.428105889914 ; (LHS = 0)
      
-theta_com(4,3,15)..  tau0(3,15) - tau0(4,15) =G= -351.138806231661 ; (LHS = 0)
+theta_com(4,3,15)..  tau0(3,15) - tau0(4,15) =G= -396.428105889914 ; (LHS = 0)
      
-theta_com(4,3,16)..  tau0(3,16) - tau0(4,16) =G= -351.138806231661 ; (LHS = 0)
+theta_com(4,3,16)..  tau0(3,16) - tau0(4,16) =G= -396.428105889914 ; (LHS = 0)
      
-theta_com(4,3,17)..  tau0(3,17) - tau0(4,17) =G= -351.138806231661 ; (LHS = 0)
+theta_com(4,3,17)..  tau0(3,17) - tau0(4,17) =G= -396.428105889914 ; (LHS = 0)
      
-theta_com(4,3,18)..  tau0(3,18) - tau0(4,18) =G= -351.138806231661 ; (LHS = 0)
+theta_com(4,3,18)..  tau0(3,18) - tau0(4,18) =G= -396.428105889914 ; (LHS = 0)
      
-theta_com(4,3,19)..  tau0(3,19) - tau0(4,19) =G= -351.138806231661 ; (LHS = 0)
+theta_com(4,3,19)..  tau0(3,19) - tau0(4,19) =G= -396.428105889914 ; (LHS = 0)
      
-theta_com(4,5,13)..  - tau0(4,13) + tau0(5,13) =G= -351.138806231661 ; (LHS = 0)
+theta_com(4,5,13)..  - tau0(4,13) + tau0(5,13) =G= -396.428105889914 ; (LHS = 0)
      
-theta_com(4,5,14)..  - tau0(4,14) + tau0(5,14) =G= -351.138806231661 ; (LHS = 0)
+theta_com(4,5,14)..  - tau0(4,14) + tau0(5,14) =G= -396.428105889914 ; (LHS = 0)
      
-theta_com(4,5,15)..  - tau0(4,15) + tau0(5,15) =G= -351.138806231661 ; (LHS = 0)
+theta_com(4,5,15)..  - tau0(4,15) + tau0(5,15) =G= -396.428105889914 ; (LHS = 0)
      
-theta_com(4,5,16)..  - tau0(4,16) + tau0(5,16) =G= -351.138806231661 ; (LHS = 0)
+theta_com(4,5,16)..  - tau0(4,16) + tau0(5,16) =G= -396.428105889914 ; (LHS = 0)
      
-theta_com(4,5,17)..  - tau0(4,17) + tau0(5,17) =G= -351.138806231661 ; (LHS = 0)
+theta_com(4,5,17)..  - tau0(4,17) + tau0(5,17) =G= -396.428105889914 ; (LHS = 0)
      
-theta_com(4,5,18)..  - tau0(4,18) + tau0(5,18) =G= -351.138806231661 ; (LHS = 0)
+theta_com(4,5,18)..  - tau0(4,18) + tau0(5,18) =G= -396.428105889914 ; (LHS = 0)
      
-theta_com(4,5,19)..  - tau0(4,19) + tau0(5,19) =G= -351.138806231661 ; (LHS = 0)
+theta_com(4,5,19)..  - tau0(4,19) + tau0(5,19) =G= -396.428105889914 ; (LHS = 0)
      
-theta_com(4,14,13)..  - tau0(4,13) + tau0(14,13) =G= -351.138806231661 ;
+theta_com(4,14,13)..  - tau0(4,13) + tau0(14,13) =G= -396.428105889914 ;
      
       (LHS = 0)
      
-theta_com(4,14,14)..  - tau0(4,14) + tau0(14,14) =G= -351.138806231661 ;
+theta_com(4,14,14)..  - tau0(4,14) + tau0(14,14) =G= -396.428105889914 ;
      
       (LHS = 0)
      
-theta_com(4,14,15)..  - tau0(4,15) + tau0(14,15) =G= -351.138806231661 ;
+theta_com(4,14,15)..  - tau0(4,15) + tau0(14,15) =G= -396.428105889914 ;
      
       (LHS = 0)
      
-theta_com(4,14,16)..  - tau0(4,16) + tau0(14,16) =G= -351.138806231661 ;
+theta_com(4,14,16)..  - tau0(4,16) + tau0(14,16) =G= -396.428105889914 ;
      
       (LHS = 0)
      
-theta_com(4,14,17)..  - tau0(4,17) + tau0(14,17) =G= -351.138806231661 ;
+theta_com(4,14,17)..  - tau0(4,17) + tau0(14,17) =G= -396.428105889914 ;
      
       (LHS = 0)
      
-theta_com(4,14,18)..  - tau0(4,18) + tau0(14,18) =G= -351.138806231661 ;
+theta_com(4,14,18)..  - tau0(4,18) + tau0(14,18) =G= -396.428105889914 ;
      
       (LHS = 0)
      
-theta_com(4,14,19)..  - tau0(4,19) + tau0(14,19) =G= -351.138806231661 ;
+theta_com(4,14,19)..  - tau0(4,19) + tau0(14,19) =G= -396.428105889914 ;
      
       (LHS = 0)
      
-theta_com(4,15,13)..  - tau0(4,13) + tau0(15,13) =G= -351.138806231661 ;
+theta_com(4,15,13)..  - tau0(4,13) + tau0(15,13) =G= -396.428105889914 ;
      
       (LHS = 0)
      
-theta_com(4,15,14)..  - tau0(4,14) + tau0(15,14) =G= -351.138806231661 ;
+theta_com(4,15,14)..  - tau0(4,14) + tau0(15,14) =G= -396.428105889914 ;
      
       (LHS = 0)
      
-theta_com(4,15,15)..  - tau0(4,15) + tau0(15,15) =G= -351.138806231661 ;
+theta_com(4,15,15)..  - tau0(4,15) + tau0(15,15) =G= -396.428105889914 ;
      
       (LHS = 0)
      
-theta_com(4,15,16)..  - tau0(4,16) + tau0(15,16) =G= -351.138806231661 ;
+theta_com(4,15,16)..  - tau0(4,16) + tau0(15,16) =G= -396.428105889914 ;
      
       (LHS = 0)
      
-theta_com(4,15,17)..  - tau0(4,17) + tau0(15,17) =G= -351.138806231661 ;
+theta_com(4,15,17)..  - tau0(4,17) + tau0(15,17) =G= -396.428105889914 ;
      
       (LHS = 0)
      
-theta_com(4,15,18)..  - tau0(4,18) + tau0(15,18) =G= -351.138806231661 ;
+theta_com(4,15,18)..  - tau0(4,18) + tau0(15,18) =G= -396.428105889914 ;
      
       (LHS = 0)
      
-theta_com(4,15,19)..  - tau0(4,19) + tau0(15,19) =G= -351.138806231661 ;
+theta_com(4,15,19)..  - tau0(4,19) + tau0(15,19) =G= -396.428105889914 ;
      
       (LHS = 0)
      
-theta_com(5,4,13)..  tau0(4,13) - tau0(5,13) =G= -351.138806231661 ; (LHS = 0)
+theta_com(5,4,13)..  tau0(4,13) - tau0(5,13) =G= -395.957176373367 ; (LHS = 0)
      
-theta_com(5,4,14)..  tau0(4,14) - tau0(5,14) =G= -351.138806231661 ; (LHS = 0)
+theta_com(5,4,14)..  tau0(4,14) - tau0(5,14) =G= -395.957176373367 ; (LHS = 0)
      
-theta_com(5,4,15)..  tau0(4,15) - tau0(5,15) =G= -351.138806231661 ; (LHS = 0)
+theta_com(5,4,15)..  tau0(4,15) - tau0(5,15) =G= -395.957176373367 ; (LHS = 0)
      
-theta_com(5,4,16)..  tau0(4,16) - tau0(5,16) =G= -351.138806231661 ; (LHS = 0)
+theta_com(5,4,16)..  tau0(4,16) - tau0(5,16) =G= -395.957176373367 ; (LHS = 0)
      
-theta_com(5,4,17)..  tau0(4,17) - tau0(5,17) =G= -351.138806231661 ; (LHS = 0)
+theta_com(5,4,17)..  tau0(4,17) - tau0(5,17) =G= -395.957176373367 ; (LHS = 0)
      
-theta_com(5,4,18)..  tau0(4,18) - tau0(5,18) =G= -351.138806231661 ; (LHS = 0)
+theta_com(5,4,18)..  tau0(4,18) - tau0(5,18) =G= -395.957176373367 ; (LHS = 0)
      
-theta_com(5,4,19)..  tau0(4,19) - tau0(5,19) =G= -351.138806231661 ; (LHS = 0)
+theta_com(5,4,19)..  tau0(4,19) - tau0(5,19) =G= -395.957176373367 ; (LHS = 0)
      
-theta_com(5,6,13)..  - tau0(5,13) + tau0(6,13) =G= -351.138806231661 ; (LHS = 0)
+theta_com(5,6,13)..  - tau0(5,13) + tau0(6,13) =G= -395.957176373367 ; (LHS = 0)
      
-theta_com(5,6,14)..  - tau0(5,14) + tau0(6,14) =G= -351.138806231661 ; (LHS = 0)
+theta_com(5,6,14)..  - tau0(5,14) + tau0(6,14) =G= -395.957176373367 ; (LHS = 0)
      
-theta_com(5,6,15)..  - tau0(5,15) + tau0(6,15) =G= -351.138806231661 ; (LHS = 0)
+theta_com(5,6,15)..  - tau0(5,15) + tau0(6,15) =G= -395.957176373367 ; (LHS = 0)
      
-theta_com(5,6,16)..  - tau0(5,16) + tau0(6,16) =G= -351.138806231661 ; (LHS = 0)
+theta_com(5,6,16)..  - tau0(5,16) + tau0(6,16) =G= -395.957176373367 ; (LHS = 0)
      
-theta_com(5,6,17)..  - tau0(5,17) + tau0(6,17) =G= -351.138806231661 ; (LHS = 0)
+theta_com(5,6,17)..  - tau0(5,17) + tau0(6,17) =G= -395.957176373367 ; (LHS = 0)
      
-theta_com(5,6,18)..  - tau0(5,18) + tau0(6,18) =G= -351.138806231661 ; (LHS = 0)
+theta_com(5,6,18)..  - tau0(5,18) + tau0(6,18) =G= -395.957176373367 ; (LHS = 0)
      
-theta_com(5,6,19)..  - tau0(5,19) + tau0(6,19) =G= -351.138806231661 ; (LHS = 0)
+theta_com(5,6,19)..  - tau0(5,19) + tau0(6,19) =G= -395.957176373367 ; (LHS = 0)
      
-theta_com(5,15,13)..  - tau0(5,13) + tau0(15,13) =G= -351.138806231661 ;
+theta_com(5,15,13)..  - tau0(5,13) + tau0(15,13) =G= -395.957176373367 ;
      
       (LHS = 0)
      
-theta_com(5,15,14)..  - tau0(5,14) + tau0(15,14) =G= -351.138806231661 ;
+theta_com(5,15,14)..  - tau0(5,14) + tau0(15,14) =G= -395.957176373367 ;
      
       (LHS = 0)
      
-theta_com(5,15,15)..  - tau0(5,15) + tau0(15,15) =G= -351.138806231661 ;
+theta_com(5,15,15)..  - tau0(5,15) + tau0(15,15) =G= -395.957176373367 ;
      
       (LHS = 0)
      
-theta_com(5,15,16)..  - tau0(5,16) + tau0(15,16) =G= -351.138806231661 ;
+theta_com(5,15,16)..  - tau0(5,16) + tau0(15,16) =G= -395.957176373367 ;
      
       (LHS = 0)
      
-theta_com(5,15,17)..  - tau0(5,17) + tau0(15,17) =G= -351.138806231661 ;
+theta_com(5,15,17)..  - tau0(5,17) + tau0(15,17) =G= -395.957176373367 ;
      
       (LHS = 0)
      
-theta_com(5,15,18)..  - tau0(5,18) + tau0(15,18) =G= -351.138806231661 ;
+theta_com(5,15,18)..  - tau0(5,18) + tau0(15,18) =G= -395.957176373367 ;
      
       (LHS = 0)
      
-theta_com(5,15,19)..  - tau0(5,19) + tau0(15,19) =G= -351.138806231661 ;
+theta_com(5,15,19)..  - tau0(5,19) + tau0(15,19) =G= -395.957176373367 ;
      
       (LHS = 0)
      
-theta_com(6,5,13)..  tau0(5,13) - tau0(6,13) =G= -351.138806231661 ; (LHS = 0)
+theta_com(6,5,13)..  tau0(5,13) - tau0(6,13) =G= -396.427920768769 ; (LHS = 0)
      
-theta_com(6,5,14)..  tau0(5,14) - tau0(6,14) =G= -351.138806231661 ; (LHS = 0)
+theta_com(6,5,14)..  tau0(5,14) - tau0(6,14) =G= -396.427920768769 ; (LHS = 0)
      
-theta_com(6,5,15)..  tau0(5,15) - tau0(6,15) =G= -351.138806231661 ; (LHS = 0)
+theta_com(6,5,15)..  tau0(5,15) - tau0(6,15) =G= -396.427920768769 ; (LHS = 0)
      
-theta_com(6,5,16)..  tau0(5,16) - tau0(6,16) =G= -351.138806231661 ; (LHS = 0)
+theta_com(6,5,16)..  tau0(5,16) - tau0(6,16) =G= -396.427920768769 ; (LHS = 0)
      
-theta_com(6,5,17)..  tau0(5,17) - tau0(6,17) =G= -351.138806231661 ; (LHS = 0)
+theta_com(6,5,17)..  tau0(5,17) - tau0(6,17) =G= -396.427920768769 ; (LHS = 0)
      
-theta_com(6,5,18)..  tau0(5,18) - tau0(6,18) =G= -351.138806231661 ; (LHS = 0)
+theta_com(6,5,18)..  tau0(5,18) - tau0(6,18) =G= -396.427920768769 ; (LHS = 0)
      
-theta_com(6,5,19)..  tau0(5,19) - tau0(6,19) =G= -351.138806231661 ; (LHS = 0)
+theta_com(6,5,19)..  tau0(5,19) - tau0(6,19) =G= -396.427920768769 ; (LHS = 0)
      
-theta_com(6,7,13)..  - tau0(6,13) + tau0(7,13) =G= -351.138806231661 ; (LHS = 0)
+theta_com(6,7,13)..  - tau0(6,13) + tau0(7,13) =G= -396.427920768769 ; (LHS = 0)
      
-theta_com(6,7,14)..  - tau0(6,14) + tau0(7,14) =G= -351.138806231661 ; (LHS = 0)
+theta_com(6,7,14)..  - tau0(6,14) + tau0(7,14) =G= -396.427920768769 ; (LHS = 0)
      
-theta_com(6,7,15)..  - tau0(6,15) + tau0(7,15) =G= -351.138806231661 ; (LHS = 0)
+theta_com(6,7,15)..  - tau0(6,15) + tau0(7,15) =G= -396.427920768769 ; (LHS = 0)
      
-theta_com(6,7,16)..  - tau0(6,16) + tau0(7,16) =G= -351.138806231661 ; (LHS = 0)
+theta_com(6,7,16)..  - tau0(6,16) + tau0(7,16) =G= -396.427920768769 ; (LHS = 0)
      
-theta_com(6,7,17)..  - tau0(6,17) + tau0(7,17) =G= -351.138806231661 ; (LHS = 0)
+theta_com(6,7,17)..  - tau0(6,17) + tau0(7,17) =G= -396.427920768769 ; (LHS = 0)
      
-theta_com(6,7,18)..  - tau0(6,18) + tau0(7,18) =G= -351.138806231661 ; (LHS = 0)
+theta_com(6,7,18)..  - tau0(6,18) + tau0(7,18) =G= -396.427920768769 ; (LHS = 0)
      
-theta_com(6,7,19)..  - tau0(6,19) + tau0(7,19) =G= -351.138806231661 ; (LHS = 0)
+theta_com(6,7,19)..  - tau0(6,19) + tau0(7,19) =G= -396.427920768769 ; (LHS = 0)
      
-theta_com(6,15,13)..  - tau0(6,13) + tau0(15,13) =G= -351.138806231661 ;
+theta_com(6,15,13)..  - tau0(6,13) + tau0(15,13) =G= -396.427920768769 ;
      
       (LHS = 0)
      
-theta_com(6,15,14)..  - tau0(6,14) + tau0(15,14) =G= -351.138806231661 ;
+theta_com(6,15,14)..  - tau0(6,14) + tau0(15,14) =G= -396.427920768769 ;
      
       (LHS = 0)
      
-theta_com(6,15,15)..  - tau0(6,15) + tau0(15,15) =G= -351.138806231661 ;
+theta_com(6,15,15)..  - tau0(6,15) + tau0(15,15) =G= -396.427920768769 ;
      
       (LHS = 0)
      
-theta_com(6,15,16)..  - tau0(6,16) + tau0(15,16) =G= -351.138806231661 ;
+theta_com(6,15,16)..  - tau0(6,16) + tau0(15,16) =G= -396.427920768769 ;
      
       (LHS = 0)
      
-theta_com(6,15,17)..  - tau0(6,17) + tau0(15,17) =G= -351.138806231661 ;
+theta_com(6,15,17)..  - tau0(6,17) + tau0(15,17) =G= -396.427920768769 ;
      
       (LHS = 0)
      
-theta_com(6,15,18)..  - tau0(6,18) + tau0(15,18) =G= -351.138806231661 ;
+theta_com(6,15,18)..  - tau0(6,18) + tau0(15,18) =G= -396.427920768769 ;
      
       (LHS = 0)
      
-theta_com(6,15,19)..  - tau0(6,19) + tau0(15,19) =G= -351.138806231661 ;
+theta_com(6,15,19)..  - tau0(6,19) + tau0(15,19) =G= -396.427920768769 ;
      
       (LHS = 0)
      
-theta_com(6,16,13)..  - tau0(6,13) + tau0(16,13) =G= -351.138806231661 ;
+theta_com(6,16,13)..  - tau0(6,13) + tau0(16,13) =G= -396.427920768769 ;
      
       (LHS = 0)
      
-theta_com(6,16,14)..  - tau0(6,14) + tau0(16,14) =G= -351.138806231661 ;
+theta_com(6,16,14)..  - tau0(6,14) + tau0(16,14) =G= -396.427920768769 ;
      
       (LHS = 0)
      
-theta_com(6,16,15)..  - tau0(6,15) + tau0(16,15) =G= -351.138806231661 ;
+theta_com(6,16,15)..  - tau0(6,15) + tau0(16,15) =G= -396.427920768769 ;
      
       (LHS = 0)
      
-theta_com(6,16,16)..  - tau0(6,16) + tau0(16,16) =G= -351.138806231661 ;
+theta_com(6,16,16)..  - tau0(6,16) + tau0(16,16) =G= -396.427920768769 ;
      
       (LHS = 0)
      
-theta_com(6,16,17)..  - tau0(6,17) + tau0(16,17) =G= -351.138806231661 ;
+theta_com(6,16,17)..  - tau0(6,17) + tau0(16,17) =G= -396.427920768769 ;
      
       (LHS = 0)
      
-theta_com(6,16,18)..  - tau0(6,18) + tau0(16,18) =G= -351.138806231661 ;
+theta_com(6,16,18)..  - tau0(6,18) + tau0(16,18) =G= -396.427920768769 ;
      
       (LHS = 0)
      
-theta_com(6,16,19)..  - tau0(6,19) + tau0(16,19) =G= -351.138806231661 ;
+theta_com(6,16,19)..  - tau0(6,19) + tau0(16,19) =G= -396.427920768769 ;
      
       (LHS = 0)
      
-theta_com(7,6,13)..  tau0(6,13) - tau0(7,13) =G= -332.976454185196 ; (LHS = 0)
+theta_com(7,6,13)..  tau0(6,13) - tau0(7,13) =G= -375.528356905702 ; (LHS = 0)
      
-theta_com(7,6,14)..  tau0(6,14) - tau0(7,14) =G= -332.976454185196 ; (LHS = 0)
+theta_com(7,6,14)..  tau0(6,14) - tau0(7,14) =G= -375.528356905702 ; (LHS = 0)
      
-theta_com(7,6,15)..  tau0(6,15) - tau0(7,15) =G= -332.976454185196 ; (LHS = 0)
+theta_com(7,6,15)..  tau0(6,15) - tau0(7,15) =G= -375.528356905702 ; (LHS = 0)
      
-theta_com(7,6,16)..  tau0(6,16) - tau0(7,16) =G= -332.976454185196 ; (LHS = 0)
+theta_com(7,6,16)..  tau0(6,16) - tau0(7,16) =G= -375.528356905702 ; (LHS = 0)
      
-theta_com(7,6,17)..  tau0(6,17) - tau0(7,17) =G= -332.976454185196 ; (LHS = 0)
+theta_com(7,6,17)..  tau0(6,17) - tau0(7,17) =G= -375.528356905702 ; (LHS = 0)
      
-theta_com(7,6,18)..  tau0(6,18) - tau0(7,18) =G= -332.976454185196 ; (LHS = 0)
+theta_com(7,6,18)..  tau0(6,18) - tau0(7,18) =G= -375.528356905702 ; (LHS = 0)
      
-theta_com(7,6,19)..  tau0(6,19) - tau0(7,19) =G= -332.976454185196 ; (LHS = 0)
+theta_com(7,6,19)..  tau0(6,19) - tau0(7,19) =G= -375.528356905702 ; (LHS = 0)
      
-theta_com(7,8,13)..  - tau0(7,13) + tau0(8,13) =G= -332.976454185196 ; (LHS = 0)
+theta_com(7,8,13)..  - tau0(7,13) + tau0(8,13) =G= -375.528356905702 ; (LHS = 0)
      
-theta_com(7,8,14)..  - tau0(7,14) + tau0(8,14) =G= -332.976454185196 ; (LHS = 0)
+theta_com(7,8,14)..  - tau0(7,14) + tau0(8,14) =G= -375.528356905702 ; (LHS = 0)
      
-theta_com(7,8,15)..  - tau0(7,15) + tau0(8,15) =G= -332.976454185196 ; (LHS = 0)
+theta_com(7,8,15)..  - tau0(7,15) + tau0(8,15) =G= -375.528356905702 ; (LHS = 0)
      
-theta_com(7,8,16)..  - tau0(7,16) + tau0(8,16) =G= -332.976454185196 ; (LHS = 0)
+theta_com(7,8,16)..  - tau0(7,16) + tau0(8,16) =G= -375.528356905702 ; (LHS = 0)
      
-theta_com(7,8,17)..  - tau0(7,17) + tau0(8,17) =G= -332.976454185196 ; (LHS = 0)
+theta_com(7,8,17)..  - tau0(7,17) + tau0(8,17) =G= -375.528356905702 ; (LHS = 0)
      
-theta_com(7,8,18)..  - tau0(7,18) + tau0(8,18) =G= -332.976454185196 ; (LHS = 0)
+theta_com(7,8,18)..  - tau0(7,18) + tau0(8,18) =G= -375.528356905702 ; (LHS = 0)
      
-theta_com(7,8,19)..  - tau0(7,19) + tau0(8,19) =G= -332.976454185196 ; (LHS = 0)
+theta_com(7,8,19)..  - tau0(7,19) + tau0(8,19) =G= -375.528356905702 ; (LHS = 0)
      
-theta_com(7,16,13)..  - tau0(7,13) + tau0(16,13) =G= -332.976454185196 ;
+theta_com(7,16,13)..  - tau0(7,13) + tau0(16,13) =G= -375.528356905702 ;
      
       (LHS = 0)
      
-theta_com(7,16,14)..  - tau0(7,14) + tau0(16,14) =G= -332.976454185196 ;
+theta_com(7,16,14)..  - tau0(7,14) + tau0(16,14) =G= -375.528356905702 ;
      
       (LHS = 0)
      
-theta_com(7,16,15)..  - tau0(7,15) + tau0(16,15) =G= -332.976454185196 ;
+theta_com(7,16,15)..  - tau0(7,15) + tau0(16,15) =G= -375.528356905702 ;
      
       (LHS = 0)
      
-theta_com(7,16,16)..  - tau0(7,16) + tau0(16,16) =G= -332.976454185196 ;
+theta_com(7,16,16)..  - tau0(7,16) + tau0(16,16) =G= -375.528356905702 ;
      
       (LHS = 0)
      
-theta_com(7,16,17)..  - tau0(7,17) + tau0(16,17) =G= -332.976454185196 ;
+theta_com(7,16,17)..  - tau0(7,17) + tau0(16,17) =G= -375.528356905702 ;
      
       (LHS = 0)
      
-theta_com(7,16,18)..  - tau0(7,18) + tau0(16,18) =G= -332.976454185196 ;
+theta_com(7,16,18)..  - tau0(7,18) + tau0(16,18) =G= -375.528356905702 ;
      
       (LHS = 0)
      
-theta_com(7,16,19)..  - tau0(7,19) + tau0(16,19) =G= -332.976454185196 ;
+theta_com(7,16,19)..  - tau0(7,19) + tau0(16,19) =G= -375.528356905702 ;
      
       (LHS = 0)
      
-theta_com(8,7,13)..  tau0(7,13) - tau0(8,13) =G= -332.976454185196 ; (LHS = 0)
+theta_com(8,7,13)..  tau0(7,13) - tau0(8,13) =G= -375.974752453111 ; (LHS = 0)
      
-theta_com(8,7,14)..  tau0(7,14) - tau0(8,14) =G= -332.976454185196 ; (LHS = 0)
+theta_com(8,7,14)..  tau0(7,14) - tau0(8,14) =G= -375.974752453111 ; (LHS = 0)
      
-theta_com(8,7,15)..  tau0(7,15) - tau0(8,15) =G= -332.976454185196 ; (LHS = 0)
+theta_com(8,7,15)..  tau0(7,15) - tau0(8,15) =G= -375.974752453111 ; (LHS = 0)
      
-theta_com(8,7,16)..  tau0(7,16) - tau0(8,16) =G= -332.976454185196 ; (LHS = 0)
+theta_com(8,7,16)..  tau0(7,16) - tau0(8,16) =G= -375.974752453111 ; (LHS = 0)
      
-theta_com(8,7,17)..  tau0(7,17) - tau0(8,17) =G= -332.976454185196 ; (LHS = 0)
+theta_com(8,7,17)..  tau0(7,17) - tau0(8,17) =G= -375.974752453111 ; (LHS = 0)
      
-theta_com(8,7,18)..  tau0(7,18) - tau0(8,18) =G= -332.976454185196 ; (LHS = 0)
+theta_com(8,7,18)..  tau0(7,18) - tau0(8,18) =G= -375.974752453111 ; (LHS = 0)
      
-theta_com(8,7,19)..  tau0(7,19) - tau0(8,19) =G= -332.976454185196 ; (LHS = 0)
+theta_com(8,7,19)..  tau0(7,19) - tau0(8,19) =G= -375.974752453111 ; (LHS = 0)
      
-theta_com(8,9,13)..  - tau0(8,13) + tau0(9,13) =G= -332.976454185196 ; (LHS = 0)
+theta_com(8,9,13)..  - tau0(8,13) + tau0(9,13) =G= -375.974752453111 ; (LHS = 0)
      
-theta_com(8,9,14)..  - tau0(8,14) + tau0(9,14) =G= -332.976454185196 ; (LHS = 0)
+theta_com(8,9,14)..  - tau0(8,14) + tau0(9,14) =G= -375.974752453111 ; (LHS = 0)
      
-theta_com(8,9,15)..  - tau0(8,15) + tau0(9,15) =G= -332.976454185196 ; (LHS = 0)
+theta_com(8,9,15)..  - tau0(8,15) + tau0(9,15) =G= -375.974752453111 ; (LHS = 0)
      
-theta_com(8,9,16)..  - tau0(8,16) + tau0(9,16) =G= -332.976454185196 ; (LHS = 0)
+theta_com(8,9,16)..  - tau0(8,16) + tau0(9,16) =G= -375.974752453111 ; (LHS = 0)
      
-theta_com(8,9,17)..  - tau0(8,17) + tau0(9,17) =G= -332.976454185196 ; (LHS = 0)
+theta_com(8,9,17)..  - tau0(8,17) + tau0(9,17) =G= -375.974752453111 ; (LHS = 0)
      
-theta_com(8,9,18)..  - tau0(8,18) + tau0(9,18) =G= -332.976454185196 ; (LHS = 0)
+theta_com(8,9,18)..  - tau0(8,18) + tau0(9,18) =G= -375.974752453111 ; (LHS = 0)
      
-theta_com(8,9,19)..  - tau0(8,19) + tau0(9,19) =G= -332.976454185196 ; (LHS = 0)
+theta_com(8,9,19)..  - tau0(8,19) + tau0(9,19) =G= -375.974752453111 ; (LHS = 0)
      
-theta_com(8,16,13)..  - tau0(8,13) + tau0(16,13) =G= -332.976454185196 ;
+theta_com(8,16,13)..  - tau0(8,13) + tau0(16,13) =G= -375.974752453111 ;
      
       (LHS = 0)
      
-theta_com(8,16,14)..  - tau0(8,14) + tau0(16,14) =G= -332.976454185196 ;
+theta_com(8,16,14)..  - tau0(8,14) + tau0(16,14) =G= -375.974752453111 ;
      
       (LHS = 0)
      
-theta_com(8,16,15)..  - tau0(8,15) + tau0(16,15) =G= -332.976454185196 ;
+theta_com(8,16,15)..  - tau0(8,15) + tau0(16,15) =G= -375.974752453111 ;
      
       (LHS = 0)
      
-theta_com(8,16,16)..  - tau0(8,16) + tau0(16,16) =G= -332.976454185196 ;
+theta_com(8,16,16)..  - tau0(8,16) + tau0(16,16) =G= -375.974752453111 ;
      
       (LHS = 0)
      
-theta_com(8,16,17)..  - tau0(8,17) + tau0(16,17) =G= -332.976454185196 ;
+theta_com(8,16,17)..  - tau0(8,17) + tau0(16,17) =G= -375.974752453111 ;
      
       (LHS = 0)
      
-theta_com(8,16,18)..  - tau0(8,18) + tau0(16,18) =G= -332.976454185196 ;
+theta_com(8,16,18)..  - tau0(8,18) + tau0(16,18) =G= -375.974752453111 ;
      
       (LHS = 0)
      
-theta_com(8,16,19)..  - tau0(8,19) + tau0(16,19) =G= -332.976454185196 ;
+theta_com(8,16,19)..  - tau0(8,19) + tau0(16,19) =G= -375.974752453111 ;
      
       (LHS = 0)
      
-theta_com(8,17,13)..  - tau0(8,13) + tau0(17,13) =G= -332.976454185196 ;
+theta_com(8,17,13)..  - tau0(8,13) + tau0(17,13) =G= -375.974752453111 ;
      
       (LHS = 0)
      
-theta_com(8,17,14)..  - tau0(8,14) + tau0(17,14) =G= -332.976454185196 ;
+theta_com(8,17,14)..  - tau0(8,14) + tau0(17,14) =G= -375.974752453111 ;
      
       (LHS = 0)
      
-theta_com(8,17,15)..  - tau0(8,15) + tau0(17,15) =G= -332.976454185196 ;
+theta_com(8,17,15)..  - tau0(8,15) + tau0(17,15) =G= -375.974752453111 ;
      
       (LHS = 0)
      
-theta_com(8,17,16)..  - tau0(8,16) + tau0(17,16) =G= -332.976454185196 ;
+theta_com(8,17,16)..  - tau0(8,16) + tau0(17,16) =G= -375.974752453111 ;
      
       (LHS = 0)
      
-theta_com(8,17,17)..  - tau0(8,17) + tau0(17,17) =G= -332.976454185196 ;
+theta_com(8,17,17)..  - tau0(8,17) + tau0(17,17) =G= -375.974752453111 ;
      
       (LHS = 0)
      
-theta_com(8,17,18)..  - tau0(8,18) + tau0(17,18) =G= -332.976454185196 ;
+theta_com(8,17,18)..  - tau0(8,18) + tau0(17,18) =G= -375.974752453111 ;
      
       (LHS = 0)
      
-theta_com(8,17,19)..  - tau0(8,19) + tau0(17,19) =G= -332.976454185196 ;
+theta_com(8,17,19)..  - tau0(8,19) + tau0(17,19) =G= -375.974752453111 ;
      
       (LHS = 0)
      
-theta_com(9,8,13)..  tau0(8,13) - tau0(9,13) =G= -332.976454185196 ; (LHS = 0)
+theta_com(9,8,13)..  tau0(8,13) - tau0(9,13) =G= -375.528356905702 ; (LHS = 0)
      
-theta_com(9,8,14)..  tau0(8,14) - tau0(9,14) =G= -332.976454185196 ; (LHS = 0)
+theta_com(9,8,14)..  tau0(8,14) - tau0(9,14) =G= -375.528356905702 ; (LHS = 0)
      
-theta_com(9,8,15)..  tau0(8,15) - tau0(9,15) =G= -332.976454185196 ; (LHS = 0)
+theta_com(9,8,15)..  tau0(8,15) - tau0(9,15) =G= -375.528356905702 ; (LHS = 0)
      
-theta_com(9,8,16)..  tau0(8,16) - tau0(9,16) =G= -332.976454185196 ; (LHS = 0)
+theta_com(9,8,16)..  tau0(8,16) - tau0(9,16) =G= -375.528356905702 ; (LHS = 0)
      
-theta_com(9,8,17)..  tau0(8,17) - tau0(9,17) =G= -332.976454185196 ; (LHS = 0)
+theta_com(9,8,17)..  tau0(8,17) - tau0(9,17) =G= -375.528356905702 ; (LHS = 0)
      
-theta_com(9,8,18)..  tau0(8,18) - tau0(9,18) =G= -332.976454185196 ; (LHS = 0)
+theta_com(9,8,18)..  tau0(8,18) - tau0(9,18) =G= -375.528356905702 ; (LHS = 0)
      
-theta_com(9,8,19)..  tau0(8,19) - tau0(9,19) =G= -332.976454185196 ; (LHS = 0)
+theta_com(9,8,19)..  tau0(8,19) - tau0(9,19) =G= -375.528356905702 ; (LHS = 0)
      
-theta_com(9,10,13)..  - tau0(9,13) + tau0(10,13) =G= -332.976454185196 ;
+theta_com(9,10,13)..  - tau0(9,13) + tau0(10,13) =G= -375.528356905702 ;
      
       (LHS = 0)
      
-theta_com(9,10,14)..  - tau0(9,14) + tau0(10,14) =G= -332.976454185196 ;
+theta_com(9,10,14)..  - tau0(9,14) + tau0(10,14) =G= -375.528356905702 ;
      
       (LHS = 0)
      
-theta_com(9,10,15)..  - tau0(9,15) + tau0(10,15) =G= -332.976454185196 ;
+theta_com(9,10,15)..  - tau0(9,15) + tau0(10,15) =G= -375.528356905702 ;
      
       (LHS = 0)
      
-theta_com(9,10,16)..  - tau0(9,16) + tau0(10,16) =G= -332.976454185196 ;
+theta_com(9,10,16)..  - tau0(9,16) + tau0(10,16) =G= -375.528356905702 ;
      
       (LHS = 0)
      
-theta_com(9,10,17)..  - tau0(9,17) + tau0(10,17) =G= -332.976454185196 ;
+theta_com(9,10,17)..  - tau0(9,17) + tau0(10,17) =G= -375.528356905702 ;
      
       (LHS = 0)
      
-theta_com(9,10,18)..  - tau0(9,18) + tau0(10,18) =G= -332.976454185196 ;
+theta_com(9,10,18)..  - tau0(9,18) + tau0(10,18) =G= -375.528356905702 ;
      
       (LHS = 0)
      
-theta_com(9,10,19)..  - tau0(9,19) + tau0(10,19) =G= -332.976454185196 ;
+theta_com(9,10,19)..  - tau0(9,19) + tau0(10,19) =G= -375.528356905702 ;
      
       (LHS = 0)
      
-theta_com(9,17,13)..  - tau0(9,13) + tau0(17,13) =G= -332.976454185196 ;
+theta_com(9,17,13)..  - tau0(9,13) + tau0(17,13) =G= -375.528356905702 ;
      
       (LHS = 0)
      
-theta_com(9,17,14)..  - tau0(9,14) + tau0(17,14) =G= -332.976454185196 ;
+theta_com(9,17,14)..  - tau0(9,14) + tau0(17,14) =G= -375.528356905702 ;
      
       (LHS = 0)
      
-theta_com(9,17,15)..  - tau0(9,15) + tau0(17,15) =G= -332.976454185196 ;
+theta_com(9,17,15)..  - tau0(9,15) + tau0(17,15) =G= -375.528356905702 ;
      
       (LHS = 0)
      
-theta_com(9,17,16)..  - tau0(9,16) + tau0(17,16) =G= -332.976454185196 ;
+theta_com(9,17,16)..  - tau0(9,16) + tau0(17,16) =G= -375.528356905702 ;
      
       (LHS = 0)
      
-theta_com(9,17,17)..  - tau0(9,17) + tau0(17,17) =G= -332.976454185196 ;
+theta_com(9,17,17)..  - tau0(9,17) + tau0(17,17) =G= -375.528356905702 ;
      
       (LHS = 0)
      
-theta_com(9,17,18)..  - tau0(9,18) + tau0(17,18) =G= -332.976454185196 ;
+theta_com(9,17,18)..  - tau0(9,18) + tau0(17,18) =G= -375.528356905702 ;
      
       (LHS = 0)
      
-theta_com(9,17,19)..  - tau0(9,19) + tau0(17,19) =G= -332.976454185196 ;
+theta_com(9,17,19)..  - tau0(9,19) + tau0(17,19) =G= -375.528356905702 ;
      
       (LHS = 0)
      
-theta_com(10,9,13)..  tau0(9,13) - tau0(10,13) =G= -351.138806231661 ; (LHS = 0)
+theta_com(10,9,13)..  tau0(9,13) - tau0(10,13) =G= -396.427920768769 ; (LHS = 0)
      
-theta_com(10,9,14)..  tau0(9,14) - tau0(10,14) =G= -351.138806231661 ; (LHS = 0)
+theta_com(10,9,14)..  tau0(9,14) - tau0(10,14) =G= -396.427920768769 ; (LHS = 0)
      
-theta_com(10,9,15)..  tau0(9,15) - tau0(10,15) =G= -351.138806231661 ; (LHS = 0)
+theta_com(10,9,15)..  tau0(9,15) - tau0(10,15) =G= -396.427920768769 ; (LHS = 0)
      
-theta_com(10,9,16)..  tau0(9,16) - tau0(10,16) =G= -351.138806231661 ; (LHS = 0)
+theta_com(10,9,16)..  tau0(9,16) - tau0(10,16) =G= -396.427920768769 ; (LHS = 0)
      
-theta_com(10,9,17)..  tau0(9,17) - tau0(10,17) =G= -351.138806231661 ; (LHS = 0)
+theta_com(10,9,17)..  tau0(9,17) - tau0(10,17) =G= -396.427920768769 ; (LHS = 0)
      
-theta_com(10,9,18)..  tau0(9,18) - tau0(10,18) =G= -351.138806231661 ; (LHS = 0)
+theta_com(10,9,18)..  tau0(9,18) - tau0(10,18) =G= -396.427920768769 ; (LHS = 0)
      
-theta_com(10,9,19)..  tau0(9,19) - tau0(10,19) =G= -351.138806231661 ; (LHS = 0)
+theta_com(10,9,19)..  tau0(9,19) - tau0(10,19) =G= -396.427920768769 ; (LHS = 0)
      
-theta_com(10,11,13)..  - tau0(10,13) + tau0(11,13) =G= -351.138806231661 ;
+theta_com(10,11,13)..  - tau0(10,13) + tau0(11,13) =G= -396.427920768769 ;
      
       (LHS = 0)
      
-theta_com(10,11,14)..  - tau0(10,14) + tau0(11,14) =G= -351.138806231661 ;
+theta_com(10,11,14)..  - tau0(10,14) + tau0(11,14) =G= -396.427920768769 ;
      
       (LHS = 0)
      
-theta_com(10,11,15)..  - tau0(10,15) + tau0(11,15) =G= -351.138806231661 ;
+theta_com(10,11,15)..  - tau0(10,15) + tau0(11,15) =G= -396.427920768769 ;
      
       (LHS = 0)
      
-theta_com(10,11,16)..  - tau0(10,16) + tau0(11,16) =G= -351.138806231661 ;
+theta_com(10,11,16)..  - tau0(10,16) + tau0(11,16) =G= -396.427920768769 ;
      
       (LHS = 0)
      
-theta_com(10,11,17)..  - tau0(10,17) + tau0(11,17) =G= -351.138806231661 ;
+theta_com(10,11,17)..  - tau0(10,17) + tau0(11,17) =G= -396.427920768769 ;
      
       (LHS = 0)
      
-theta_com(10,11,18)..  - tau0(10,18) + tau0(11,18) =G= -351.138806231661 ;
+theta_com(10,11,18)..  - tau0(10,18) + tau0(11,18) =G= -396.427920768769 ;
      
       (LHS = 0)
      
-theta_com(10,11,19)..  - tau0(10,19) + tau0(11,19) =G= -351.138806231661 ;
+theta_com(10,11,19)..  - tau0(10,19) + tau0(11,19) =G= -396.427920768769 ;
      
       (LHS = 0)
      
-theta_com(10,17,13)..  - tau0(10,13) + tau0(17,13) =G= -351.138806231661 ;
+theta_com(10,17,13)..  - tau0(10,13) + tau0(17,13) =G= -396.427920768769 ;
      
       (LHS = 0)
      
-theta_com(10,17,14)..  - tau0(10,14) + tau0(17,14) =G= -351.138806231661 ;
+theta_com(10,17,14)..  - tau0(10,14) + tau0(17,14) =G= -396.427920768769 ;
      
       (LHS = 0)
      
-theta_com(10,17,15)..  - tau0(10,15) + tau0(17,15) =G= -351.138806231661 ;
+theta_com(10,17,15)..  - tau0(10,15) + tau0(17,15) =G= -396.427920768769 ;
      
       (LHS = 0)
      
-theta_com(10,17,16)..  - tau0(10,16) + tau0(17,16) =G= -351.138806231661 ;
+theta_com(10,17,16)..  - tau0(10,16) + tau0(17,16) =G= -396.427920768769 ;
      
       (LHS = 0)
      
-theta_com(10,17,17)..  - tau0(10,17) + tau0(17,17) =G= -351.138806231661 ;
+theta_com(10,17,17)..  - tau0(10,17) + tau0(17,17) =G= -396.427920768769 ;
      
       (LHS = 0)
      
-theta_com(10,17,18)..  - tau0(10,18) + tau0(17,18) =G= -351.138806231661 ;
+theta_com(10,17,18)..  - tau0(10,18) + tau0(17,18) =G= -396.427920768769 ;
      
       (LHS = 0)
      
-theta_com(10,17,19)..  - tau0(10,19) + tau0(17,19) =G= -351.138806231661 ;
+theta_com(10,17,19)..  - tau0(10,19) + tau0(17,19) =G= -396.427920768769 ;
      
       (LHS = 0)
      
-theta_com(10,18,13)..  - tau0(10,13) + tau0(18,13) =G= -351.138806231661 ;
+theta_com(10,18,13)..  - tau0(10,13) + tau0(18,13) =G= -396.427920768769 ;
      
       (LHS = 0)
      
-theta_com(10,18,14)..  - tau0(10,14) + tau0(18,14) =G= -351.138806231661 ;
+theta_com(10,18,14)..  - tau0(10,14) + tau0(18,14) =G= -396.427920768769 ;
      
       (LHS = 0)
      
-theta_com(10,18,15)..  - tau0(10,15) + tau0(18,15) =G= -351.138806231661 ;
+theta_com(10,18,15)..  - tau0(10,15) + tau0(18,15) =G= -396.427920768769 ;
      
       (LHS = 0)
      
-theta_com(10,18,16)..  - tau0(10,16) + tau0(18,16) =G= -351.138806231661 ;
+theta_com(10,18,16)..  - tau0(10,16) + tau0(18,16) =G= -396.427920768769 ;
      
       (LHS = 0)
      
-theta_com(10,18,17)..  - tau0(10,17) + tau0(18,17) =G= -351.138806231661 ;
+theta_com(10,18,17)..  - tau0(10,17) + tau0(18,17) =G= -396.427920768769 ;
      
       (LHS = 0)
      
-theta_com(10,18,18)..  - tau0(10,18) + tau0(18,18) =G= -351.138806231661 ;
+theta_com(10,18,18)..  - tau0(10,18) + tau0(18,18) =G= -396.427920768769 ;
      
       (LHS = 0)
      
-theta_com(10,18,19)..  - tau0(10,19) + tau0(18,19) =G= -351.138806231661 ;
+theta_com(10,18,19)..  - tau0(10,19) + tau0(18,19) =G= -396.427920768769 ;
      
       (LHS = 0)
      
-theta_com(11,10,13)..  tau0(10,13) - tau0(11,13) =G= -351.138806231661 ;
+theta_com(11,10,13)..  tau0(10,13) - tau0(11,13) =G= -395.957176373363 ;
      
       (LHS = 0)
      
-theta_com(11,10,14)..  tau0(10,14) - tau0(11,14) =G= -351.138806231661 ;
+theta_com(11,10,14)..  tau0(10,14) - tau0(11,14) =G= -395.957176373363 ;
      
       (LHS = 0)
      
-theta_com(11,10,15)..  tau0(10,15) - tau0(11,15) =G= -351.138806231661 ;
+theta_com(11,10,15)..  tau0(10,15) - tau0(11,15) =G= -395.957176373363 ;
      
       (LHS = 0)
      
-theta_com(11,10,16)..  tau0(10,16) - tau0(11,16) =G= -351.138806231661 ;
+theta_com(11,10,16)..  tau0(10,16) - tau0(11,16) =G= -395.957176373363 ;
      
       (LHS = 0)
      
-theta_com(11,10,17)..  tau0(10,17) - tau0(11,17) =G= -351.138806231661 ;
+theta_com(11,10,17)..  tau0(10,17) - tau0(11,17) =G= -395.957176373363 ;
      
       (LHS = 0)
      
-theta_com(11,10,18)..  tau0(10,18) - tau0(11,18) =G= -351.138806231661 ;
+theta_com(11,10,18)..  tau0(10,18) - tau0(11,18) =G= -395.957176373363 ;
      
       (LHS = 0)
      
-theta_com(11,10,19)..  tau0(10,19) - tau0(11,19) =G= -351.138806231661 ;
+theta_com(11,10,19)..  tau0(10,19) - tau0(11,19) =G= -395.957176373363 ;
      
       (LHS = 0)
      
-theta_com(11,12,13)..  - tau0(11,13) + tau0(12,13) =G= -351.138806231661 ;
+theta_com(11,12,13)..  - tau0(11,13) + tau0(12,13) =G= -395.957176373363 ;
      
       (LHS = 0)
      
-theta_com(11,12,14)..  - tau0(11,14) + tau0(12,14) =G= -351.138806231661 ;
+theta_com(11,12,14)..  - tau0(11,14) + tau0(12,14) =G= -395.957176373363 ;
      
       (LHS = 0)
      
-theta_com(11,12,15)..  - tau0(11,15) + tau0(12,15) =G= -351.138806231661 ;
+theta_com(11,12,15)..  - tau0(11,15) + tau0(12,15) =G= -395.957176373363 ;
      
       (LHS = 0)
      
-theta_com(11,12,16)..  - tau0(11,16) + tau0(12,16) =G= -351.138806231661 ;
+theta_com(11,12,16)..  - tau0(11,16) + tau0(12,16) =G= -395.957176373363 ;
      
       (LHS = 0)
      
-theta_com(11,12,17)..  - tau0(11,17) + tau0(12,17) =G= -351.138806231661 ;
+theta_com(11,12,17)..  - tau0(11,17) + tau0(12,17) =G= -395.957176373363 ;
      
       (LHS = 0)
      
-theta_com(11,12,18)..  - tau0(11,18) + tau0(12,18) =G= -351.138806231661 ;
+theta_com(11,12,18)..  - tau0(11,18) + tau0(12,18) =G= -395.957176373363 ;
      
       (LHS = 0)
      
-theta_com(11,12,19)..  - tau0(11,19) + tau0(12,19) =G= -351.138806231661 ;
+theta_com(11,12,19)..  - tau0(11,19) + tau0(12,19) =G= -395.957176373363 ;
      
       (LHS = 0)
      
-theta_com(11,18,13)..  - tau0(11,13) + tau0(18,13) =G= -351.138806231661 ;
+theta_com(11,18,13)..  - tau0(11,13) + tau0(18,13) =G= -395.957176373363 ;
      
       (LHS = 0)
      
-theta_com(11,18,14)..  - tau0(11,14) + tau0(18,14) =G= -351.138806231661 ;
+theta_com(11,18,14)..  - tau0(11,14) + tau0(18,14) =G= -395.957176373363 ;
      
       (LHS = 0)
      
-theta_com(11,18,15)..  - tau0(11,15) + tau0(18,15) =G= -351.138806231661 ;
+theta_com(11,18,15)..  - tau0(11,15) + tau0(18,15) =G= -395.957176373363 ;
      
       (LHS = 0)
      
-theta_com(11,18,16)..  - tau0(11,16) + tau0(18,16) =G= -351.138806231661 ;
+theta_com(11,18,16)..  - tau0(11,16) + tau0(18,16) =G= -395.957176373363 ;
      
       (LHS = 0)
      
-theta_com(11,18,17)..  - tau0(11,17) + tau0(18,17) =G= -351.138806231661 ;
+theta_com(11,18,17)..  - tau0(11,17) + tau0(18,17) =G= -395.957176373363 ;
      
       (LHS = 0)
      
-theta_com(11,18,18)..  - tau0(11,18) + tau0(18,18) =G= -351.138806231661 ;
+theta_com(11,18,18)..  - tau0(11,18) + tau0(18,18) =G= -395.957176373363 ;
      
       (LHS = 0)
      
-theta_com(11,18,19)..  - tau0(11,19) + tau0(18,19) =G= -351.138806231661 ;
+theta_com(11,18,19)..  - tau0(11,19) + tau0(18,19) =G= -395.957176373363 ;
      
       (LHS = 0)
      
-theta_com(12,1,13)..  tau0(1,13) - tau0(12,13) =G= -351.138806231661 ; (LHS = 0)
+theta_com(12,1,13)..  tau0(1,13) - tau0(12,13) =G= -396.428105889884 ; (LHS = 0)
      
-theta_com(12,1,14)..  tau0(1,14) - tau0(12,14) =G= -351.138806231661 ; (LHS = 0)
+theta_com(12,1,14)..  tau0(1,14) - tau0(12,14) =G= -396.428105889884 ; (LHS = 0)
      
-theta_com(12,1,15)..  tau0(1,15) - tau0(12,15) =G= -351.138806231661 ; (LHS = 0)
+theta_com(12,1,15)..  tau0(1,15) - tau0(12,15) =G= -396.428105889884 ; (LHS = 0)
      
-theta_com(12,1,16)..  tau0(1,16) - tau0(12,16) =G= -351.138806231661 ; (LHS = 0)
+theta_com(12,1,16)..  tau0(1,16) - tau0(12,16) =G= -396.428105889884 ; (LHS = 0)
      
-theta_com(12,1,17)..  tau0(1,17) - tau0(12,17) =G= -351.138806231661 ; (LHS = 0)
+theta_com(12,1,17)..  tau0(1,17) - tau0(12,17) =G= -396.428105889884 ; (LHS = 0)
      
-theta_com(12,1,18)..  tau0(1,18) - tau0(12,18) =G= -351.138806231661 ; (LHS = 0)
+theta_com(12,1,18)..  tau0(1,18) - tau0(12,18) =G= -396.428105889884 ; (LHS = 0)
      
-theta_com(12,1,19)..  tau0(1,19) - tau0(12,19) =G= -351.138806231661 ; (LHS = 0)
+theta_com(12,1,19)..  tau0(1,19) - tau0(12,19) =G= -396.428105889884 ; (LHS = 0)
      
-theta_com(12,11,13)..  tau0(11,13) - tau0(12,13) =G= -351.138806231661 ;
+theta_com(12,11,13)..  tau0(11,13) - tau0(12,13) =G= -396.428105889884 ;
      
       (LHS = 0)
      
-theta_com(12,11,14)..  tau0(11,14) - tau0(12,14) =G= -351.138806231661 ;
+theta_com(12,11,14)..  tau0(11,14) - tau0(12,14) =G= -396.428105889884 ;
      
       (LHS = 0)
      
-theta_com(12,11,15)..  tau0(11,15) - tau0(12,15) =G= -351.138806231661 ;
+theta_com(12,11,15)..  tau0(11,15) - tau0(12,15) =G= -396.428105889884 ;
      
       (LHS = 0)
      
-theta_com(12,11,16)..  tau0(11,16) - tau0(12,16) =G= -351.138806231661 ;
+theta_com(12,11,16)..  tau0(11,16) - tau0(12,16) =G= -396.428105889884 ;
      
       (LHS = 0)
      
-theta_com(12,11,17)..  tau0(11,17) - tau0(12,17) =G= -351.138806231661 ;
+theta_com(12,11,17)..  tau0(11,17) - tau0(12,17) =G= -396.428105889884 ;
      
       (LHS = 0)
      
-theta_com(12,11,18)..  tau0(11,18) - tau0(12,18) =G= -351.138806231661 ;
+theta_com(12,11,18)..  tau0(11,18) - tau0(12,18) =G= -396.428105889884 ;
      
       (LHS = 0)
      
-theta_com(12,11,19)..  tau0(11,19) - tau0(12,19) =G= -351.138806231661 ;
+theta_com(12,11,19)..  tau0(11,19) - tau0(12,19) =G= -396.428105889884 ;
      
       (LHS = 0)
      
-theta_com(12,13,13)..  - tau0(12,13) + tau0(13,13) =G= -351.138806231661 ;
+theta_com(12,13,13)..  - tau0(12,13) + tau0(13,13) =G= -396.428105889884 ;
      
       (LHS = 0)
      
-theta_com(12,13,14)..  - tau0(12,14) + tau0(13,14) =G= -351.138806231661 ;
+theta_com(12,13,14)..  - tau0(12,14) + tau0(13,14) =G= -396.428105889884 ;
      
       (LHS = 0)
      
-theta_com(12,13,15)..  - tau0(12,15) + tau0(13,15) =G= -351.138806231661 ;
+theta_com(12,13,15)..  - tau0(12,15) + tau0(13,15) =G= -396.428105889884 ;
      
       (LHS = 0)
      
-theta_com(12,13,16)..  - tau0(12,16) + tau0(13,16) =G= -351.138806231661 ;
+theta_com(12,13,16)..  - tau0(12,16) + tau0(13,16) =G= -396.428105889884 ;
      
       (LHS = 0)
      
-theta_com(12,13,17)..  - tau0(12,17) + tau0(13,17) =G= -351.138806231661 ;
+theta_com(12,13,17)..  - tau0(12,17) + tau0(13,17) =G= -396.428105889884 ;
      
       (LHS = 0)
      
-theta_com(12,13,18)..  - tau0(12,18) + tau0(13,18) =G= -351.138806231661 ;
+theta_com(12,13,18)..  - tau0(12,18) + tau0(13,18) =G= -396.428105889884 ;
      
       (LHS = 0)
      
-theta_com(12,13,19)..  - tau0(12,19) + tau0(13,19) =G= -351.138806231661 ;
+theta_com(12,13,19)..  - tau0(12,19) + tau0(13,19) =G= -396.428105889884 ;
      
       (LHS = 0)
      
-theta_com(12,18,13)..  - tau0(12,13) + tau0(18,13) =G= -351.138806231661 ;
+theta_com(12,18,13)..  - tau0(12,13) + tau0(18,13) =G= -396.428105889884 ;
      
       (LHS = 0)
      
-theta_com(12,18,14)..  - tau0(12,14) + tau0(18,14) =G= -351.138806231661 ;
+theta_com(12,18,14)..  - tau0(12,14) + tau0(18,14) =G= -396.428105889884 ;
      
       (LHS = 0)
      
-theta_com(12,18,15)..  - tau0(12,15) + tau0(18,15) =G= -351.138806231661 ;
+theta_com(12,18,15)..  - tau0(12,15) + tau0(18,15) =G= -396.428105889884 ;
      
       (LHS = 0)
      
-theta_com(12,18,16)..  - tau0(12,16) + tau0(18,16) =G= -351.138806231661 ;
+theta_com(12,18,16)..  - tau0(12,16) + tau0(18,16) =G= -396.428105889884 ;
      
       (LHS = 0)
      
-theta_com(12,18,17)..  - tau0(12,17) + tau0(18,17) =G= -351.138806231661 ;
+theta_com(12,18,17)..  - tau0(12,17) + tau0(18,17) =G= -396.428105889884 ;
      
       (LHS = 0)
      
-theta_com(12,18,18)..  - tau0(12,18) + tau0(18,18) =G= -351.138806231661 ;
+theta_com(12,18,18)..  - tau0(12,18) + tau0(18,18) =G= -396.428105889884 ;
      
       (LHS = 0)
      
-theta_com(12,18,19)..  - tau0(12,19) + tau0(18,19) =G= -351.138806231661 ;
+theta_com(12,18,19)..  - tau0(12,19) + tau0(18,19) =G= -396.428105889884 ;
      
       (LHS = 0)
      
-theta_com(13,1,13)..  tau0(1,13) - tau0(13,13) =G= -290.597632743444 ; (LHS = 0)
+theta_com(13,1,13)..  tau0(1,13) - tau0(13,13) =G= -325.150640018234 ; (LHS = 0)
      
-theta_com(13,1,14)..  tau0(1,14) - tau0(13,14) =G= -290.597632743444 ; (LHS = 0)
+theta_com(13,1,14)..  tau0(1,14) - tau0(13,14) =G= -325.150640018234 ; (LHS = 0)
      
-theta_com(13,1,15)..  tau0(1,15) - tau0(13,15) =G= -290.597632743444 ; (LHS = 0)
+theta_com(13,1,15)..  tau0(1,15) - tau0(13,15) =G= -325.150640018234 ; (LHS = 0)
      
-theta_com(13,1,16)..  tau0(1,16) - tau0(13,16) =G= -290.597632743444 ; (LHS = 0)
+theta_com(13,1,16)..  tau0(1,16) - tau0(13,16) =G= -325.150640018234 ; (LHS = 0)
      
-theta_com(13,1,17)..  tau0(1,17) - tau0(13,17) =G= -290.597632743444 ; (LHS = 0)
+theta_com(13,1,17)..  tau0(1,17) - tau0(13,17) =G= -325.150640018234 ; (LHS = 0)
      
-theta_com(13,1,18)..  tau0(1,18) - tau0(13,18) =G= -290.597632743444 ; (LHS = 0)
+theta_com(13,1,18)..  tau0(1,18) - tau0(13,18) =G= -325.150640018234 ; (LHS = 0)
      
 REMAINING 288 ENTRIES SKIPPED
 
 
 ---- tau0_com  =G=  the complimentary term of tau0(i,d)
 
-tau0_com(1,13)..  theta(1,2,13) + theta(1,12,13) + theta(1,13,13) =G= 
-     0.000270781712319159 ; (LHS = 0, INFES = 0.000270781712319159 ****)
+tau0_com(1,13)..  theta(1,2,13) + theta(1,12,13) + theta(1,13,13) =G= 0 ;
      
-tau0_com(1,14)..  theta(1,2,14) + theta(1,12,14) + theta(1,13,14) =G= 
-     0.000270781712319159 ; (LHS = 0, INFES = 0.000270781712319159 ****)
+      (LHS = 0)
      
-tau0_com(1,15)..  theta(1,2,15) + theta(1,12,15) + theta(1,13,15) =G= 
-     0.000270781712319159 ; (LHS = 0, INFES = 0.000270781712319159 ****)
+tau0_com(1,14)..  theta(1,2,14) + theta(1,12,14) + theta(1,13,14) =G= 0 ;
      
-tau0_com(1,16)..  theta(1,2,16) + theta(1,12,16) + theta(1,13,16) =G= 
-     0.000270781712319159 ; (LHS = 0, INFES = 0.000270781712319159 ****)
+      (LHS = 0)
      
-tau0_com(1,17)..  theta(1,2,17) + theta(1,12,17) + theta(1,13,17) =G= 
-     0.000270781712319159 ; (LHS = 0, INFES = 0.000270781712319159 ****)
+tau0_com(1,15)..  theta(1,2,15) + theta(1,12,15) + theta(1,13,15) =G= 0 ;
      
-tau0_com(1,18)..  theta(1,2,18) + theta(1,12,18) + theta(1,13,18) =G= 
-     0.000270781712319159 ; (LHS = 0, INFES = 0.000270781712319159 ****)
+      (LHS = 0)
      
-tau0_com(1,19)..  theta(1,2,19) + theta(1,12,19) + theta(1,13,19) =G= 
-     0.000270781712319159 ; (LHS = 0, INFES = 0.000270781712319159 ****)
+tau0_com(1,16)..  theta(1,2,16) + theta(1,12,16) + theta(1,13,16) =G= 0 ;
+     
+      (LHS = 0)
+     
+tau0_com(1,17)..  theta(1,2,17) + theta(1,12,17) + theta(1,13,17) =G= 0 ;
+     
+      (LHS = 0)
+     
+tau0_com(1,18)..  theta(1,2,18) + theta(1,12,18) + theta(1,13,18) =G= 0 ;
+     
+      (LHS = 0)
+     
+tau0_com(1,19)..  theta(1,2,19) + theta(1,12,19) + theta(1,13,19) =G= 0 ;
+     
+      (LHS = 0)
      
 tau0_com(2,13)..  theta(2,1,13) + theta(2,3,13) + theta(2,13,13)
      
-      + theta(2,14,13) =G= 0.000270781712319159 ;
-     
-      (LHS = 0, INFES = 0.000270781712319159 ****)
+      + theta(2,14,13) =G= 0 ; (LHS = 0)
      
 tau0_com(2,14)..  theta(2,1,14) + theta(2,3,14) + theta(2,13,14)
      
-      + theta(2,14,14) =G= 0.000270781712319159 ;
-     
-      (LHS = 0, INFES = 0.000270781712319159 ****)
+      + theta(2,14,14) =G= 0 ; (LHS = 0)
      
 tau0_com(2,15)..  theta(2,1,15) + theta(2,3,15) + theta(2,13,15)
      
-      + theta(2,14,15) =G= 0.000270781712319159 ;
-     
-      (LHS = 0, INFES = 0.000270781712319159 ****)
+      + theta(2,14,15) =G= 0 ; (LHS = 0)
      
 tau0_com(2,16)..  theta(2,1,16) + theta(2,3,16) + theta(2,13,16)
      
-      + theta(2,14,16) =G= 0.000270781712319159 ;
-     
-      (LHS = 0, INFES = 0.000270781712319159 ****)
+      + theta(2,14,16) =G= 0 ; (LHS = 0)
      
 tau0_com(2,17)..  theta(2,1,17) + theta(2,3,17) + theta(2,13,17)
      
-      + theta(2,14,17) =G= 0.000270781712319159 ;
-     
-      (LHS = 0, INFES = 0.000270781712319159 ****)
+      + theta(2,14,17) =G= 0 ; (LHS = 0)
      
 tau0_com(2,18)..  theta(2,1,18) + theta(2,3,18) + theta(2,13,18)
      
-      + theta(2,14,18) =G= 0.000270781712319159 ;
-     
-      (LHS = 0, INFES = 0.000270781712319159 ****)
+      + theta(2,14,18) =G= 0 ; (LHS = 0)
      
 tau0_com(2,19)..  theta(2,1,19) + theta(2,3,19) + theta(2,13,19)
      
-      + theta(2,14,19) =G= 0.000270781712319159 ;
+      + theta(2,14,19) =G= 0 ; (LHS = 0)
      
-      (LHS = 0, INFES = 0.000270781712319159 ****)
+tau0_com(3,13)..  theta(3,2,13) + theta(3,4,13) + theta(3,14,13) =G= 0 ;
      
-tau0_com(3,13)..  theta(3,2,13) + theta(3,4,13) + theta(3,14,13) =G= 
-     0.000270781712319159 ; (LHS = 0, INFES = 0.000270781712319159 ****)
+      (LHS = 0)
      
-tau0_com(3,14)..  theta(3,2,14) + theta(3,4,14) + theta(3,14,14) =G= 
-     0.000270781712319159 ; (LHS = 0, INFES = 0.000270781712319159 ****)
+tau0_com(3,14)..  theta(3,2,14) + theta(3,4,14) + theta(3,14,14) =G= 0 ;
      
-tau0_com(3,15)..  theta(3,2,15) + theta(3,4,15) + theta(3,14,15) =G= 
-     0.000270781712319159 ; (LHS = 0, INFES = 0.000270781712319159 ****)
+      (LHS = 0)
      
-tau0_com(3,16)..  theta(3,2,16) + theta(3,4,16) + theta(3,14,16) =G= 
-     0.000270781712319159 ; (LHS = 0, INFES = 0.000270781712319159 ****)
+tau0_com(3,15)..  theta(3,2,15) + theta(3,4,15) + theta(3,14,15) =G= 0 ;
      
-tau0_com(3,17)..  theta(3,2,17) + theta(3,4,17) + theta(3,14,17) =G= 
-     0.000270781712319159 ; (LHS = 0, INFES = 0.000270781712319159 ****)
+      (LHS = 0)
      
-tau0_com(3,18)..  theta(3,2,18) + theta(3,4,18) + theta(3,14,18) =G= 
-     0.000270781712319159 ; (LHS = 0, INFES = 0.000270781712319159 ****)
+tau0_com(3,16)..  theta(3,2,16) + theta(3,4,16) + theta(3,14,16) =G= 0 ;
      
-tau0_com(3,19)..  theta(3,2,19) + theta(3,4,19) + theta(3,14,19) =G= 
-     0.000270781712319159 ; (LHS = 0, INFES = 0.000270781712319159 ****)
+      (LHS = 0)
+     
+tau0_com(3,17)..  theta(3,2,17) + theta(3,4,17) + theta(3,14,17) =G= 0 ;
+     
+      (LHS = 0)
+     
+tau0_com(3,18)..  theta(3,2,18) + theta(3,4,18) + theta(3,14,18) =G= 0 ;
+     
+      (LHS = 0)
+     
+tau0_com(3,19)..  theta(3,2,19) + theta(3,4,19) + theta(3,14,19) =G= 0 ;
+     
+      (LHS = 0)
      
 tau0_com(4,13)..  theta(4,3,13) + theta(4,5,13) + theta(4,14,13)
      
-      + theta(4,15,13) =G= 0.000284787662956357 ;
-     
-      (LHS = 0, INFES = 0.000284787662956357 ****)
+      + theta(4,15,13) =G= 0 ; (LHS = 0)
      
 tau0_com(4,14)..  theta(4,3,14) + theta(4,5,14) + theta(4,14,14)
      
-      + theta(4,15,14) =G= 0.000284787662956357 ;
-     
-      (LHS = 0, INFES = 0.000284787662956357 ****)
+      + theta(4,15,14) =G= 0 ; (LHS = 0)
      
 tau0_com(4,15)..  theta(4,3,15) + theta(4,5,15) + theta(4,14,15)
      
-      + theta(4,15,15) =G= 0.000284787662956357 ;
-     
-      (LHS = 0, INFES = 0.000284787662956357 ****)
+      + theta(4,15,15) =G= 0 ; (LHS = 0)
      
 tau0_com(4,16)..  theta(4,3,16) + theta(4,5,16) + theta(4,14,16)
      
-      + theta(4,15,16) =G= 0.000284787662956357 ;
-     
-      (LHS = 0, INFES = 0.000284787662956357 ****)
+      + theta(4,15,16) =G= 0 ; (LHS = 0)
      
 tau0_com(4,17)..  theta(4,3,17) + theta(4,5,17) + theta(4,14,17)
      
-      + theta(4,15,17) =G= 0.000284787662956357 ;
-     
-      (LHS = 0, INFES = 0.000284787662956357 ****)
+      + theta(4,15,17) =G= 0 ; (LHS = 0)
      
 tau0_com(4,18)..  theta(4,3,18) + theta(4,5,18) + theta(4,14,18)
      
-      + theta(4,15,18) =G= 0.000284787662956357 ;
-     
-      (LHS = 0, INFES = 0.000284787662956357 ****)
+      + theta(4,15,18) =G= 0 ; (LHS = 0)
      
 tau0_com(4,19)..  theta(4,3,19) + theta(4,5,19) + theta(4,14,19)
      
-      + theta(4,15,19) =G= 0.000284787662956357 ;
+      + theta(4,15,19) =G= 0 ; (LHS = 0)
      
-      (LHS = 0, INFES = 0.000284787662956357 ****)
+tau0_com(5,13)..  theta(5,4,13) + theta(5,6,13) + theta(5,15,13) =G= 0 ;
      
-tau0_com(5,13)..  theta(5,4,13) + theta(5,6,13) + theta(5,15,13) =G= 
-     0.000284787662956357 ; (LHS = 0, INFES = 0.000284787662956357 ****)
+      (LHS = 0)
      
-tau0_com(5,14)..  theta(5,4,14) + theta(5,6,14) + theta(5,15,14) =G= 
-     0.000284787662956357 ; (LHS = 0, INFES = 0.000284787662956357 ****)
+tau0_com(5,14)..  theta(5,4,14) + theta(5,6,14) + theta(5,15,14) =G= 0 ;
      
-tau0_com(5,15)..  theta(5,4,15) + theta(5,6,15) + theta(5,15,15) =G= 
-     0.000284787662956357 ; (LHS = 0, INFES = 0.000284787662956357 ****)
+      (LHS = 0)
      
-tau0_com(5,16)..  theta(5,4,16) + theta(5,6,16) + theta(5,15,16) =G= 
-     0.000284787662956357 ; (LHS = 0, INFES = 0.000284787662956357 ****)
+tau0_com(5,15)..  theta(5,4,15) + theta(5,6,15) + theta(5,15,15) =G= 0 ;
      
-tau0_com(5,17)..  theta(5,4,17) + theta(5,6,17) + theta(5,15,17) =G= 
-     0.000284787662956357 ; (LHS = 0, INFES = 0.000284787662956357 ****)
+      (LHS = 0)
      
-tau0_com(5,18)..  theta(5,4,18) + theta(5,6,18) + theta(5,15,18) =G= 
-     0.000284787662956357 ; (LHS = 0, INFES = 0.000284787662956357 ****)
+tau0_com(5,16)..  theta(5,4,16) + theta(5,6,16) + theta(5,15,16) =G= 0 ;
      
-tau0_com(5,19)..  theta(5,4,19) + theta(5,6,19) + theta(5,15,19) =G= 
-     0.000284787662956357 ; (LHS = 0, INFES = 0.000284787662956357 ****)
+      (LHS = 0)
+     
+tau0_com(5,17)..  theta(5,4,17) + theta(5,6,17) + theta(5,15,17) =G= 0 ;
+     
+      (LHS = 0)
+     
+tau0_com(5,18)..  theta(5,4,18) + theta(5,6,18) + theta(5,15,18) =G= 0 ;
+     
+      (LHS = 0)
+     
+tau0_com(5,19)..  theta(5,4,19) + theta(5,6,19) + theta(5,15,19) =G= 0 ;
+     
+      (LHS = 0)
      
 tau0_com(6,13)..  theta(6,5,13) + theta(6,7,13) + theta(6,15,13)
      
-      + theta(6,16,13) =G= 0.000284787662956357 ;
-     
-      (LHS = 0, INFES = 0.000284787662956357 ****)
+      + theta(6,16,13) =G= 0 ; (LHS = 0)
      
 tau0_com(6,14)..  theta(6,5,14) + theta(6,7,14) + theta(6,15,14)
      
-      + theta(6,16,14) =G= 0.000284787662956357 ;
-     
-      (LHS = 0, INFES = 0.000284787662956357 ****)
+      + theta(6,16,14) =G= 0 ; (LHS = 0)
      
 tau0_com(6,15)..  theta(6,5,15) + theta(6,7,15) + theta(6,15,15)
      
-      + theta(6,16,15) =G= 0.000284787662956357 ;
-     
-      (LHS = 0, INFES = 0.000284787662956357 ****)
+      + theta(6,16,15) =G= 0 ; (LHS = 0)
      
 tau0_com(6,16)..  theta(6,5,16) + theta(6,7,16) + theta(6,15,16)
      
-      + theta(6,16,16) =G= 0.000284787662956357 ;
-     
-      (LHS = 0, INFES = 0.000284787662956357 ****)
+      + theta(6,16,16) =G= 0 ; (LHS = 0)
      
 tau0_com(6,17)..  theta(6,5,17) + theta(6,7,17) + theta(6,15,17)
      
-      + theta(6,16,17) =G= 0.000284787662956357 ;
-     
-      (LHS = 0, INFES = 0.000284787662956357 ****)
+      + theta(6,16,17) =G= 0 ; (LHS = 0)
      
 tau0_com(6,18)..  theta(6,5,18) + theta(6,7,18) + theta(6,15,18)
      
-      + theta(6,16,18) =G= 0.000284787662956357 ;
-     
-      (LHS = 0, INFES = 0.000284787662956357 ****)
+      + theta(6,16,18) =G= 0 ; (LHS = 0)
      
 tau0_com(6,19)..  theta(6,5,19) + theta(6,7,19) + theta(6,15,19)
      
-      + theta(6,16,19) =G= 0.000284787662956357 ;
+      + theta(6,16,19) =G= 0 ; (LHS = 0)
      
-      (LHS = 0, INFES = 0.000284787662956357 ****)
+tau0_com(7,13)..  theta(7,6,13) + theta(7,8,13) + theta(7,16,13) =G= 0 ;
      
-tau0_com(7,13)..  theta(7,6,13) + theta(7,8,13) + theta(7,16,13) =G= 
-     0.00030032153548125 ; (LHS = 0, INFES = 0.00030032153548125 ****)
+      (LHS = 0)
      
-tau0_com(7,14)..  theta(7,6,14) + theta(7,8,14) + theta(7,16,14) =G= 
-     0.00030032153548125 ; (LHS = 0, INFES = 0.00030032153548125 ****)
+tau0_com(7,14)..  theta(7,6,14) + theta(7,8,14) + theta(7,16,14) =G= 0 ;
      
-tau0_com(7,15)..  theta(7,6,15) + theta(7,8,15) + theta(7,16,15) =G= 
-     0.00030032153548125 ; (LHS = 0, INFES = 0.00030032153548125 ****)
+      (LHS = 0)
      
-tau0_com(7,16)..  theta(7,6,16) + theta(7,8,16) + theta(7,16,16) =G= 
-     0.00030032153548125 ; (LHS = 0, INFES = 0.00030032153548125 ****)
+tau0_com(7,15)..  theta(7,6,15) + theta(7,8,15) + theta(7,16,15) =G= 0 ;
      
-tau0_com(7,17)..  theta(7,6,17) + theta(7,8,17) + theta(7,16,17) =G= 
-     0.00030032153548125 ; (LHS = 0, INFES = 0.00030032153548125 ****)
+      (LHS = 0)
      
-tau0_com(7,18)..  theta(7,6,18) + theta(7,8,18) + theta(7,16,18) =G= 
-     0.00030032153548125 ; (LHS = 0, INFES = 0.00030032153548125 ****)
+tau0_com(7,16)..  theta(7,6,16) + theta(7,8,16) + theta(7,16,16) =G= 0 ;
      
-tau0_com(7,19)..  theta(7,6,19) + theta(7,8,19) + theta(7,16,19) =G= 
-     0.00030032153548125 ; (LHS = 0, INFES = 0.00030032153548125 ****)
+      (LHS = 0)
+     
+tau0_com(7,17)..  theta(7,6,17) + theta(7,8,17) + theta(7,16,17) =G= 0 ;
+     
+      (LHS = 0)
+     
+tau0_com(7,18)..  theta(7,6,18) + theta(7,8,18) + theta(7,16,18) =G= 0 ;
+     
+      (LHS = 0)
+     
+tau0_com(7,19)..  theta(7,6,19) + theta(7,8,19) + theta(7,16,19) =G= 0 ;
+     
+      (LHS = 0)
      
 tau0_com(8,13)..  theta(8,7,13) + theta(8,9,13) + theta(8,16,13)
      
-      + theta(8,17,13) =G= 0.00030032153548125 ;
-     
-      (LHS = 0, INFES = 0.00030032153548125 ****)
+      + theta(8,17,13) =G= 0 ; (LHS = 0)
      
 tau0_com(8,14)..  theta(8,7,14) + theta(8,9,14) + theta(8,16,14)
      
-      + theta(8,17,14) =G= 0.00030032153548125 ;
-     
-      (LHS = 0, INFES = 0.00030032153548125 ****)
+      + theta(8,17,14) =G= 0 ; (LHS = 0)
      
 tau0_com(8,15)..  theta(8,7,15) + theta(8,9,15) + theta(8,16,15)
      
-      + theta(8,17,15) =G= 0.00030032153548125 ;
-     
-      (LHS = 0, INFES = 0.00030032153548125 ****)
+      + theta(8,17,15) =G= 0 ; (LHS = 0)
      
 tau0_com(8,16)..  theta(8,7,16) + theta(8,9,16) + theta(8,16,16)
      
-      + theta(8,17,16) =G= 0.00030032153548125 ;
-     
-      (LHS = 0, INFES = 0.00030032153548125 ****)
+      + theta(8,17,16) =G= 0 ; (LHS = 0)
      
 tau0_com(8,17)..  theta(8,7,17) + theta(8,9,17) + theta(8,16,17)
      
-      + theta(8,17,17) =G= 0.00030032153548125 ;
-     
-      (LHS = 0, INFES = 0.00030032153548125 ****)
+      + theta(8,17,17) =G= 0 ; (LHS = 0)
      
 tau0_com(8,18)..  theta(8,7,18) + theta(8,9,18) + theta(8,16,18)
      
-      + theta(8,17,18) =G= 0.00030032153548125 ;
-     
-      (LHS = 0, INFES = 0.00030032153548125 ****)
+      + theta(8,17,18) =G= 0 ; (LHS = 0)
      
 tau0_com(8,19)..  theta(8,7,19) + theta(8,9,19) + theta(8,16,19)
      
-      + theta(8,17,19) =G= 0.00030032153548125 ;
+      + theta(8,17,19) =G= 0 ; (LHS = 0)
      
-      (LHS = 0, INFES = 0.00030032153548125 ****)
+tau0_com(9,13)..  theta(9,8,13) + theta(9,10,13) + theta(9,17,13) =G= 0 ;
      
-tau0_com(9,13)..  theta(9,8,13) + theta(9,10,13) + theta(9,17,13) =G= 
-     0.00030032153548125 ; (LHS = 0, INFES = 0.00030032153548125 ****)
+      (LHS = 0)
      
-tau0_com(9,14)..  theta(9,8,14) + theta(9,10,14) + theta(9,17,14) =G= 
-     0.00030032153548125 ; (LHS = 0, INFES = 0.00030032153548125 ****)
+tau0_com(9,14)..  theta(9,8,14) + theta(9,10,14) + theta(9,17,14) =G= 0 ;
      
-tau0_com(9,15)..  theta(9,8,15) + theta(9,10,15) + theta(9,17,15) =G= 
-     0.00030032153548125 ; (LHS = 0, INFES = 0.00030032153548125 ****)
+      (LHS = 0)
      
-tau0_com(9,16)..  theta(9,8,16) + theta(9,10,16) + theta(9,17,16) =G= 
-     0.00030032153548125 ; (LHS = 0, INFES = 0.00030032153548125 ****)
+tau0_com(9,15)..  theta(9,8,15) + theta(9,10,15) + theta(9,17,15) =G= 0 ;
      
-tau0_com(9,17)..  theta(9,8,17) + theta(9,10,17) + theta(9,17,17) =G= 
-     0.00030032153548125 ; (LHS = 0, INFES = 0.00030032153548125 ****)
+      (LHS = 0)
      
-tau0_com(9,18)..  theta(9,8,18) + theta(9,10,18) + theta(9,17,18) =G= 
-     0.00030032153548125 ; (LHS = 0, INFES = 0.00030032153548125 ****)
+tau0_com(9,16)..  theta(9,8,16) + theta(9,10,16) + theta(9,17,16) =G= 0 ;
      
-tau0_com(9,19)..  theta(9,8,19) + theta(9,10,19) + theta(9,17,19) =G= 
-     0.00030032153548125 ; (LHS = 0, INFES = 0.00030032153548125 ****)
+      (LHS = 0)
+     
+tau0_com(9,17)..  theta(9,8,17) + theta(9,10,17) + theta(9,17,17) =G= 0 ;
+     
+      (LHS = 0)
+     
+tau0_com(9,18)..  theta(9,8,18) + theta(9,10,18) + theta(9,17,18) =G= 0 ;
+     
+      (LHS = 0)
+     
+tau0_com(9,19)..  theta(9,8,19) + theta(9,10,19) + theta(9,17,19) =G= 0 ;
+     
+      (LHS = 0)
      
 tau0_com(10,13)..  theta(10,9,13) + theta(10,11,13) + theta(10,17,13)
      
-      + theta(10,18,13) =G= 0.000284787662956357 ;
-     
-      (LHS = 0, INFES = 0.000284787662956357 ****)
+      + theta(10,18,13) =G= 0 ; (LHS = 0)
      
 tau0_com(10,14)..  theta(10,9,14) + theta(10,11,14) + theta(10,17,14)
      
-      + theta(10,18,14) =G= 0.000284787662956357 ;
-     
-      (LHS = 0, INFES = 0.000284787662956357 ****)
+      + theta(10,18,14) =G= 0 ; (LHS = 0)
      
 tau0_com(10,15)..  theta(10,9,15) + theta(10,11,15) + theta(10,17,15)
      
-      + theta(10,18,15) =G= 0.000284787662956357 ;
-     
-      (LHS = 0, INFES = 0.000284787662956357 ****)
+      + theta(10,18,15) =G= 0 ; (LHS = 0)
      
 tau0_com(10,16)..  theta(10,9,16) + theta(10,11,16) + theta(10,17,16)
      
-      + theta(10,18,16) =G= 0.000284787662956357 ;
-     
-      (LHS = 0, INFES = 0.000284787662956357 ****)
+      + theta(10,18,16) =G= 0 ; (LHS = 0)
      
 tau0_com(10,17)..  theta(10,9,17) + theta(10,11,17) + theta(10,17,17)
      
-      + theta(10,18,17) =G= 0.000284787662956357 ;
-     
-      (LHS = 0, INFES = 0.000284787662956357 ****)
+      + theta(10,18,17) =G= 0 ; (LHS = 0)
      
 tau0_com(10,18)..  theta(10,9,18) + theta(10,11,18) + theta(10,17,18)
      
-      + theta(10,18,18) =G= 0.000284787662956357 ;
-     
-      (LHS = 0, INFES = 0.000284787662956357 ****)
+      + theta(10,18,18) =G= 0 ; (LHS = 0)
      
 tau0_com(10,19)..  theta(10,9,19) + theta(10,11,19) + theta(10,17,19)
      
-      + theta(10,18,19) =G= 0.000284787662956357 ;
+      + theta(10,18,19) =G= 0 ; (LHS = 0)
      
-      (LHS = 0, INFES = 0.000284787662956357 ****)
+tau0_com(11,13)..  theta(11,10,13) + theta(11,12,13) + theta(11,18,13) =G= 0 ;
      
-tau0_com(11,13)..  theta(11,10,13) + theta(11,12,13) + theta(11,18,13) =G= 
-     0.000284787662956357 ; (LHS = 0, INFES = 0.000284787662956357 ****)
+      (LHS = 0)
      
-tau0_com(11,14)..  theta(11,10,14) + theta(11,12,14) + theta(11,18,14) =G= 
-     0.000284787662956357 ; (LHS = 0, INFES = 0.000284787662956357 ****)
+tau0_com(11,14)..  theta(11,10,14) + theta(11,12,14) + theta(11,18,14) =G= 0 ;
      
-tau0_com(11,15)..  theta(11,10,15) + theta(11,12,15) + theta(11,18,15) =G= 
-     0.000284787662956357 ; (LHS = 0, INFES = 0.000284787662956357 ****)
+      (LHS = 0)
      
-tau0_com(11,16)..  theta(11,10,16) + theta(11,12,16) + theta(11,18,16) =G= 
-     0.000284787662956357 ; (LHS = 0, INFES = 0.000284787662956357 ****)
+tau0_com(11,15)..  theta(11,10,15) + theta(11,12,15) + theta(11,18,15) =G= 0 ;
      
-tau0_com(11,17)..  theta(11,10,17) + theta(11,12,17) + theta(11,18,17) =G= 
-     0.000284787662956357 ; (LHS = 0, INFES = 0.000284787662956357 ****)
+      (LHS = 0)
      
-tau0_com(11,18)..  theta(11,10,18) + theta(11,12,18) + theta(11,18,18) =G= 
-     0.000284787662956357 ; (LHS = 0, INFES = 0.000284787662956357 ****)
+tau0_com(11,16)..  theta(11,10,16) + theta(11,12,16) + theta(11,18,16) =G= 0 ;
      
-tau0_com(11,19)..  theta(11,10,19) + theta(11,12,19) + theta(11,18,19) =G= 
-     0.000284787662956357 ; (LHS = 0, INFES = 0.000284787662956357 ****)
+      (LHS = 0)
+     
+tau0_com(11,17)..  theta(11,10,17) + theta(11,12,17) + theta(11,18,17) =G= 0 ;
+     
+      (LHS = 0)
+     
+tau0_com(11,18)..  theta(11,10,18) + theta(11,12,18) + theta(11,18,18) =G= 0 ;
+     
+      (LHS = 0)
+     
+tau0_com(11,19)..  theta(11,10,19) + theta(11,12,19) + theta(11,18,19) =G= 0 ;
+     
+      (LHS = 0)
      
 tau0_com(12,13)..  theta(12,1,13) + theta(12,11,13) + theta(12,13,13)
      
-      + theta(12,18,13) =G= 0.000284787662956357 ;
-     
-      (LHS = 0, INFES = 0.000284787662956357 ****)
+      + theta(12,18,13) =G= 0 ; (LHS = 0)
      
 tau0_com(12,14)..  theta(12,1,14) + theta(12,11,14) + theta(12,13,14)
      
-      + theta(12,18,14) =G= 0.000284787662956357 ;
-     
-      (LHS = 0, INFES = 0.000284787662956357 ****)
+      + theta(12,18,14) =G= 0 ; (LHS = 0)
      
 tau0_com(12,15)..  theta(12,1,15) + theta(12,11,15) + theta(12,13,15)
      
-      + theta(12,18,15) =G= 0.000284787662956357 ;
-     
-      (LHS = 0, INFES = 0.000284787662956357 ****)
+      + theta(12,18,15) =G= 0 ; (LHS = 0)
      
 tau0_com(12,16)..  theta(12,1,16) + theta(12,11,16) + theta(12,13,16)
      
-      + theta(12,18,16) =G= 0.000284787662956357 ;
-     
-      (LHS = 0, INFES = 0.000284787662956357 ****)
+      + theta(12,18,16) =G= 0 ; (LHS = 0)
      
 tau0_com(12,17)..  theta(12,1,17) + theta(12,11,17) + theta(12,13,17)
      
-      + theta(12,18,17) =G= 0.000284787662956357 ;
-     
-      (LHS = 0, INFES = 0.000284787662956357 ****)
+      + theta(12,18,17) =G= 0 ; (LHS = 0)
      
 tau0_com(12,18)..  theta(12,1,18) + theta(12,11,18) + theta(12,13,18)
      
-      + theta(12,18,18) =G= 0.000284787662956357 ;
-     
-      (LHS = 0, INFES = 0.000284787662956357 ****)
+      + theta(12,18,18) =G= 0 ; (LHS = 0)
      
 tau0_com(12,19)..  theta(12,1,19) + theta(12,11,19) + theta(12,13,19)
      
-      + theta(12,18,19) =G= 0.000284787662956357 ;
-     
-      (LHS = 0, INFES = 0.000284787662956357 ****)
+      + theta(12,18,19) =G= 0 ; (LHS = 0)
      
 tau0_com(13,13)..  theta(13,1,13) + theta(13,2,13) + theta(13,12,13)
      
-      + theta(13,14,13) + theta(13,18,13) + theta(13,19,13) =G= 
-     0.000344118426072265 ; (LHS = 0, INFES = 0.000344118426072265 ****)
+      + theta(13,14,13) + theta(13,18,13) + theta(13,19,13) =G= 0 ; (LHS = 0)
      
 tau0_com(13,14)..  theta(13,1,14) + theta(13,2,14) + theta(13,12,14)
      
-      + theta(13,14,14) + theta(13,18,14) + theta(13,19,14) =G= 
-     0.000344118426072265 ; (LHS = 0, INFES = 0.000344118426072265 ****)
+      + theta(13,14,14) + theta(13,18,14) + theta(13,19,14) =G= 0 ; (LHS = 0)
      
 tau0_com(13,15)..  theta(13,1,15) + theta(13,2,15) + theta(13,12,15)
      
-      + theta(13,14,15) + theta(13,18,15) + theta(13,19,15) =G= 
-     0.000344118426072265 ; (LHS = 0, INFES = 0.000344118426072265 ****)
+      + theta(13,14,15) + theta(13,18,15) + theta(13,19,15) =G= 0 ; (LHS = 0)
      
 tau0_com(13,16)..  theta(13,1,16) + theta(13,2,16) + theta(13,12,16)
      
-      + theta(13,14,16) + theta(13,18,16) + theta(13,19,16) =G= 
-     0.000344118426072265 ; (LHS = 0, INFES = 0.000344118426072265 ****)
+      + theta(13,14,16) + theta(13,18,16) + theta(13,19,16) =G= 0 ; (LHS = 0)
      
 tau0_com(13,17)..  theta(13,1,17) + theta(13,2,17) + theta(13,12,17)
      
-      + theta(13,14,17) + theta(13,18,17) + theta(13,19,17) =G= 
-     0.000344118426072265 ; (LHS = 0, INFES = 0.000344118426072265 ****)
+      + theta(13,14,17) + theta(13,18,17) + theta(13,19,17) =G= 0 ; (LHS = 0)
      
 tau0_com(13,18)..  theta(13,1,18) + theta(13,2,18) + theta(13,12,18)
      
-      + theta(13,14,18) + theta(13,18,18) + theta(13,19,18) =G= 
-     0.000344118426072265 ; (LHS = 0, INFES = 0.000344118426072265 ****)
+      + theta(13,14,18) + theta(13,18,18) + theta(13,19,18) =G= 0 ; (LHS = 0)
      
 tau0_com(13,19)..  theta(13,1,19) + theta(13,2,19) + theta(13,12,19)
      
-      + theta(13,14,19) + theta(13,18,19) + theta(13,19,19) =G= 
-     0.000344118426072265 ; (LHS = 0, INFES = 0.000344118426072265 ****)
+      + theta(13,14,19) + theta(13,18,19) + theta(13,19,19) =G= 0 ; (LHS = 0)
      
 tau0_com(14,13)..  theta(14,2,13) + theta(14,3,13) + theta(14,4,13)
      
-      + theta(14,13,13) + theta(14,15,13) + theta(14,19,13) =G= 
-     0.000344118426072265 ; (LHS = 0, INFES = 0.000344118426072265 ****)
+      + theta(14,13,13) + theta(14,15,13) + theta(14,19,13) =G= 0 ; (LHS = 0)
      
 tau0_com(14,14)..  theta(14,2,14) + theta(14,3,14) + theta(14,4,14)
      
-      + theta(14,13,14) + theta(14,15,14) + theta(14,19,14) =G= 
-     0.000344118426072265 ; (LHS = 0, INFES = 0.000344118426072265 ****)
+      + theta(14,13,14) + theta(14,15,14) + theta(14,19,14) =G= 0 ; (LHS = 0)
      
 tau0_com(14,15)..  theta(14,2,15) + theta(14,3,15) + theta(14,4,15)
      
-      + theta(14,13,15) + theta(14,15,15) + theta(14,19,15) =G= 
-     0.000344118426072265 ; (LHS = 0, INFES = 0.000344118426072265 ****)
+      + theta(14,13,15) + theta(14,15,15) + theta(14,19,15) =G= 0 ; (LHS = 0)
      
 tau0_com(14,16)..  theta(14,2,16) + theta(14,3,16) + theta(14,4,16)
      
-      + theta(14,13,16) + theta(14,15,16) + theta(14,19,16) =G= 
-     0.000344118426072265 ; (LHS = 0, INFES = 0.000344118426072265 ****)
+      + theta(14,13,16) + theta(14,15,16) + theta(14,19,16) =G= 0 ; (LHS = 0)
      
 tau0_com(14,17)..  theta(14,2,17) + theta(14,3,17) + theta(14,4,17)
      
-      + theta(14,13,17) + theta(14,15,17) + theta(14,19,17) =G= 
-     0.000344118426072265 ; (LHS = 0, INFES = 0.000344118426072265 ****)
+      + theta(14,13,17) + theta(14,15,17) + theta(14,19,17) =G= 0 ; (LHS = 0)
      
 tau0_com(14,18)..  theta(14,2,18) + theta(14,3,18) + theta(14,4,18)
      
-      + theta(14,13,18) + theta(14,15,18) + theta(14,19,18) =G= 
-     0.000344118426072265 ; (LHS = 0, INFES = 0.000344118426072265 ****)
+      + theta(14,13,18) + theta(14,15,18) + theta(14,19,18) =G= 0 ; (LHS = 0)
      
 tau0_com(14,19)..  theta(14,2,19) + theta(14,3,19) + theta(14,4,19)
      
-      + theta(14,13,19) + theta(14,15,19) + theta(14,19,19) =G= 
-     0.000344118426072265 ; (LHS = 0, INFES = 0.000344118426072265 ****)
+      + theta(14,13,19) + theta(14,15,19) + theta(14,19,19) =G= 0 ; (LHS = 0)
      
 tau0_com(15,13)..  theta(15,4,13) + theta(15,5,13) + theta(15,6,13)
      
-      + theta(15,14,13) + theta(15,16,13) + theta(15,19,13) =G= 
-     0.000367059654477083 ; (LHS = 0, INFES = 0.000367059654477083 ****)
+      + theta(15,14,13) + theta(15,16,13) + theta(15,19,13) =G= 0 ; (LHS = 0)
      
 tau0_com(15,14)..  theta(15,4,14) + theta(15,5,14) + theta(15,6,14)
      
-      + theta(15,14,14) + theta(15,16,14) + theta(15,19,14) =G= 
-     0.000367059654477083 ; (LHS = 0, INFES = 0.000367059654477083 ****)
+      + theta(15,14,14) + theta(15,16,14) + theta(15,19,14) =G= 0 ; (LHS = 0)
      
 tau0_com(15,15)..  theta(15,4,15) + theta(15,5,15) + theta(15,6,15)
      
-      + theta(15,14,15) + theta(15,16,15) + theta(15,19,15) =G= 
-     0.000367059654477083 ; (LHS = 0, INFES = 0.000367059654477083 ****)
+      + theta(15,14,15) + theta(15,16,15) + theta(15,19,15) =G= 0 ; (LHS = 0)
      
 tau0_com(15,16)..  theta(15,4,16) + theta(15,5,16) + theta(15,6,16)
      
-      + theta(15,14,16) + theta(15,16,16) + theta(15,19,16) =G= 
-     0.000367059654477083 ; (LHS = 0, INFES = 0.000367059654477083 ****)
+      + theta(15,14,16) + theta(15,16,16) + theta(15,19,16) =G= 0 ; (LHS = 0)
      
 tau0_com(15,17)..  theta(15,4,17) + theta(15,5,17) + theta(15,6,17)
      
-      + theta(15,14,17) + theta(15,16,17) + theta(15,19,17) =G= 
-     0.000367059654477083 ; (LHS = 0, INFES = 0.000367059654477083 ****)
+      + theta(15,14,17) + theta(15,16,17) + theta(15,19,17) =G= 0 ; (LHS = 0)
      
 tau0_com(15,18)..  theta(15,4,18) + theta(15,5,18) + theta(15,6,18)
      
-      + theta(15,14,18) + theta(15,16,18) + theta(15,19,18) =G= 
-     0.000367059654477083 ; (LHS = 0, INFES = 0.000367059654477083 ****)
+      + theta(15,14,18) + theta(15,16,18) + theta(15,19,18) =G= 0 ; (LHS = 0)
      
 tau0_com(15,19)..  theta(15,4,19) + theta(15,5,19) + theta(15,6,19)
      
-      + theta(15,14,19) + theta(15,16,19) + theta(15,19,19) =G= 
-     0.000367059654477083 ; (LHS = 0, INFES = 0.000367059654477083 ****)
+      + theta(15,14,19) + theta(15,16,19) + theta(15,19,19) =G= 0 ; (LHS = 0)
      
 tau0_com(16,13)..  theta(16,6,13) + theta(16,7,13) + theta(16,8,13)
      
-      + theta(16,15,13) + theta(16,17,13) + theta(16,19,13) =G= 
-     0.000367059654477083 ; (LHS = 0, INFES = 0.000367059654477083 ****)
+      + theta(16,15,13) + theta(16,17,13) + theta(16,19,13) =G= 0 ; (LHS = 0)
      
 tau0_com(16,14)..  theta(16,6,14) + theta(16,7,14) + theta(16,8,14)
      
-      + theta(16,15,14) + theta(16,17,14) + theta(16,19,14) =G= 
-     0.000367059654477083 ; (LHS = 0, INFES = 0.000367059654477083 ****)
+      + theta(16,15,14) + theta(16,17,14) + theta(16,19,14) =G= 0 ; (LHS = 0)
      
 tau0_com(16,15)..  theta(16,6,15) + theta(16,7,15) + theta(16,8,15)
      
-      + theta(16,15,15) + theta(16,17,15) + theta(16,19,15) =G= 
-     0.000367059654477083 ; (LHS = 0, INFES = 0.000367059654477083 ****)
+      + theta(16,15,15) + theta(16,17,15) + theta(16,19,15) =G= 0 ; (LHS = 0)
      
 tau0_com(16,16)..  theta(16,6,16) + theta(16,7,16) + theta(16,8,16)
      
-      + theta(16,15,16) + theta(16,17,16) + theta(16,19,16) =G= 
-     0.000367059654477083 ; (LHS = 0, INFES = 0.000367059654477083 ****)
+      + theta(16,15,16) + theta(16,17,16) + theta(16,19,16) =G= 0 ; (LHS = 0)
      
 tau0_com(16,17)..  theta(16,6,17) + theta(16,7,17) + theta(16,8,17)
      
-      + theta(16,15,17) + theta(16,17,17) + theta(16,19,17) =G= 
-     0.000367059654477083 ; (LHS = 0, INFES = 0.000367059654477083 ****)
+      + theta(16,15,17) + theta(16,17,17) + theta(16,19,17) =G= 0 ; (LHS = 0)
      
 tau0_com(16,18)..  theta(16,6,18) + theta(16,7,18) + theta(16,8,18)
      
-      + theta(16,15,18) + theta(16,17,18) + theta(16,19,18) =G= 
-     0.000367059654477083 ; (LHS = 0, INFES = 0.000367059654477083 ****)
+      + theta(16,15,18) + theta(16,17,18) + theta(16,19,18) =G= 0 ; (LHS = 0)
      
 tau0_com(16,19)..  theta(16,6,19) + theta(16,7,19) + theta(16,8,19)
      
-      + theta(16,15,19) + theta(16,17,19) + theta(16,19,19) =G= 
-     0.000367059654477083 ; (LHS = 0, INFES = 0.000367059654477083 ****)
+      + theta(16,15,19) + theta(16,17,19) + theta(16,19,19) =G= 0 ; (LHS = 0)
      
 tau0_com(17,13)..  theta(17,8,13) + theta(17,9,13) + theta(17,10,13)
      
-      + theta(17,16,13) + theta(17,18,13) + theta(17,19,13) =G= 
-     0.000367059654477083 ; (LHS = 0, INFES = 0.000367059654477083 ****)
+      + theta(17,16,13) + theta(17,18,13) + theta(17,19,13) =G= 0 ; (LHS = 0)
      
 tau0_com(17,14)..  theta(17,8,14) + theta(17,9,14) + theta(17,10,14)
      
-      + theta(17,16,14) + theta(17,18,14) + theta(17,19,14) =G= 
-     0.000367059654477083 ; (LHS = 0, INFES = 0.000367059654477083 ****)
+      + theta(17,16,14) + theta(17,18,14) + theta(17,19,14) =G= 0 ; (LHS = 0)
      
 tau0_com(17,15)..  theta(17,8,15) + theta(17,9,15) + theta(17,10,15)
      
-      + theta(17,16,15) + theta(17,18,15) + theta(17,19,15) =G= 
-     0.000367059654477083 ; (LHS = 0, INFES = 0.000367059654477083 ****)
+      + theta(17,16,15) + theta(17,18,15) + theta(17,19,15) =G= 0 ; (LHS = 0)
      
 tau0_com(17,16)..  theta(17,8,16) + theta(17,9,16) + theta(17,10,16)
      
-      + theta(17,16,16) + theta(17,18,16) + theta(17,19,16) =G= 
-     0.000367059654477083 ; (LHS = 0, INFES = 0.000367059654477083 ****)
+      + theta(17,16,16) + theta(17,18,16) + theta(17,19,16) =G= 0 ; (LHS = 0)
      
 tau0_com(17,17)..  theta(17,8,17) + theta(17,9,17) + theta(17,10,17)
      
-      + theta(17,16,17) + theta(17,18,17) + theta(17,19,17) =G= 
-     0.000367059654477083 ; (LHS = 0, INFES = 0.000367059654477083 ****)
+      + theta(17,16,17) + theta(17,18,17) + theta(17,19,17) =G= 0 ; (LHS = 0)
      
 tau0_com(17,18)..  theta(17,8,18) + theta(17,9,18) + theta(17,10,18)
      
-      + theta(17,16,18) + theta(17,18,18) + theta(17,19,18) =G= 
-     0.000367059654477083 ; (LHS = 0, INFES = 0.000367059654477083 ****)
+      + theta(17,16,18) + theta(17,18,18) + theta(17,19,18) =G= 0 ; (LHS = 0)
      
 tau0_com(17,19)..  theta(17,8,19) + theta(17,9,19) + theta(17,10,19)
      
-      + theta(17,16,19) + theta(17,18,19) + theta(17,19,19) =G= 
-     0.000367059654477083 ; (LHS = 0, INFES = 0.000367059654477083 ****)
+      + theta(17,16,19) + theta(17,18,19) + theta(17,19,19) =G= 0 ; (LHS = 0)
      
 tau0_com(18,13)..  theta(18,10,13) + theta(18,11,13) + theta(18,12,13)
      
-      + theta(18,13,13) + theta(18,17,13) + theta(18,19,13) =G= 
-     0.000367059654477083 ; (LHS = 0, INFES = 0.000367059654477083 ****)
+      + theta(18,13,13) + theta(18,17,13) + theta(18,19,13) =G= 0 ; (LHS = 0)
      
 tau0_com(18,14)..  theta(18,10,14) + theta(18,11,14) + theta(18,12,14)
      
-      + theta(18,13,14) + theta(18,17,14) + theta(18,19,14) =G= 
-     0.000367059654477083 ; (LHS = 0, INFES = 0.000367059654477083 ****)
+      + theta(18,13,14) + theta(18,17,14) + theta(18,19,14) =G= 0 ; (LHS = 0)
      
 tau0_com(18,15)..  theta(18,10,15) + theta(18,11,15) + theta(18,12,15)
      
-      + theta(18,13,15) + theta(18,17,15) + theta(18,19,15) =G= 
-     0.000367059654477083 ; (LHS = 0, INFES = 0.000367059654477083 ****)
+      + theta(18,13,15) + theta(18,17,15) + theta(18,19,15) =G= 0 ; (LHS = 0)
      
 tau0_com(18,16)..  theta(18,10,16) + theta(18,11,16) + theta(18,12,16)
      
-      + theta(18,13,16) + theta(18,17,16) + theta(18,19,16) =G= 
-     0.000367059654477083 ; (LHS = 0, INFES = 0.000367059654477083 ****)
+      + theta(18,13,16) + theta(18,17,16) + theta(18,19,16) =G= 0 ; (LHS = 0)
      
 tau0_com(18,17)..  theta(18,10,17) + theta(18,11,17) + theta(18,12,17)
      
-      + theta(18,13,17) + theta(18,17,17) + theta(18,19,17) =G= 
-     0.000367059654477083 ; (LHS = 0, INFES = 0.000367059654477083 ****)
+      + theta(18,13,17) + theta(18,17,17) + theta(18,19,17) =G= 0 ; (LHS = 0)
      
 tau0_com(18,18)..  theta(18,10,18) + theta(18,11,18) + theta(18,12,18)
      
-      + theta(18,13,18) + theta(18,17,18) + theta(18,19,18) =G= 
-     0.000367059654477083 ; (LHS = 0, INFES = 0.000367059654477083 ****)
+      + theta(18,13,18) + theta(18,17,18) + theta(18,19,18) =G= 0 ; (LHS = 0)
      
 tau0_com(18,19)..  theta(18,10,19) + theta(18,11,19) + theta(18,12,19)
      
-      + theta(18,13,19) + theta(18,17,19) + theta(18,19,19) =G= 
-     0.000367059654477083 ; (LHS = 0, INFES = 0.000367059654477083 ****)
+      + theta(18,13,19) + theta(18,17,19) + theta(18,19,19) =G= 0 ; (LHS = 0)
      
 tau0_com(19,13)..  theta(19,13,13) + theta(19,14,13) + theta(19,15,13)
      
-      + theta(19,16,13) + theta(19,17,13) + theta(19,18,13) =G= 
-     0.000458824568096354 ; (LHS = 0, INFES = 0.000458824568096354 ****)
+      + theta(19,16,13) + theta(19,17,13) + theta(19,18,13) =G= 0 ; (LHS = 0)
      
 tau0_com(19,14)..  theta(19,13,14) + theta(19,14,14) + theta(19,15,14)
      
-      + theta(19,16,14) + theta(19,17,14) + theta(19,18,14) =G= 
-     0.000458824568096354 ; (LHS = 0, INFES = 0.000458824568096354 ****)
+      + theta(19,16,14) + theta(19,17,14) + theta(19,18,14) =G= 0 ; (LHS = 0)
      
 tau0_com(19,15)..  theta(19,13,15) + theta(19,14,15) + theta(19,15,15)
      
-      + theta(19,16,15) + theta(19,17,15) + theta(19,18,15) =G= 
-     0.000458824568096354 ; (LHS = 0, INFES = 0.000458824568096354 ****)
+      + theta(19,16,15) + theta(19,17,15) + theta(19,18,15) =G= 0 ; (LHS = 0)
      
 tau0_com(19,16)..  theta(19,13,16) + theta(19,14,16) + theta(19,15,16)
      
-      + theta(19,16,16) + theta(19,17,16) + theta(19,18,16) =G= 
-     0.000458824568096354 ; (LHS = 0, INFES = 0.000458824568096354 ****)
+      + theta(19,16,16) + theta(19,17,16) + theta(19,18,16) =G= 0 ; (LHS = 0)
      
 tau0_com(19,17)..  theta(19,13,17) + theta(19,14,17) + theta(19,15,17)
      
-      + theta(19,16,17) + theta(19,17,17) + theta(19,18,17) =G= 
-     0.000458824568096354 ; (LHS = 0, INFES = 0.000458824568096354 ****)
+      + theta(19,16,17) + theta(19,17,17) + theta(19,18,17) =G= 0 ; (LHS = 0)
      
 tau0_com(19,18)..  theta(19,13,18) + theta(19,14,18) + theta(19,15,18)
      
-      + theta(19,16,18) + theta(19,17,18) + theta(19,18,18) =G= 
-     0.000458824568096354 ; (LHS = 0, INFES = 0.000458824568096354 ****)
+      + theta(19,16,18) + theta(19,17,18) + theta(19,18,18) =G= 0 ; (LHS = 0)
      
 tau0_com(19,19)..  theta(19,13,19) + theta(19,14,19) + theta(19,15,19)
      
-      + theta(19,16,19) + theta(19,17,19) + theta(19,18,19) =G= 
-     0.000458824568096354 ; (LHS = 0, INFES = 0.000458824568096354 ****)
+      + theta(19,16,19) + theta(19,17,19) + theta(19,18,19) =G= 0 ; (LHS = 0)
      
-GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows 10/26/21 12:49:44 Page 4
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows 12/07/21 14:49:57 Page 4
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
-Column Listing      SOLVE mfd Using MCP From line 145
+Column Listing      SOLVE mfd Using MCP From line 233
 
 
 ---- theta  the queue inflow of the boundary (i,j)
@@ -3254,9 +3245,9 @@ tau0(15,14)
         1       theta_com(19,15,14)
 
 REMAINING 33 ENTRIES SKIPPED
-GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows 10/26/21 12:49:44 Page 5
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows 12/07/21 14:49:57 Page 5
 G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
-Model Statistics    SOLVE mfd Using MCP From line 145
+Model Statistics    SOLVE mfd Using MCP From line 233
 
 
 MODEL STATISTICS
@@ -3271,13 +3262,1540 @@ CODE LENGTH                   0
 GENERATION TIME      =        0.000 SECONDS      4 MB  24.9.2 r64480 WEX-WEI
 
 
-EXECUTION TIME       =        0.031 SECONDS      4 MB  24.9.2 r64480 WEX-WEI
-**** Exec Error at line 145: Problem extracting short path, result contains 
-          extended ASCII codes: D:\OneDrive\WORKSW~1\OHAYªº~1\¥X°êÅª~1\CET800~1\
-                        Codes\MFD_CO~1\MFD-DQ\225a\ (maybe 8.3 form is disabled)
-**** Exec Error at line 145: Problem extracting short path, result contains 
-          extended ASCII codes: D:\OneDrive\WORKSW~1\OHAYªº~1\¥X°êÅª~1\CET800~1\
-                             Codes\MFD_CO~1\MFD-DQ\ (maybe 8.3 form is disabled)
-**** Exec Error at line 145: Problem extracting short path, result contains 
-          extended ASCII codes: D:\OneDrive\WORKSW~1\OHAYªº~1\¥X°êÅª~1\CET800~1\
-            Codes\MFD_CO~1\MFD-DQ\225a\gamscntr.dat (maybe 8.3 form is disabled)
+EXECUTION TIME       =        0.016 SECONDS      4 MB  24.9.2 r64480 WEX-WEI
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows 12/07/21 14:49:57 Page 6
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE mfd Using MCP From line 233
+
+
+               S O L V E      S U M M A R Y
+
+     MODEL   mfd                 
+     TYPE    MCP                 
+     SOLVER  PATH                FROM LINE  233
+
+**** SOLVER STATUS     1 Normal Completion         
+**** MODEL STATUS      1 Optimal                   
+
+ RESOURCE USAGE, LIMIT          0.109      1000.000
+ ITERATION COUNT, LIMIT         0    2000000000
+ EVALUATION ERRORS              0             0
+714 row/cols, 1638 non-zeros, 0.32% dense.
+
+Path 4.7.04 (Tue Nov 14 06:46:25 2017)
+Written by Todd Munson, Steven Dirkse, and Michael Ferris
+
+INITIAL POINT STATISTICS
+Maximum of X. . . . . . . . . .  0.0000e+000 var: (theta(1,2,13))
+Maximum of F. . . . . . . . . .  4.1688e+002 eqn: (theta_com(2,1,13))
+Maximum of Grad F . . . . . . .  1.0000e+000 eqn: (tau0_com(1,13))
+                                            var: (theta(1,2,13))
+
+INITIAL JACOBIAN NORM STATISTICS
+Maximum Row Norm. . . . . . . .  6.0000e+000 eqn: (tau0_com(13,15))
+Minimum Row Norm. . . . . . . .  2.0000e+000 eqn: (theta_com(1,2,13))
+Maximum Column Norm . . . . . .  1.2000e+001 var: (tau0(13,15))
+Minimum Column Norm . . . . . .  1.0000e+000 var: (theta(1,2,13))
+
+FINAL STATISTICS
+Inf-Norm of Complementarity . .  0.0000e+000 eqn: (theta_com(1,2,13))
+Inf-Norm of Normal Map. . . . .  0.0000e+000 eqn: (theta_com(1,2,13))
+Inf-Norm of Minimum Map . . . .  0.0000e+000 eqn: (theta_com(1,2,13))
+Inf-Norm of Fischer Function. .  0.0000e+000 eqn: (theta_com(1,2,13))
+Inf-Norm of Grad Fischer Fcn. .  0.0000e+000 eqn: (theta_com(1,2,13))
+Two-Norm of Grad Fischer Fcn. .  0.0000e+000
+
+FINAL POINT STATISTICS
+Maximum of X. . . . . . . . . .  0.0000e+000 var: (theta(1,2,13))
+Maximum of F. . . . . . . . . .  4.1688e+002 eqn: (theta_com(2,1,13))
+Maximum of Grad F . . . . . . .  1.0000e+000 eqn: (tau0_com(1,13))
+                                            var: (theta(1,2,13))
+
+
+---- EQU theta_com  the complimentary term of theta(i,j,d)
+
+            LOWER     LEVEL     UPPER    MARGINAL
+
+1 .2 .13  -416.386      .        +INF       .         
+1 .2 .14  -416.386      .        +INF       .         
+1 .2 .15  -416.386      .        +INF       .         
+1 .2 .16  -416.386      .        +INF       .         
+1 .2 .17  -416.386      .        +INF       .         
+1 .2 .18  -416.386      .        +INF       .         
+1 .2 .19  -416.386      .        +INF       .         
+1 .12.13  -416.386      .        +INF       .         
+1 .12.14  -416.386      .        +INF       .         
+1 .12.15  -416.386      .        +INF       .         
+1 .12.16  -416.386      .        +INF       .         
+1 .12.17  -416.386      .        +INF       .         
+1 .12.18  -416.386      .        +INF       .         
+1 .12.19  -416.386      .        +INF       .         
+1 .13.13  -416.386      .        +INF       .         
+1 .13.14  -416.386      .        +INF       .         
+1 .13.15  -416.386      .        +INF       .         
+1 .13.16  -416.386      .        +INF       .         
+1 .13.17  -416.386      .        +INF       .         
+1 .13.18  -416.386      .        +INF       .         
+1 .13.19  -416.386      .        +INF       .         
+2 .1 .13  -416.881      .        +INF       .         
+2 .1 .14  -416.881      .        +INF       .         
+2 .1 .15  -416.881      .        +INF       .         
+2 .1 .16  -416.881      .        +INF       .         
+2 .1 .17  -416.881      .        +INF       .         
+2 .1 .18  -416.881      .        +INF       .         
+2 .1 .19  -416.881      .        +INF       .         
+2 .3 .13  -416.881      .        +INF       .         
+2 .3 .14  -416.881      .        +INF       .         
+2 .3 .15  -416.881      .        +INF       .         
+2 .3 .16  -416.881      .        +INF       .         
+2 .3 .17  -416.881      .        +INF       .         
+2 .3 .18  -416.881      .        +INF       .         
+2 .3 .19  -416.881      .        +INF       .         
+2 .13.13  -416.881      .        +INF       .         
+2 .13.14  -416.881      .        +INF       .         
+2 .13.15  -416.881      .        +INF       .         
+2 .13.16  -416.881      .        +INF       .         
+2 .13.17  -416.881      .        +INF       .         
+2 .13.18  -416.881      .        +INF       .         
+2 .13.19  -416.881      .        +INF       .         
+2 .14.13  -416.881      .        +INF       .         
+2 .14.14  -416.881      .        +INF       .         
+2 .14.15  -416.881      .        +INF       .         
+2 .14.16  -416.881      .        +INF       .         
+2 .14.17  -416.881      .        +INF       .         
+2 .14.18  -416.881      .        +INF       .         
+2 .14.19  -416.881      .        +INF       .         
+3 .2 .13  -416.386      .        +INF       .         
+3 .2 .14  -416.386      .        +INF       .         
+3 .2 .15  -416.386      .        +INF       .         
+3 .2 .16  -416.386      .        +INF       .         
+3 .2 .17  -416.386      .        +INF       .         
+3 .2 .18  -416.386      .        +INF       .         
+3 .2 .19  -416.386      .        +INF       .         
+3 .4 .13  -416.386      .        +INF       .         
+3 .4 .14  -416.386      .        +INF       .         
+3 .4 .15  -416.386      .        +INF       .         
+3 .4 .16  -416.386      .        +INF       .         
+3 .4 .17  -416.386      .        +INF       .         
+3 .4 .18  -416.386      .        +INF       .         
+3 .4 .19  -416.386      .        +INF       .         
+3 .14.13  -416.386      .        +INF       .         
+3 .14.14  -416.386      .        +INF       .         
+3 .14.15  -416.386      .        +INF       .         
+3 .14.16  -416.386      .        +INF       .         
+3 .14.17  -416.386      .        +INF       .         
+3 .14.18  -416.386      .        +INF       .         
+3 .14.19  -416.386      .        +INF       .         
+4 .3 .13  -396.428      .        +INF       .         
+4 .3 .14  -396.428      .        +INF       .         
+4 .3 .15  -396.428      .        +INF       .         
+4 .3 .16  -396.428      .        +INF       .         
+4 .3 .17  -396.428      .        +INF       .         
+4 .3 .18  -396.428      .        +INF       .         
+4 .3 .19  -396.428      .        +INF       .         
+4 .5 .13  -396.428      .        +INF       .         
+4 .5 .14  -396.428      .        +INF       .         
+4 .5 .15  -396.428      .        +INF       .         
+4 .5 .16  -396.428      .        +INF       .         
+4 .5 .17  -396.428      .        +INF       .         
+4 .5 .18  -396.428      .        +INF       .         
+4 .5 .19  -396.428      .        +INF       .         
+4 .14.13  -396.428      .        +INF       .         
+4 .14.14  -396.428      .        +INF       .         
+4 .14.15  -396.428      .        +INF       .         
+4 .14.16  -396.428      .        +INF       .         
+4 .14.17  -396.428      .        +INF       .         
+4 .14.18  -396.428      .        +INF       .         
+4 .14.19  -396.428      .        +INF       .         
+4 .15.13  -396.428      .        +INF       .         
+4 .15.14  -396.428      .        +INF       .         
+4 .15.15  -396.428      .        +INF       .         
+4 .15.16  -396.428      .        +INF       .         
+4 .15.17  -396.428      .        +INF       .         
+4 .15.18  -396.428      .        +INF       .         
+4 .15.19  -396.428      .        +INF       .         
+5 .4 .13  -395.957      .        +INF       .         
+5 .4 .14  -395.957      .        +INF       .         
+5 .4 .15  -395.957      .        +INF       .         
+5 .4 .16  -395.957      .        +INF       .         
+5 .4 .17  -395.957      .        +INF       .         
+5 .4 .18  -395.957      .        +INF       .         
+5 .4 .19  -395.957      .        +INF       .         
+5 .6 .13  -395.957      .        +INF       .         
+5 .6 .14  -395.957      .        +INF       .         
+5 .6 .15  -395.957      .        +INF       .         
+5 .6 .16  -395.957      .        +INF       .         
+5 .6 .17  -395.957      .        +INF       .         
+5 .6 .18  -395.957      .        +INF       .         
+5 .6 .19  -395.957      .        +INF       .         
+5 .15.13  -395.957      .        +INF       .         
+5 .15.14  -395.957      .        +INF       .         
+5 .15.15  -395.957      .        +INF       .         
+5 .15.16  -395.957      .        +INF       .         
+5 .15.17  -395.957      .        +INF       .         
+5 .15.18  -395.957      .        +INF       .         
+5 .15.19  -395.957      .        +INF       .         
+6 .5 .13  -396.428      .        +INF       .         
+6 .5 .14  -396.428      .        +INF       .         
+6 .5 .15  -396.428      .        +INF       .         
+6 .5 .16  -396.428      .        +INF       .         
+6 .5 .17  -396.428      .        +INF       .         
+6 .5 .18  -396.428      .        +INF       .         
+6 .5 .19  -396.428      .        +INF       .         
+6 .7 .13  -396.428      .        +INF       .         
+6 .7 .14  -396.428      .        +INF       .         
+6 .7 .15  -396.428      .        +INF       .         
+6 .7 .16  -396.428      .        +INF       .         
+6 .7 .17  -396.428      .        +INF       .         
+6 .7 .18  -396.428      .        +INF       .         
+6 .7 .19  -396.428      .        +INF       .         
+6 .15.13  -396.428      .        +INF       .         
+6 .15.14  -396.428      .        +INF       .         
+6 .15.15  -396.428      .        +INF       .         
+6 .15.16  -396.428      .        +INF       .         
+6 .15.17  -396.428      .        +INF       .         
+6 .15.18  -396.428      .        +INF       .         
+6 .15.19  -396.428      .        +INF       .         
+6 .16.13  -396.428      .        +INF       .         
+6 .16.14  -396.428      .        +INF       .         
+6 .16.15  -396.428      .        +INF       .         
+6 .16.16  -396.428      .        +INF       .         
+6 .16.17  -396.428      .        +INF       .         
+6 .16.18  -396.428      .        +INF       .         
+6 .16.19  -396.428      .        +INF       .         
+7 .6 .13  -375.528      .        +INF       .         
+7 .6 .14  -375.528      .        +INF       .         
+7 .6 .15  -375.528      .        +INF       .         
+7 .6 .16  -375.528      .        +INF       .         
+7 .6 .17  -375.528      .        +INF       .         
+7 .6 .18  -375.528      .        +INF       .         
+7 .6 .19  -375.528      .        +INF       .         
+7 .8 .13  -375.528      .        +INF       .         
+7 .8 .14  -375.528      .        +INF       .         
+7 .8 .15  -375.528      .        +INF       .         
+7 .8 .16  -375.528      .        +INF       .         
+7 .8 .17  -375.528      .        +INF       .         
+7 .8 .18  -375.528      .        +INF       .         
+7 .8 .19  -375.528      .        +INF       .         
+7 .16.13  -375.528      .        +INF       .         
+7 .16.14  -375.528      .        +INF       .         
+7 .16.15  -375.528      .        +INF       .         
+7 .16.16  -375.528      .        +INF       .         
+7 .16.17  -375.528      .        +INF       .         
+7 .16.18  -375.528      .        +INF       .         
+7 .16.19  -375.528      .        +INF       .         
+8 .7 .13  -375.975      .        +INF       .         
+8 .7 .14  -375.975      .        +INF       .         
+8 .7 .15  -375.975      .        +INF       .         
+8 .7 .16  -375.975      .        +INF       .         
+8 .7 .17  -375.975      .        +INF       .         
+8 .7 .18  -375.975      .        +INF       .         
+8 .7 .19  -375.975      .        +INF       .         
+8 .9 .13  -375.975      .        +INF       .         
+8 .9 .14  -375.975      .        +INF       .         
+8 .9 .15  -375.975      .        +INF       .         
+8 .9 .16  -375.975      .        +INF       .         
+8 .9 .17  -375.975      .        +INF       .         
+8 .9 .18  -375.975      .        +INF       .         
+8 .9 .19  -375.975      .        +INF       .         
+8 .16.13  -375.975      .        +INF       .         
+8 .16.14  -375.975      .        +INF       .         
+8 .16.15  -375.975      .        +INF       .         
+8 .16.16  -375.975      .        +INF       .         
+8 .16.17  -375.975      .        +INF       .         
+8 .16.18  -375.975      .        +INF       .         
+8 .16.19  -375.975      .        +INF       .         
+8 .17.13  -375.975      .        +INF       .         
+8 .17.14  -375.975      .        +INF       .         
+8 .17.15  -375.975      .        +INF       .         
+8 .17.16  -375.975      .        +INF       .         
+8 .17.17  -375.975      .        +INF       .         
+8 .17.18  -375.975      .        +INF       .         
+8 .17.19  -375.975      .        +INF       .         
+9 .8 .13  -375.528      .        +INF       .         
+9 .8 .14  -375.528      .        +INF       .         
+9 .8 .15  -375.528      .        +INF       .         
+9 .8 .16  -375.528      .        +INF       .         
+9 .8 .17  -375.528      .        +INF       .         
+9 .8 .18  -375.528      .        +INF       .         
+9 .8 .19  -375.528      .        +INF       .         
+9 .10.13  -375.528      .        +INF       .         
+9 .10.14  -375.528      .        +INF       .         
+9 .10.15  -375.528      .        +INF       .         
+9 .10.16  -375.528      .        +INF       .         
+9 .10.17  -375.528      .        +INF       .         
+9 .10.18  -375.528      .        +INF       .         
+9 .10.19  -375.528      .        +INF       .         
+9 .17.13  -375.528      .        +INF       .         
+9 .17.14  -375.528      .        +INF       .         
+9 .17.15  -375.528      .        +INF       .         
+9 .17.16  -375.528      .        +INF       .         
+9 .17.17  -375.528      .        +INF       .         
+9 .17.18  -375.528      .        +INF       .         
+9 .17.19  -375.528      .        +INF       .         
+10.9 .13  -396.428      .        +INF       .         
+10.9 .14  -396.428      .        +INF       .         
+10.9 .15  -396.428      .        +INF       .         
+10.9 .16  -396.428      .        +INF       .         
+10.9 .17  -396.428      .        +INF       .         
+10.9 .18  -396.428      .        +INF       .         
+10.9 .19  -396.428      .        +INF       .         
+10.11.13  -396.428      .        +INF       .         
+10.11.14  -396.428      .        +INF       .         
+10.11.15  -396.428      .        +INF       .         
+10.11.16  -396.428      .        +INF       .         
+10.11.17  -396.428      .        +INF       .         
+10.11.18  -396.428      .        +INF       .         
+10.11.19  -396.428      .        +INF       .         
+10.17.13  -396.428      .        +INF       .         
+10.17.14  -396.428      .        +INF       .         
+10.17.15  -396.428      .        +INF       .         
+10.17.16  -396.428      .        +INF       .         
+10.17.17  -396.428      .        +INF       .         
+10.17.18  -396.428      .        +INF       .         
+10.17.19  -396.428      .        +INF       .         
+10.18.13  -396.428      .        +INF       .         
+10.18.14  -396.428      .        +INF       .         
+10.18.15  -396.428      .        +INF       .         
+10.18.16  -396.428      .        +INF       .         
+10.18.17  -396.428      .        +INF       .         
+10.18.18  -396.428      .        +INF       .         
+10.18.19  -396.428      .        +INF       .         
+11.10.13  -395.957      .        +INF       .         
+11.10.14  -395.957      .        +INF       .         
+11.10.15  -395.957      .        +INF       .         
+11.10.16  -395.957      .        +INF       .         
+11.10.17  -395.957      .        +INF       .         
+11.10.18  -395.957      .        +INF       .         
+11.10.19  -395.957      .        +INF       .         
+11.12.13  -395.957      .        +INF       .         
+11.12.14  -395.957      .        +INF       .         
+11.12.15  -395.957      .        +INF       .         
+11.12.16  -395.957      .        +INF       .         
+11.12.17  -395.957      .        +INF       .         
+11.12.18  -395.957      .        +INF       .         
+11.12.19  -395.957      .        +INF       .         
+11.18.13  -395.957      .        +INF       .         
+11.18.14  -395.957      .        +INF       .         
+11.18.15  -395.957      .        +INF       .         
+11.18.16  -395.957      .        +INF       .         
+11.18.17  -395.957      .        +INF       .         
+11.18.18  -395.957      .        +INF       .         
+11.18.19  -395.957      .        +INF       .         
+12.1 .13  -396.428      .        +INF       .         
+12.1 .14  -396.428      .        +INF       .         
+12.1 .15  -396.428      .        +INF       .         
+12.1 .16  -396.428      .        +INF       .         
+12.1 .17  -396.428      .        +INF       .         
+12.1 .18  -396.428      .        +INF       .         
+12.1 .19  -396.428      .        +INF       .         
+12.11.13  -396.428      .        +INF       .         
+12.11.14  -396.428      .        +INF       .         
+12.11.15  -396.428      .        +INF       .         
+12.11.16  -396.428      .        +INF       .         
+12.11.17  -396.428      .        +INF       .         
+12.11.18  -396.428      .        +INF       .         
+12.11.19  -396.428      .        +INF       .         
+12.13.13  -396.428      .        +INF       .         
+12.13.14  -396.428      .        +INF       .         
+12.13.15  -396.428      .        +INF       .         
+12.13.16  -396.428      .        +INF       .         
+12.13.17  -396.428      .        +INF       .         
+12.13.18  -396.428      .        +INF       .         
+12.13.19  -396.428      .        +INF       .         
+12.18.13  -396.428      .        +INF       .         
+12.18.14  -396.428      .        +INF       .         
+12.18.15  -396.428      .        +INF       .         
+12.18.16  -396.428      .        +INF       .         
+12.18.17  -396.428      .        +INF       .         
+12.18.18  -396.428      .        +INF       .         
+12.18.19  -396.428      .        +INF       .         
+13.1 .13  -325.151      .        +INF       .         
+13.1 .14  -325.151      .        +INF       .         
+13.1 .15  -325.151      .        +INF       .         
+13.1 .16  -325.151      .        +INF       .         
+13.1 .17  -325.151      .        +INF       .         
+13.1 .18  -325.151      .        +INF       .         
+13.1 .19  -325.151      .        +INF       .         
+13.2 .13  -325.151      .        +INF       .         
+13.2 .14  -325.151      .        +INF       .         
+13.2 .15  -325.151      .        +INF       .         
+13.2 .16  -325.151      .        +INF       .         
+13.2 .17  -325.151      .        +INF       .         
+13.2 .18  -325.151      .        +INF       .         
+13.2 .19  -325.151      .        +INF       .         
+13.12.13  -325.151      .        +INF       .         
+13.12.14  -325.151      .        +INF       .         
+13.12.15  -325.151      .        +INF       .         
+13.12.16  -325.151      .        +INF       .         
+13.12.17  -325.151      .        +INF       .         
+13.12.18  -325.151      .        +INF       .         
+13.12.19  -325.151      .        +INF       .         
+13.14.13  -325.151      .        +INF       .         
+13.14.14  -325.151      .        +INF       .         
+13.14.15  -325.151      .        +INF       .         
+13.14.16  -325.151      .        +INF       .         
+13.14.17  -325.151      .        +INF       .         
+13.14.18  -325.151      .        +INF       .         
+13.14.19  -325.151      .        +INF       .         
+13.18.13  -325.151      .        +INF       .         
+13.18.14  -325.151      .        +INF       .         
+13.18.15  -325.151      .        +INF       .         
+13.18.16  -325.151      .        +INF       .         
+13.18.17  -325.151      .        +INF       .         
+13.18.18  -325.151      .        +INF       .         
+13.18.19  -325.151      .        +INF       .         
+13.19.13  -325.151      .        +INF       .         
+13.19.14  -325.151      .        +INF       .         
+13.19.15  -325.151      .        +INF       .         
+13.19.16  -325.151      .        +INF       .         
+13.19.17  -325.151      .        +INF       .         
+13.19.18  -325.151      .        +INF       .         
+13.19.19  -325.151      .        +INF       .         
+14.2 .13  -325.351      .        +INF       .         
+14.2 .14  -325.351      .        +INF       .         
+14.2 .15  -325.351      .        +INF       .         
+14.2 .16  -325.351      .        +INF       .         
+14.2 .17  -325.351      .        +INF       .         
+14.2 .18  -325.351      .        +INF       .         
+14.2 .19  -325.351      .        +INF       .         
+14.3 .13  -325.351      .        +INF       .         
+14.3 .14  -325.351      .        +INF       .         
+14.3 .15  -325.351      .        +INF       .         
+14.3 .16  -325.351      .        +INF       .         
+14.3 .17  -325.351      .        +INF       .         
+14.3 .18  -325.351      .        +INF       .         
+14.3 .19  -325.351      .        +INF       .         
+14.4 .13  -325.351      .        +INF       .         
+14.4 .14  -325.351      .        +INF       .         
+14.4 .15  -325.351      .        +INF       .         
+14.4 .16  -325.351      .        +INF       .         
+14.4 .17  -325.351      .        +INF       .         
+14.4 .18  -325.351      .        +INF       .         
+14.4 .19  -325.351      .        +INF       .         
+14.13.13  -325.351      .        +INF       .         
+14.13.14  -325.351      .        +INF       .         
+14.13.15  -325.351      .        +INF       .         
+14.13.16  -325.351      .        +INF       .         
+14.13.17  -325.351      .        +INF       .         
+14.13.18  -325.351      .        +INF       .         
+14.13.19  -325.351      .        +INF       .         
+14.15.13  -325.351      .        +INF       .         
+14.15.14  -325.351      .        +INF       .         
+14.15.15  -325.351      .        +INF       .         
+14.15.16  -325.351      .        +INF       .         
+14.15.17  -325.351      .        +INF       .         
+14.15.18  -325.351      .        +INF       .         
+14.15.19  -325.351      .        +INF       .         
+14.19.13  -325.351      .        +INF       .         
+14.19.14  -325.351      .        +INF       .         
+14.19.15  -325.351      .        +INF       .         
+14.19.16  -325.351      .        +INF       .         
+14.19.17  -325.351      .        +INF       .         
+14.19.18  -325.351      .        +INF       .         
+14.19.19  -325.351      .        +INF       .         
+15.4 .13  -304.786      .        +INF       .         
+15.4 .14  -304.786      .        +INF       .         
+15.4 .15  -304.786      .        +INF       .         
+15.4 .16  -304.786      .        +INF       .         
+15.4 .17  -304.786      .        +INF       .         
+15.4 .18  -304.786      .        +INF       .         
+15.4 .19  -304.786      .        +INF       .         
+15.5 .13  -304.786      .        +INF       .         
+15.5 .14  -304.786      .        +INF       .         
+15.5 .15  -304.786      .        +INF       .         
+15.5 .16  -304.786      .        +INF       .         
+15.5 .17  -304.786      .        +INF       .         
+15.5 .18  -304.786      .        +INF       .         
+15.5 .19  -304.786      .        +INF       .         
+15.6 .13  -304.786      .        +INF       .         
+15.6 .14  -304.786      .        +INF       .         
+15.6 .15  -304.786      .        +INF       .         
+15.6 .16  -304.786      .        +INF       .         
+15.6 .17  -304.786      .        +INF       .         
+15.6 .18  -304.786      .        +INF       .         
+15.6 .19  -304.786      .        +INF       .         
+15.14.13  -304.786      .        +INF       .         
+15.14.14  -304.786      .        +INF       .         
+15.14.15  -304.786      .        +INF       .         
+15.14.16  -304.786      .        +INF       .         
+15.14.17  -304.786      .        +INF       .         
+15.14.18  -304.786      .        +INF       .         
+15.14.19  -304.786      .        +INF       .         
+15.16.13  -304.786      .        +INF       .         
+15.16.14  -304.786      .        +INF       .         
+15.16.15  -304.786      .        +INF       .         
+15.16.16  -304.786      .        +INF       .         
+15.16.17  -304.786      .        +INF       .         
+15.16.18  -304.786      .        +INF       .         
+15.16.19  -304.786      .        +INF       .         
+15.19.13  -304.786      .        +INF       .         
+15.19.14  -304.786      .        +INF       .         
+15.19.15  -304.786      .        +INF       .         
+15.19.16  -304.786      .        +INF       .         
+15.19.17  -304.786      .        +INF       .         
+15.19.18  -304.786      .        +INF       .         
+15.19.19  -304.786      .        +INF       .         
+16.6 .13  -304.786      .        +INF       .         
+16.6 .14  -304.786      .        +INF       .         
+16.6 .15  -304.786      .        +INF       .         
+16.6 .16  -304.786      .        +INF       .         
+16.6 .17  -304.786      .        +INF       .         
+16.6 .18  -304.786      .        +INF       .         
+16.6 .19  -304.786      .        +INF       .         
+16.7 .13  -304.786      .        +INF       .         
+16.7 .14  -304.786      .        +INF       .         
+16.7 .15  -304.786      .        +INF       .         
+16.7 .16  -304.786      .        +INF       .         
+16.7 .17  -304.786      .        +INF       .         
+16.7 .18  -304.786      .        +INF       .         
+16.7 .19  -304.786      .        +INF       .         
+16.8 .13  -304.786      .        +INF       .         
+16.8 .14  -304.786      .        +INF       .         
+16.8 .15  -304.786      .        +INF       .         
+16.8 .16  -304.786      .        +INF       .         
+16.8 .17  -304.786      .        +INF       .         
+16.8 .18  -304.786      .        +INF       .         
+16.8 .19  -304.786      .        +INF       .         
+16.15.13  -304.786      .        +INF       .         
+16.15.14  -304.786      .        +INF       .         
+16.15.15  -304.786      .        +INF       .         
+16.15.16  -304.786      .        +INF       .         
+16.15.17  -304.786      .        +INF       .         
+16.15.18  -304.786      .        +INF       .         
+16.15.19  -304.786      .        +INF       .         
+16.17.13  -304.786      .        +INF       .         
+16.17.14  -304.786      .        +INF       .         
+16.17.15  -304.786      .        +INF       .         
+16.17.16  -304.786      .        +INF       .         
+16.17.17  -304.786      .        +INF       .         
+16.17.18  -304.786      .        +INF       .         
+16.17.19  -304.786      .        +INF       .         
+16.19.13  -304.786      .        +INF       .         
+16.19.14  -304.786      .        +INF       .         
+16.19.15  -304.786      .        +INF       .         
+16.19.16  -304.786      .        +INF       .         
+16.19.17  -304.786      .        +INF       .         
+16.19.18  -304.786      .        +INF       .         
+16.19.19  -304.786      .        +INF       .         
+17.8 .13  -304.786      .        +INF       .         
+17.8 .14  -304.786      .        +INF       .         
+17.8 .15  -304.786      .        +INF       .         
+17.8 .16  -304.786      .        +INF       .         
+17.8 .17  -304.786      .        +INF       .         
+17.8 .18  -304.786      .        +INF       .         
+17.8 .19  -304.786      .        +INF       .         
+17.9 .13  -304.786      .        +INF       .         
+17.9 .14  -304.786      .        +INF       .         
+17.9 .15  -304.786      .        +INF       .         
+17.9 .16  -304.786      .        +INF       .         
+17.9 .17  -304.786      .        +INF       .         
+17.9 .18  -304.786      .        +INF       .         
+17.9 .19  -304.786      .        +INF       .         
+17.10.13  -304.786      .        +INF       .         
+17.10.14  -304.786      .        +INF       .         
+17.10.15  -304.786      .        +INF       .         
+17.10.16  -304.786      .        +INF       .         
+17.10.17  -304.786      .        +INF       .         
+17.10.18  -304.786      .        +INF       .         
+17.10.19  -304.786      .        +INF       .         
+17.16.13  -304.786      .        +INF       .         
+17.16.14  -304.786      .        +INF       .         
+17.16.15  -304.786      .        +INF       .         
+17.16.16  -304.786      .        +INF       .         
+17.16.17  -304.786      .        +INF       .         
+17.16.18  -304.786      .        +INF       .         
+17.16.19  -304.786      .        +INF       .         
+17.18.13  -304.786      .        +INF       .         
+17.18.14  -304.786      .        +INF       .         
+17.18.15  -304.786      .        +INF       .         
+17.18.16  -304.786      .        +INF       .         
+17.18.17  -304.786      .        +INF       .         
+17.18.18  -304.786      .        +INF       .         
+17.18.19  -304.786      .        +INF       .         
+17.19.13  -304.786      .        +INF       .         
+17.19.14  -304.786      .        +INF       .         
+17.19.15  -304.786      .        +INF       .         
+17.19.16  -304.786      .        +INF       .         
+17.19.17  -304.786      .        +INF       .         
+17.19.18  -304.786      .        +INF       .         
+17.19.19  -304.786      .        +INF       .         
+18.10.13  -304.786      .        +INF       .         
+18.10.14  -304.786      .        +INF       .         
+18.10.15  -304.786      .        +INF       .         
+18.10.16  -304.786      .        +INF       .         
+18.10.17  -304.786      .        +INF       .         
+18.10.18  -304.786      .        +INF       .         
+18.10.19  -304.786      .        +INF       .         
+18.11.13  -304.786      .        +INF       .         
+18.11.14  -304.786      .        +INF       .         
+18.11.15  -304.786      .        +INF       .         
+18.11.16  -304.786      .        +INF       .         
+18.11.17  -304.786      .        +INF       .         
+18.11.18  -304.786      .        +INF       .         
+18.11.19  -304.786      .        +INF       .         
+18.12.13  -304.786      .        +INF       .         
+18.12.14  -304.786      .        +INF       .         
+18.12.15  -304.786      .        +INF       .         
+18.12.16  -304.786      .        +INF       .         
+18.12.17  -304.786      .        +INF       .         
+18.12.18  -304.786      .        +INF       .         
+18.12.19  -304.786      .        +INF       .         
+18.13.13  -304.786      .        +INF       .         
+18.13.14  -304.786      .        +INF       .         
+18.13.15  -304.786      .        +INF       .         
+18.13.16  -304.786      .        +INF       .         
+18.13.17  -304.786      .        +INF       .         
+18.13.18  -304.786      .        +INF       .         
+18.13.19  -304.786      .        +INF       .         
+18.17.13  -304.786      .        +INF       .         
+18.17.14  -304.786      .        +INF       .         
+18.17.15  -304.786      .        +INF       .         
+18.17.16  -304.786      .        +INF       .         
+18.17.17  -304.786      .        +INF       .         
+18.17.18  -304.786      .        +INF       .         
+18.17.19  -304.786      .        +INF       .         
+18.19.13  -304.786      .        +INF       .         
+18.19.14  -304.786      .        +INF       .         
+18.19.15  -304.786      .        +INF       .         
+18.19.16  -304.786      .        +INF       .         
+18.19.17  -304.786      .        +INF       .         
+18.19.18  -304.786      .        +INF       .         
+18.19.19  -304.786      .        +INF       .         
+19.13.13  -243.307      .        +INF       .         
+19.13.14  -243.307      .        +INF       .         
+19.13.15  -243.307      .        +INF       .         
+19.13.16  -243.307      .        +INF       .         
+19.13.17  -243.307      .        +INF       .         
+19.13.18  -243.307      .        +INF       .         
+19.13.19  -243.307      .        +INF       .         
+19.14.13  -243.307      .        +INF       .         
+19.14.14  -243.307      .        +INF       .         
+19.14.15  -243.307      .        +INF       .         
+19.14.16  -243.307      .        +INF       .         
+19.14.17  -243.307      .        +INF       .         
+19.14.18  -243.307      .        +INF       .         
+19.14.19  -243.307      .        +INF       .         
+19.15.13  -243.307      .        +INF       .         
+19.15.14  -243.307      .        +INF       .         
+19.15.15  -243.307      .        +INF       .         
+19.15.16  -243.307      .        +INF       .         
+19.15.17  -243.307      .        +INF       .         
+19.15.18  -243.307      .        +INF       .         
+19.15.19  -243.307      .        +INF       .         
+19.16.13  -243.307      .        +INF       .         
+19.16.14  -243.307      .        +INF       .         
+19.16.15  -243.307      .        +INF       .         
+19.16.16  -243.307      .        +INF       .         
+19.16.17  -243.307      .        +INF       .         
+19.16.18  -243.307      .        +INF       .         
+19.16.19  -243.307      .        +INF       .         
+19.17.13  -243.307      .        +INF       .         
+19.17.14  -243.307      .        +INF       .         
+19.17.15  -243.307      .        +INF       .         
+19.17.16  -243.307      .        +INF       .         
+19.17.17  -243.307      .        +INF       .         
+19.17.18  -243.307      .        +INF       .         
+19.17.19  -243.307      .        +INF       .         
+19.18.13  -243.307      .        +INF       .         
+19.18.14  -243.307      .        +INF       .         
+19.18.15  -243.307      .        +INF       .         
+19.18.16  -243.307      .        +INF       .         
+19.18.17  -243.307      .        +INF       .         
+19.18.18  -243.307      .        +INF       .         
+19.18.19  -243.307      .        +INF       .         
+
+---- EQU tau0_com  the complimentary term of tau0(i,d)
+
+         LOWER     LEVEL     UPPER    MARGINAL
+
+1 .13      .         .        +INF       .         
+1 .14      .         .        +INF       .         
+1 .15      .         .        +INF       .         
+1 .16      .         .        +INF       .         
+1 .17      .         .        +INF       .         
+1 .18      .         .        +INF       .         
+1 .19      .         .        +INF       .         
+2 .13      .         .        +INF       .         
+2 .14      .         .        +INF       .         
+2 .15      .         .        +INF       .         
+2 .16      .         .        +INF       .         
+2 .17      .         .        +INF       .         
+2 .18      .         .        +INF       .         
+2 .19      .         .        +INF       .         
+3 .13      .         .        +INF       .         
+3 .14      .         .        +INF       .         
+3 .15      .         .        +INF       .         
+3 .16      .         .        +INF       .         
+3 .17      .         .        +INF       .         
+3 .18      .         .        +INF       .         
+3 .19      .         .        +INF       .         
+4 .13      .         .        +INF       .         
+4 .14      .         .        +INF       .         
+4 .15      .         .        +INF       .         
+4 .16      .         .        +INF       .         
+4 .17      .         .        +INF       .         
+4 .18      .         .        +INF       .         
+4 .19      .         .        +INF       .         
+5 .13      .         .        +INF       .         
+5 .14      .         .        +INF       .         
+5 .15      .         .        +INF       .         
+5 .16      .         .        +INF       .         
+5 .17      .         .        +INF       .         
+5 .18      .         .        +INF       .         
+5 .19      .         .        +INF       .         
+6 .13      .         .        +INF       .         
+6 .14      .         .        +INF       .         
+6 .15      .         .        +INF       .         
+6 .16      .         .        +INF       .         
+6 .17      .         .        +INF       .         
+6 .18      .         .        +INF       .         
+6 .19      .         .        +INF       .         
+7 .13      .         .        +INF       .         
+7 .14      .         .        +INF       .         
+7 .15      .         .        +INF       .         
+7 .16      .         .        +INF       .         
+7 .17      .         .        +INF       .         
+7 .18      .         .        +INF       .         
+7 .19      .         .        +INF       .         
+8 .13      .         .        +INF       .         
+8 .14      .         .        +INF       .         
+8 .15      .         .        +INF       .         
+8 .16      .         .        +INF       .         
+8 .17      .         .        +INF       .         
+8 .18      .         .        +INF       .         
+8 .19      .         .        +INF       .         
+9 .13      .         .        +INF       .         
+9 .14      .         .        +INF       .         
+9 .15      .         .        +INF       .         
+9 .16      .         .        +INF       .         
+9 .17      .         .        +INF       .         
+9 .18      .         .        +INF       .         
+9 .19      .         .        +INF       .         
+10.13      .         .        +INF       .         
+10.14      .         .        +INF       .         
+10.15      .         .        +INF       .         
+10.16      .         .        +INF       .         
+10.17      .         .        +INF       .         
+10.18      .         .        +INF       .         
+10.19      .         .        +INF       .         
+11.13      .         .        +INF       .         
+11.14      .         .        +INF       .         
+11.15      .         .        +INF       .         
+11.16      .         .        +INF       .         
+11.17      .         .        +INF       .         
+11.18      .         .        +INF       .         
+11.19      .         .        +INF       .         
+12.13      .         .        +INF       .         
+12.14      .         .        +INF       .         
+12.15      .         .        +INF       .         
+12.16      .         .        +INF       .         
+12.17      .         .        +INF       .         
+12.18      .         .        +INF       .         
+12.19      .         .        +INF       .         
+13.13      .         .        +INF       .         
+13.14      .         .        +INF       .         
+13.15      .         .        +INF       .         
+13.16      .         .        +INF       .         
+13.17      .         .        +INF       .         
+13.18      .         .        +INF       .         
+13.19      .         .        +INF       .         
+14.13      .         .        +INF       .         
+14.14      .         .        +INF       .         
+14.15      .         .        +INF       .         
+14.16      .         .        +INF       .         
+14.17      .         .        +INF       .         
+14.18      .         .        +INF       .         
+14.19      .         .        +INF       .         
+15.13      .         .        +INF       .         
+15.14      .         .        +INF       .         
+15.15      .         .        +INF       .         
+15.16      .         .        +INF       .         
+15.17      .         .        +INF       .         
+15.18      .         .        +INF       .         
+15.19      .         .        +INF       .         
+16.13      .         .        +INF       .         
+16.14      .         .        +INF       .         
+16.15      .         .        +INF       .         
+16.16      .         .        +INF       .         
+16.17      .         .        +INF       .         
+16.18      .         .        +INF       .         
+16.19      .         .        +INF       .         
+17.13      .         .        +INF       .         
+17.14      .         .        +INF       .         
+17.15      .         .        +INF       .         
+17.16      .         .        +INF       .         
+17.17      .         .        +INF       .         
+17.18      .         .        +INF       .         
+17.19      .         .        +INF       .         
+18.13      .         .        +INF       .         
+18.14      .         .        +INF       .         
+18.15      .         .        +INF       .         
+18.16      .         .        +INF       .         
+18.17      .         .        +INF       .         
+18.18      .         .        +INF       .         
+18.19      .         .        +INF       .         
+19.13      .         .        +INF       .         
+19.14      .         .        +INF       .         
+19.15      .         .        +INF       .         
+19.16      .         .        +INF       .         
+19.17      .         .        +INF       .         
+19.18      .         .        +INF       .         
+19.19      .         .        +INF       .         
+
+---- VAR theta  the queue inflow of the boundary (i,j)
+
+            LOWER     LEVEL     UPPER    MARGINAL
+
+1 .2 .13      .         .        +INF    416.386      
+1 .2 .14      .         .        +INF    416.386      
+1 .2 .15      .         .        +INF    416.386      
+1 .2 .16      .         .        +INF    416.386      
+1 .2 .17      .         .        +INF    416.386      
+1 .2 .18      .         .        +INF    416.386      
+1 .2 .19      .         .        +INF    416.386      
+1 .12.13      .         .        +INF    416.386      
+1 .12.14      .         .        +INF    416.386      
+1 .12.15      .         .        +INF    416.386      
+1 .12.16      .         .        +INF    416.386      
+1 .12.17      .         .        +INF    416.386      
+1 .12.18      .         .        +INF    416.386      
+1 .12.19      .         .        +INF    416.386      
+1 .13.13      .         .        +INF    416.386      
+1 .13.14      .         .        +INF    416.386      
+1 .13.15      .         .        +INF    416.386      
+1 .13.16      .         .        +INF    416.386      
+1 .13.17      .         .        +INF    416.386      
+1 .13.18      .         .        +INF    416.386      
+1 .13.19      .         .        +INF    416.386      
+2 .1 .13      .         .        +INF    416.881      
+2 .1 .14      .         .        +INF    416.881      
+2 .1 .15      .         .        +INF    416.881      
+2 .1 .16      .         .        +INF    416.881      
+2 .1 .17      .         .        +INF    416.881      
+2 .1 .18      .         .        +INF    416.881      
+2 .1 .19      .         .        +INF    416.881      
+2 .3 .13      .         .        +INF    416.881      
+2 .3 .14      .         .        +INF    416.881      
+2 .3 .15      .         .        +INF    416.881      
+2 .3 .16      .         .        +INF    416.881      
+2 .3 .17      .         .        +INF    416.881      
+2 .3 .18      .         .        +INF    416.881      
+2 .3 .19      .         .        +INF    416.881      
+2 .13.13      .         .        +INF    416.881      
+2 .13.14      .         .        +INF    416.881      
+2 .13.15      .         .        +INF    416.881      
+2 .13.16      .         .        +INF    416.881      
+2 .13.17      .         .        +INF    416.881      
+2 .13.18      .         .        +INF    416.881      
+2 .13.19      .         .        +INF    416.881      
+2 .14.13      .         .        +INF    416.881      
+2 .14.14      .         .        +INF    416.881      
+2 .14.15      .         .        +INF    416.881      
+2 .14.16      .         .        +INF    416.881      
+2 .14.17      .         .        +INF    416.881      
+2 .14.18      .         .        +INF    416.881      
+2 .14.19      .         .        +INF    416.881      
+3 .2 .13      .         .        +INF    416.386      
+3 .2 .14      .         .        +INF    416.386      
+3 .2 .15      .         .        +INF    416.386      
+3 .2 .16      .         .        +INF    416.386      
+3 .2 .17      .         .        +INF    416.386      
+3 .2 .18      .         .        +INF    416.386      
+3 .2 .19      .         .        +INF    416.386      
+3 .4 .13      .         .        +INF    416.386      
+3 .4 .14      .         .        +INF    416.386      
+3 .4 .15      .         .        +INF    416.386      
+3 .4 .16      .         .        +INF    416.386      
+3 .4 .17      .         .        +INF    416.386      
+3 .4 .18      .         .        +INF    416.386      
+3 .4 .19      .         .        +INF    416.386      
+3 .14.13      .         .        +INF    416.386      
+3 .14.14      .         .        +INF    416.386      
+3 .14.15      .         .        +INF    416.386      
+3 .14.16      .         .        +INF    416.386      
+3 .14.17      .         .        +INF    416.386      
+3 .14.18      .         .        +INF    416.386      
+3 .14.19      .         .        +INF    416.386      
+4 .3 .13      .         .        +INF    396.428      
+4 .3 .14      .         .        +INF    396.428      
+4 .3 .15      .         .        +INF    396.428      
+4 .3 .16      .         .        +INF    396.428      
+4 .3 .17      .         .        +INF    396.428      
+4 .3 .18      .         .        +INF    396.428      
+4 .3 .19      .         .        +INF    396.428      
+4 .5 .13      .         .        +INF    396.428      
+4 .5 .14      .         .        +INF    396.428      
+4 .5 .15      .         .        +INF    396.428      
+4 .5 .16      .         .        +INF    396.428      
+4 .5 .17      .         .        +INF    396.428      
+4 .5 .18      .         .        +INF    396.428      
+4 .5 .19      .         .        +INF    396.428      
+4 .14.13      .         .        +INF    396.428      
+4 .14.14      .         .        +INF    396.428      
+4 .14.15      .         .        +INF    396.428      
+4 .14.16      .         .        +INF    396.428      
+4 .14.17      .         .        +INF    396.428      
+4 .14.18      .         .        +INF    396.428      
+4 .14.19      .         .        +INF    396.428      
+4 .15.13      .         .        +INF    396.428      
+4 .15.14      .         .        +INF    396.428      
+4 .15.15      .         .        +INF    396.428      
+4 .15.16      .         .        +INF    396.428      
+4 .15.17      .         .        +INF    396.428      
+4 .15.18      .         .        +INF    396.428      
+4 .15.19      .         .        +INF    396.428      
+5 .4 .13      .         .        +INF    395.957      
+5 .4 .14      .         .        +INF    395.957      
+5 .4 .15      .         .        +INF    395.957      
+5 .4 .16      .         .        +INF    395.957      
+5 .4 .17      .         .        +INF    395.957      
+5 .4 .18      .         .        +INF    395.957      
+5 .4 .19      .         .        +INF    395.957      
+5 .6 .13      .         .        +INF    395.957      
+5 .6 .14      .         .        +INF    395.957      
+5 .6 .15      .         .        +INF    395.957      
+5 .6 .16      .         .        +INF    395.957      
+5 .6 .17      .         .        +INF    395.957      
+5 .6 .18      .         .        +INF    395.957      
+5 .6 .19      .         .        +INF    395.957      
+5 .15.13      .         .        +INF    395.957      
+5 .15.14      .         .        +INF    395.957      
+5 .15.15      .         .        +INF    395.957      
+5 .15.16      .         .        +INF    395.957      
+5 .15.17      .         .        +INF    395.957      
+5 .15.18      .         .        +INF    395.957      
+5 .15.19      .         .        +INF    395.957      
+6 .5 .13      .         .        +INF    396.428      
+6 .5 .14      .         .        +INF    396.428      
+6 .5 .15      .         .        +INF    396.428      
+6 .5 .16      .         .        +INF    396.428      
+6 .5 .17      .         .        +INF    396.428      
+6 .5 .18      .         .        +INF    396.428      
+6 .5 .19      .         .        +INF    396.428      
+6 .7 .13      .         .        +INF    396.428      
+6 .7 .14      .         .        +INF    396.428      
+6 .7 .15      .         .        +INF    396.428      
+6 .7 .16      .         .        +INF    396.428      
+6 .7 .17      .         .        +INF    396.428      
+6 .7 .18      .         .        +INF    396.428      
+6 .7 .19      .         .        +INF    396.428      
+6 .15.13      .         .        +INF    396.428      
+6 .15.14      .         .        +INF    396.428      
+6 .15.15      .         .        +INF    396.428      
+6 .15.16      .         .        +INF    396.428      
+6 .15.17      .         .        +INF    396.428      
+6 .15.18      .         .        +INF    396.428      
+6 .15.19      .         .        +INF    396.428      
+6 .16.13      .         .        +INF    396.428      
+6 .16.14      .         .        +INF    396.428      
+6 .16.15      .         .        +INF    396.428      
+6 .16.16      .         .        +INF    396.428      
+6 .16.17      .         .        +INF    396.428      
+6 .16.18      .         .        +INF    396.428      
+6 .16.19      .         .        +INF    396.428      
+7 .6 .13      .         .        +INF    375.528      
+7 .6 .14      .         .        +INF    375.528      
+7 .6 .15      .         .        +INF    375.528      
+7 .6 .16      .         .        +INF    375.528      
+7 .6 .17      .         .        +INF    375.528      
+7 .6 .18      .         .        +INF    375.528      
+7 .6 .19      .         .        +INF    375.528      
+7 .8 .13      .         .        +INF    375.528      
+7 .8 .14      .         .        +INF    375.528      
+7 .8 .15      .         .        +INF    375.528      
+7 .8 .16      .         .        +INF    375.528      
+7 .8 .17      .         .        +INF    375.528      
+7 .8 .18      .         .        +INF    375.528      
+7 .8 .19      .         .        +INF    375.528      
+7 .16.13      .         .        +INF    375.528      
+7 .16.14      .         .        +INF    375.528      
+7 .16.15      .         .        +INF    375.528      
+7 .16.16      .         .        +INF    375.528      
+7 .16.17      .         .        +INF    375.528      
+7 .16.18      .         .        +INF    375.528      
+7 .16.19      .         .        +INF    375.528      
+8 .7 .13      .         .        +INF    375.975      
+8 .7 .14      .         .        +INF    375.975      
+8 .7 .15      .         .        +INF    375.975      
+8 .7 .16      .         .        +INF    375.975      
+8 .7 .17      .         .        +INF    375.975      
+8 .7 .18      .         .        +INF    375.975      
+8 .7 .19      .         .        +INF    375.975      
+8 .9 .13      .         .        +INF    375.975      
+8 .9 .14      .         .        +INF    375.975      
+8 .9 .15      .         .        +INF    375.975      
+8 .9 .16      .         .        +INF    375.975      
+8 .9 .17      .         .        +INF    375.975      
+8 .9 .18      .         .        +INF    375.975      
+8 .9 .19      .         .        +INF    375.975      
+8 .16.13      .         .        +INF    375.975      
+8 .16.14      .         .        +INF    375.975      
+8 .16.15      .         .        +INF    375.975      
+8 .16.16      .         .        +INF    375.975      
+8 .16.17      .         .        +INF    375.975      
+8 .16.18      .         .        +INF    375.975      
+8 .16.19      .         .        +INF    375.975      
+8 .17.13      .         .        +INF    375.975      
+8 .17.14      .         .        +INF    375.975      
+8 .17.15      .         .        +INF    375.975      
+8 .17.16      .         .        +INF    375.975      
+8 .17.17      .         .        +INF    375.975      
+8 .17.18      .         .        +INF    375.975      
+8 .17.19      .         .        +INF    375.975      
+9 .8 .13      .         .        +INF    375.528      
+9 .8 .14      .         .        +INF    375.528      
+9 .8 .15      .         .        +INF    375.528      
+9 .8 .16      .         .        +INF    375.528      
+9 .8 .17      .         .        +INF    375.528      
+9 .8 .18      .         .        +INF    375.528      
+9 .8 .19      .         .        +INF    375.528      
+9 .10.13      .         .        +INF    375.528      
+9 .10.14      .         .        +INF    375.528      
+9 .10.15      .         .        +INF    375.528      
+9 .10.16      .         .        +INF    375.528      
+9 .10.17      .         .        +INF    375.528      
+9 .10.18      .         .        +INF    375.528      
+9 .10.19      .         .        +INF    375.528      
+9 .17.13      .         .        +INF    375.528      
+9 .17.14      .         .        +INF    375.528      
+9 .17.15      .         .        +INF    375.528      
+9 .17.16      .         .        +INF    375.528      
+9 .17.17      .         .        +INF    375.528      
+9 .17.18      .         .        +INF    375.528      
+9 .17.19      .         .        +INF    375.528      
+10.9 .13      .         .        +INF    396.428      
+10.9 .14      .         .        +INF    396.428      
+10.9 .15      .         .        +INF    396.428      
+10.9 .16      .         .        +INF    396.428      
+10.9 .17      .         .        +INF    396.428      
+10.9 .18      .         .        +INF    396.428      
+10.9 .19      .         .        +INF    396.428      
+10.11.13      .         .        +INF    396.428      
+10.11.14      .         .        +INF    396.428      
+10.11.15      .         .        +INF    396.428      
+10.11.16      .         .        +INF    396.428      
+10.11.17      .         .        +INF    396.428      
+10.11.18      .         .        +INF    396.428      
+10.11.19      .         .        +INF    396.428      
+10.17.13      .         .        +INF    396.428      
+10.17.14      .         .        +INF    396.428      
+10.17.15      .         .        +INF    396.428      
+10.17.16      .         .        +INF    396.428      
+10.17.17      .         .        +INF    396.428      
+10.17.18      .         .        +INF    396.428      
+10.17.19      .         .        +INF    396.428      
+10.18.13      .         .        +INF    396.428      
+10.18.14      .         .        +INF    396.428      
+10.18.15      .         .        +INF    396.428      
+10.18.16      .         .        +INF    396.428      
+10.18.17      .         .        +INF    396.428      
+10.18.18      .         .        +INF    396.428      
+10.18.19      .         .        +INF    396.428      
+11.10.13      .         .        +INF    395.957      
+11.10.14      .         .        +INF    395.957      
+11.10.15      .         .        +INF    395.957      
+11.10.16      .         .        +INF    395.957      
+11.10.17      .         .        +INF    395.957      
+11.10.18      .         .        +INF    395.957      
+11.10.19      .         .        +INF    395.957      
+11.12.13      .         .        +INF    395.957      
+11.12.14      .         .        +INF    395.957      
+11.12.15      .         .        +INF    395.957      
+11.12.16      .         .        +INF    395.957      
+11.12.17      .         .        +INF    395.957      
+11.12.18      .         .        +INF    395.957      
+11.12.19      .         .        +INF    395.957      
+11.18.13      .         .        +INF    395.957      
+11.18.14      .         .        +INF    395.957      
+11.18.15      .         .        +INF    395.957      
+11.18.16      .         .        +INF    395.957      
+11.18.17      .         .        +INF    395.957      
+11.18.18      .         .        +INF    395.957      
+11.18.19      .         .        +INF    395.957      
+12.1 .13      .         .        +INF    396.428      
+12.1 .14      .         .        +INF    396.428      
+12.1 .15      .         .        +INF    396.428      
+12.1 .16      .         .        +INF    396.428      
+12.1 .17      .         .        +INF    396.428      
+12.1 .18      .         .        +INF    396.428      
+12.1 .19      .         .        +INF    396.428      
+12.11.13      .         .        +INF    396.428      
+12.11.14      .         .        +INF    396.428      
+12.11.15      .         .        +INF    396.428      
+12.11.16      .         .        +INF    396.428      
+12.11.17      .         .        +INF    396.428      
+12.11.18      .         .        +INF    396.428      
+12.11.19      .         .        +INF    396.428      
+12.13.13      .         .        +INF    396.428      
+12.13.14      .         .        +INF    396.428      
+12.13.15      .         .        +INF    396.428      
+12.13.16      .         .        +INF    396.428      
+12.13.17      .         .        +INF    396.428      
+12.13.18      .         .        +INF    396.428      
+12.13.19      .         .        +INF    396.428      
+12.18.13      .         .        +INF    396.428      
+12.18.14      .         .        +INF    396.428      
+12.18.15      .         .        +INF    396.428      
+12.18.16      .         .        +INF    396.428      
+12.18.17      .         .        +INF    396.428      
+12.18.18      .         .        +INF    396.428      
+12.18.19      .         .        +INF    396.428      
+13.1 .13      .         .        +INF    325.151      
+13.1 .14      .         .        +INF    325.151      
+13.1 .15      .         .        +INF    325.151      
+13.1 .16      .         .        +INF    325.151      
+13.1 .17      .         .        +INF    325.151      
+13.1 .18      .         .        +INF    325.151      
+13.1 .19      .         .        +INF    325.151      
+13.2 .13      .         .        +INF    325.151      
+13.2 .14      .         .        +INF    325.151      
+13.2 .15      .         .        +INF    325.151      
+13.2 .16      .         .        +INF    325.151      
+13.2 .17      .         .        +INF    325.151      
+13.2 .18      .         .        +INF    325.151      
+13.2 .19      .         .        +INF    325.151      
+13.12.13      .         .        +INF    325.151      
+13.12.14      .         .        +INF    325.151      
+13.12.15      .         .        +INF    325.151      
+13.12.16      .         .        +INF    325.151      
+13.12.17      .         .        +INF    325.151      
+13.12.18      .         .        +INF    325.151      
+13.12.19      .         .        +INF    325.151      
+13.14.13      .         .        +INF    325.151      
+13.14.14      .         .        +INF    325.151      
+13.14.15      .         .        +INF    325.151      
+13.14.16      .         .        +INF    325.151      
+13.14.17      .         .        +INF    325.151      
+13.14.18      .         .        +INF    325.151      
+13.14.19      .         .        +INF    325.151      
+13.18.13      .         .        +INF    325.151      
+13.18.14      .         .        +INF    325.151      
+13.18.15      .         .        +INF    325.151      
+13.18.16      .         .        +INF    325.151      
+13.18.17      .         .        +INF    325.151      
+13.18.18      .         .        +INF    325.151      
+13.18.19      .         .        +INF    325.151      
+13.19.13      .         .        +INF    325.151      
+13.19.14      .         .        +INF    325.151      
+13.19.15      .         .        +INF    325.151      
+13.19.16      .         .        +INF    325.151      
+13.19.17      .         .        +INF    325.151      
+13.19.18      .         .        +INF    325.151      
+13.19.19      .         .        +INF    325.151      
+14.2 .13      .         .        +INF    325.351      
+14.2 .14      .         .        +INF    325.351      
+14.2 .15      .         .        +INF    325.351      
+14.2 .16      .         .        +INF    325.351      
+14.2 .17      .         .        +INF    325.351      
+14.2 .18      .         .        +INF    325.351      
+14.2 .19      .         .        +INF    325.351      
+14.3 .13      .         .        +INF    325.351      
+14.3 .14      .         .        +INF    325.351      
+14.3 .15      .         .        +INF    325.351      
+14.3 .16      .         .        +INF    325.351      
+14.3 .17      .         .        +INF    325.351      
+14.3 .18      .         .        +INF    325.351      
+14.3 .19      .         .        +INF    325.351      
+14.4 .13      .         .        +INF    325.351      
+14.4 .14      .         .        +INF    325.351      
+14.4 .15      .         .        +INF    325.351      
+14.4 .16      .         .        +INF    325.351      
+14.4 .17      .         .        +INF    325.351      
+14.4 .18      .         .        +INF    325.351      
+14.4 .19      .         .        +INF    325.351      
+14.13.13      .         .        +INF    325.351      
+14.13.14      .         .        +INF    325.351      
+14.13.15      .         .        +INF    325.351      
+14.13.16      .         .        +INF    325.351      
+14.13.17      .         .        +INF    325.351      
+14.13.18      .         .        +INF    325.351      
+14.13.19      .         .        +INF    325.351      
+14.15.13      .         .        +INF    325.351      
+14.15.14      .         .        +INF    325.351      
+14.15.15      .         .        +INF    325.351      
+14.15.16      .         .        +INF    325.351      
+14.15.17      .         .        +INF    325.351      
+14.15.18      .         .        +INF    325.351      
+14.15.19      .         .        +INF    325.351      
+14.19.13      .         .        +INF    325.351      
+14.19.14      .         .        +INF    325.351      
+14.19.15      .         .        +INF    325.351      
+14.19.16      .         .        +INF    325.351      
+14.19.17      .         .        +INF    325.351      
+14.19.18      .         .        +INF    325.351      
+14.19.19      .         .        +INF    325.351      
+15.4 .13      .         .        +INF    304.786      
+15.4 .14      .         .        +INF    304.786      
+15.4 .15      .         .        +INF    304.786      
+15.4 .16      .         .        +INF    304.786      
+15.4 .17      .         .        +INF    304.786      
+15.4 .18      .         .        +INF    304.786      
+15.4 .19      .         .        +INF    304.786      
+15.5 .13      .         .        +INF    304.786      
+15.5 .14      .         .        +INF    304.786      
+15.5 .15      .         .        +INF    304.786      
+15.5 .16      .         .        +INF    304.786      
+15.5 .17      .         .        +INF    304.786      
+15.5 .18      .         .        +INF    304.786      
+15.5 .19      .         .        +INF    304.786      
+15.6 .13      .         .        +INF    304.786      
+15.6 .14      .         .        +INF    304.786      
+15.6 .15      .         .        +INF    304.786      
+15.6 .16      .         .        +INF    304.786      
+15.6 .17      .         .        +INF    304.786      
+15.6 .18      .         .        +INF    304.786      
+15.6 .19      .         .        +INF    304.786      
+15.14.13      .         .        +INF    304.786      
+15.14.14      .         .        +INF    304.786      
+15.14.15      .         .        +INF    304.786      
+15.14.16      .         .        +INF    304.786      
+15.14.17      .         .        +INF    304.786      
+15.14.18      .         .        +INF    304.786      
+15.14.19      .         .        +INF    304.786      
+15.16.13      .         .        +INF    304.786      
+15.16.14      .         .        +INF    304.786      
+15.16.15      .         .        +INF    304.786      
+15.16.16      .         .        +INF    304.786      
+15.16.17      .         .        +INF    304.786      
+15.16.18      .         .        +INF    304.786      
+15.16.19      .         .        +INF    304.786      
+15.19.13      .         .        +INF    304.786      
+15.19.14      .         .        +INF    304.786      
+15.19.15      .         .        +INF    304.786      
+15.19.16      .         .        +INF    304.786      
+15.19.17      .         .        +INF    304.786      
+15.19.18      .         .        +INF    304.786      
+15.19.19      .         .        +INF    304.786      
+16.6 .13      .         .        +INF    304.786      
+16.6 .14      .         .        +INF    304.786      
+16.6 .15      .         .        +INF    304.786      
+16.6 .16      .         .        +INF    304.786      
+16.6 .17      .         .        +INF    304.786      
+16.6 .18      .         .        +INF    304.786      
+16.6 .19      .         .        +INF    304.786      
+16.7 .13      .         .        +INF    304.786      
+16.7 .14      .         .        +INF    304.786      
+16.7 .15      .         .        +INF    304.786      
+16.7 .16      .         .        +INF    304.786      
+16.7 .17      .         .        +INF    304.786      
+16.7 .18      .         .        +INF    304.786      
+16.7 .19      .         .        +INF    304.786      
+16.8 .13      .         .        +INF    304.786      
+16.8 .14      .         .        +INF    304.786      
+16.8 .15      .         .        +INF    304.786      
+16.8 .16      .         .        +INF    304.786      
+16.8 .17      .         .        +INF    304.786      
+16.8 .18      .         .        +INF    304.786      
+16.8 .19      .         .        +INF    304.786      
+16.15.13      .         .        +INF    304.786      
+16.15.14      .         .        +INF    304.786      
+16.15.15      .         .        +INF    304.786      
+16.15.16      .         .        +INF    304.786      
+16.15.17      .         .        +INF    304.786      
+16.15.18      .         .        +INF    304.786      
+16.15.19      .         .        +INF    304.786      
+16.17.13      .         .        +INF    304.786      
+16.17.14      .         .        +INF    304.786      
+16.17.15      .         .        +INF    304.786      
+16.17.16      .         .        +INF    304.786      
+16.17.17      .         .        +INF    304.786      
+16.17.18      .         .        +INF    304.786      
+16.17.19      .         .        +INF    304.786      
+16.19.13      .         .        +INF    304.786      
+16.19.14      .         .        +INF    304.786      
+16.19.15      .         .        +INF    304.786      
+16.19.16      .         .        +INF    304.786      
+16.19.17      .         .        +INF    304.786      
+16.19.18      .         .        +INF    304.786      
+16.19.19      .         .        +INF    304.786      
+17.8 .13      .         .        +INF    304.786      
+17.8 .14      .         .        +INF    304.786      
+17.8 .15      .         .        +INF    304.786      
+17.8 .16      .         .        +INF    304.786      
+17.8 .17      .         .        +INF    304.786      
+17.8 .18      .         .        +INF    304.786      
+17.8 .19      .         .        +INF    304.786      
+17.9 .13      .         .        +INF    304.786      
+17.9 .14      .         .        +INF    304.786      
+17.9 .15      .         .        +INF    304.786      
+17.9 .16      .         .        +INF    304.786      
+17.9 .17      .         .        +INF    304.786      
+17.9 .18      .         .        +INF    304.786      
+17.9 .19      .         .        +INF    304.786      
+17.10.13      .         .        +INF    304.786      
+17.10.14      .         .        +INF    304.786      
+17.10.15      .         .        +INF    304.786      
+17.10.16      .         .        +INF    304.786      
+17.10.17      .         .        +INF    304.786      
+17.10.18      .         .        +INF    304.786      
+17.10.19      .         .        +INF    304.786      
+17.16.13      .         .        +INF    304.786      
+17.16.14      .         .        +INF    304.786      
+17.16.15      .         .        +INF    304.786      
+17.16.16      .         .        +INF    304.786      
+17.16.17      .         .        +INF    304.786      
+17.16.18      .         .        +INF    304.786      
+17.16.19      .         .        +INF    304.786      
+17.18.13      .         .        +INF    304.786      
+17.18.14      .         .        +INF    304.786      
+17.18.15      .         .        +INF    304.786      
+17.18.16      .         .        +INF    304.786      
+17.18.17      .         .        +INF    304.786      
+17.18.18      .         .        +INF    304.786      
+17.18.19      .         .        +INF    304.786      
+17.19.13      .         .        +INF    304.786      
+17.19.14      .         .        +INF    304.786      
+17.19.15      .         .        +INF    304.786      
+17.19.16      .         .        +INF    304.786      
+17.19.17      .         .        +INF    304.786      
+17.19.18      .         .        +INF    304.786      
+17.19.19      .         .        +INF    304.786      
+18.10.13      .         .        +INF    304.786      
+18.10.14      .         .        +INF    304.786      
+18.10.15      .         .        +INF    304.786      
+18.10.16      .         .        +INF    304.786      
+18.10.17      .         .        +INF    304.786      
+18.10.18      .         .        +INF    304.786      
+18.10.19      .         .        +INF    304.786      
+18.11.13      .         .        +INF    304.786      
+18.11.14      .         .        +INF    304.786      
+18.11.15      .         .        +INF    304.786      
+18.11.16      .         .        +INF    304.786      
+18.11.17      .         .        +INF    304.786      
+18.11.18      .         .        +INF    304.786      
+18.11.19      .         .        +INF    304.786      
+18.12.13      .         .        +INF    304.786      
+18.12.14      .         .        +INF    304.786      
+18.12.15      .         .        +INF    304.786      
+18.12.16      .         .        +INF    304.786      
+18.12.17      .         .        +INF    304.786      
+18.12.18      .         .        +INF    304.786      
+18.12.19      .         .        +INF    304.786      
+18.13.13      .         .        +INF    304.786      
+18.13.14      .         .        +INF    304.786      
+18.13.15      .         .        +INF    304.786      
+18.13.16      .         .        +INF    304.786      
+18.13.17      .         .        +INF    304.786      
+18.13.18      .         .        +INF    304.786      
+18.13.19      .         .        +INF    304.786      
+18.17.13      .         .        +INF    304.786      
+18.17.14      .         .        +INF    304.786      
+18.17.15      .         .        +INF    304.786      
+18.17.16      .         .        +INF    304.786      
+18.17.17      .         .        +INF    304.786      
+18.17.18      .         .        +INF    304.786      
+18.17.19      .         .        +INF    304.786      
+18.19.13      .         .        +INF    304.786      
+18.19.14      .         .        +INF    304.786      
+18.19.15      .         .        +INF    304.786      
+18.19.16      .         .        +INF    304.786      
+18.19.17      .         .        +INF    304.786      
+18.19.18      .         .        +INF    304.786      
+18.19.19      .         .        +INF    304.786      
+19.13.13      .         .        +INF    243.307      
+19.13.14      .         .        +INF    243.307      
+19.13.15      .         .        +INF    243.307      
+19.13.16      .         .        +INF    243.307      
+19.13.17      .         .        +INF    243.307      
+19.13.18      .         .        +INF    243.307      
+19.13.19      .         .        +INF    243.307      
+19.14.13      .         .        +INF    243.307      
+19.14.14      .         .        +INF    243.307      
+19.14.15      .         .        +INF    243.307      
+19.14.16      .         .        +INF    243.307      
+19.14.17      .         .        +INF    243.307      
+19.14.18      .         .        +INF    243.307      
+19.14.19      .         .        +INF    243.307      
+19.15.13      .         .        +INF    243.307      
+19.15.14      .         .        +INF    243.307      
+19.15.15      .         .        +INF    243.307      
+19.15.16      .         .        +INF    243.307      
+19.15.17      .         .        +INF    243.307      
+19.15.18      .         .        +INF    243.307      
+19.15.19      .         .        +INF    243.307      
+19.16.13      .         .        +INF    243.307      
+19.16.14      .         .        +INF    243.307      
+19.16.15      .         .        +INF    243.307      
+19.16.16      .         .        +INF    243.307      
+19.16.17      .         .        +INF    243.307      
+19.16.18      .         .        +INF    243.307      
+19.16.19      .         .        +INF    243.307      
+19.17.13      .         .        +INF    243.307      
+19.17.14      .         .        +INF    243.307      
+19.17.15      .         .        +INF    243.307      
+19.17.16      .         .        +INF    243.307      
+19.17.17      .         .        +INF    243.307      
+19.17.18      .         .        +INF    243.307      
+19.17.19      .         .        +INF    243.307      
+19.18.13      .         .        +INF    243.307      
+19.18.14      .         .        +INF    243.307      
+19.18.15      .         .        +INF    243.307      
+19.18.16      .         .        +INF    243.307      
+19.18.17      .         .        +INF    243.307      
+19.18.18      .         .        +INF    243.307      
+19.18.19      .         .        +INF    243.307      
+
+---- VAR tau0  the minimum travel time from region i to destination
+
+         LOWER     LEVEL     UPPER    MARGINAL
+
+1 .13      .         .        +INF       .         
+1 .14      .         .        +INF       .         
+1 .15      .         .        +INF       .         
+1 .16      .         .        +INF       .         
+1 .17      .         .        +INF       .         
+1 .18      .         .        +INF       .         
+1 .19      .         .        +INF       .         
+2 .13      .         .        +INF       .         
+2 .14      .         .        +INF       .         
+2 .15      .         .        +INF       .         
+2 .16      .         .        +INF       .         
+2 .17      .         .        +INF       .         
+2 .18      .         .        +INF       .         
+2 .19      .         .        +INF       .         
+3 .13      .         .        +INF       .         
+3 .14      .         .        +INF       .         
+3 .15      .         .        +INF       .         
+3 .16      .         .        +INF       .         
+3 .17      .         .        +INF       .         
+3 .18      .         .        +INF       .         
+3 .19      .         .        +INF       .         
+4 .13      .         .        +INF       .         
+4 .14      .         .        +INF       .         
+4 .15      .         .        +INF       .         
+4 .16      .         .        +INF       .         
+4 .17      .         .        +INF       .         
+4 .18      .         .        +INF       .         
+4 .19      .         .        +INF       .         
+5 .13      .         .        +INF       .         
+5 .14      .         .        +INF       .         
+5 .15      .         .        +INF       .         
+5 .16      .         .        +INF       .         
+5 .17      .         .        +INF       .         
+5 .18      .         .        +INF       .         
+5 .19      .         .        +INF       .         
+6 .13      .         .        +INF       .         
+6 .14      .         .        +INF       .         
+6 .15      .         .        +INF       .         
+6 .16      .         .        +INF       .         
+6 .17      .         .        +INF       .         
+6 .18      .         .        +INF       .         
+6 .19      .         .        +INF       .         
+7 .13      .         .        +INF       .         
+7 .14      .         .        +INF       .         
+7 .15      .         .        +INF       .         
+7 .16      .         .        +INF       .         
+7 .17      .         .        +INF       .         
+7 .18      .         .        +INF       .         
+7 .19      .         .        +INF       .         
+8 .13      .         .        +INF       .         
+8 .14      .         .        +INF       .         
+8 .15      .         .        +INF       .         
+8 .16      .         .        +INF       .         
+8 .17      .         .        +INF       .         
+8 .18      .         .        +INF       .         
+8 .19      .         .        +INF       .         
+9 .13      .         .        +INF       .         
+9 .14      .         .        +INF       .         
+9 .15      .         .        +INF       .         
+9 .16      .         .        +INF       .         
+9 .17      .         .        +INF       .         
+9 .18      .         .        +INF       .         
+9 .19      .         .        +INF       .         
+10.13      .         .        +INF       .         
+10.14      .         .        +INF       .         
+10.15      .         .        +INF       .         
+10.16      .         .        +INF       .         
+10.17      .         .        +INF       .         
+10.18      .         .        +INF       .         
+10.19      .         .        +INF       .         
+11.13      .         .        +INF       .         
+11.14      .         .        +INF       .         
+11.15      .         .        +INF       .         
+11.16      .         .        +INF       .         
+11.17      .         .        +INF       .         
+11.18      .         .        +INF       .         
+11.19      .         .        +INF       .         
+12.13      .         .        +INF       .         
+12.14      .         .        +INF       .         
+12.15      .         .        +INF       .         
+12.16      .         .        +INF       .         
+12.17      .         .        +INF       .         
+12.18      .         .        +INF       .         
+12.19      .         .        +INF       .         
+13.13      .         .         .         EPS       
+13.14      .         .        +INF       .         
+13.15      .         .        +INF       .         
+13.16      .         .        +INF       .         
+13.17      .         .        +INF       .         
+13.18      .         .        +INF       .         
+13.19      .         .        +INF       .         
+14.13      .         .        +INF       .         
+14.14      .         .         .         EPS       
+14.15      .         .        +INF       .         
+14.16      .         .        +INF       .         
+14.17      .         .        +INF       .         
+14.18      .         .        +INF       .         
+14.19      .         .        +INF       .         
+15.13      .         .        +INF       .         
+15.14      .         .        +INF       .         
+15.15      .         .         .         EPS       
+15.16      .         .        +INF       .         
+15.17      .         .        +INF       .         
+15.18      .         .        +INF       .         
+15.19      .         .        +INF       .         
+16.13      .         .        +INF       .         
+16.14      .         .        +INF       .         
+16.15      .         .        +INF       .         
+16.16      .         .         .         EPS       
+16.17      .         .        +INF       .         
+16.18      .         .        +INF       .         
+16.19      .         .        +INF       .         
+17.13      .         .        +INF       .         
+17.14      .         .        +INF       .         
+17.15      .         .        +INF       .         
+17.16      .         .        +INF       .         
+17.17      .         .         .         EPS       
+17.18      .         .        +INF       .         
+17.19      .         .        +INF       .         
+18.13      .         .        +INF       .         
+18.14      .         .        +INF       .         
+18.15      .         .        +INF       .         
+18.16      .         .        +INF       .         
+18.17      .         .        +INF       .         
+18.18      .         .         .         EPS       
+18.19      .         .        +INF       .         
+19.13      .         .        +INF       .         
+19.14      .         .        +INF       .         
+19.15      .         .        +INF       .         
+19.16      .         .        +INF       .         
+19.17      .         .        +INF       .         
+19.18      .         .        +INF       .         
+19.19      .         .         .         EPS       
+
+
+**** REPORT SUMMARY :        0     NONOPT
+                             0 INFEASIBLE
+                             0  UNBOUNDED
+                             0  REDEFINED
+                             0     ERRORS
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows 12/07/21 14:49:57 Page 7
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+E x e c u t i o n
+
+
+EXECUTION TIME       =        0.016 SECONDS      3 MB  24.9.2 r64480 WEX-WEI
+
+
+USER: Small MUD - 5 User License                     G161020:1349AO-WIN
+      University of Washington, Seattle, Civil and EnvironmentalDC12815
+      License for teaching and research at degree granting institutions
+
+
+**** FILE SUMMARY
+
+Input      D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\DQ_main_19_hexagon_regions_multi_ds_
+           no_control_1012.gms
+Output     D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\DQ_main_19_hexagon_regions_multi_ds_
+           no_control_1012.lst

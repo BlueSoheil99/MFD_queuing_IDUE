@@ -1,3 +1,27 @@
 B 2 C o m p i l a t i o n
-B 289 Error Messages
-B 298 Include File Summary
+B 273 Include File Summary
+B 290 Equation Listing    SOLVE mfd Using MCP From line 242
+D 291 theta_com
+D 897 eta_com
+D 1502 y_com
+D 1841 lamda_com
+D 2012 mu_com
+B 2185 Column Listing      SOLVE mfd Using MCP From line 242
+E 2186 theta
+E 2591 eta
+E 3675 y
+E 4098 lamda
+E 4437 mu
+B 4778 Model Statistics    SOLVE mfd Using MCP From line 242
+B 4796 Solution Report     SOLVE mfd Using MCP From line 242
+F 4821 theta_com
+F 5414 eta_com
+F 5552 y_com
+F 5641 lamda_com
+F 5730 mu_com
+G 5814 theta
+G 6407 eta
+G 6545 y
+G 6634 lamda
+G 6723 mu
+B 6822 E x e c u t i o n

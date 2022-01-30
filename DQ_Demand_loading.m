@@ -4,7 +4,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% parameter setting
 T = 1;          % simulate time interval (s)
-N = 7200;       % simulate steps
+N = 8000;       % simulate steps
 cut = 2700;     % demand stop time
 % cut = 1800;     % demand stop time
 num_reg = 19;   % region number

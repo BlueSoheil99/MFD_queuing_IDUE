@@ -1,7 +1,7 @@
 clear
 clc
 %% Mode
-limit_n = [20000];
+limit_n = [5300];
 %demand_choice = [0.3, 0.3, 0.2]; % 0.275, 0.275, 0.2]; %0.3, 0.2, 0.1];
 % demand_choice = [0.3, 0.3, 0.2; 0.275, 0.275, 0.2; 0.25, 0.25, 0.2];
 % demand_choice =[0.3, 0.25, 0.15; 0.325, 0.275, 0.15; 0.275, 0.225, 0.15];
@@ -13,7 +13,7 @@ limit_n = [20000];
 demand_choice =[0.35, 0.25, 0.15; 0.3, 0.25, 0.15];
 demand_choice =[0.3, 0.25, 0.15];
 
-queueType = 'DQ-reduceCbar'; % PQ; DQ
+queueType = 'PQ'; % DQ
 
 for ite_num =1:1:length(limit_n)
     for ite_dem =1:1:size(demand_choice,1)
@@ -55,19 +55,11 @@ for ite_num =1:1:length(limit_n)
 
         filename = '';
         if strcmp(queueType,'DQ')
-            run DQ_MFD_noControl_19_hexagon_regions_multi_destinations_new.m
+            run DQ_MFD_noControl_19_hexagon_regions_multi_destinations.m
             filename = strcat('n_19_hexagon_regions_multi_ds_withdemand_7200_',num2str(ite_dem+1),'_', num2str(limit_n(ite_num)),'_DQ.mat');
-        elseif strcmp(queueType,'DQ-reduceCbar')
-            run DQ_MFD_noControl_19_hexagon_regions_multi_destinations_reduceCb.m
-            filename = strcat('n_19_hexagon_regions_multi_ds_withdemand_8000_',num2str(ite_dem+1),'_', num2str(limit_n(ite_num)),'_DQ_Reduce.mat');
         elseif strcmp(queueType,'PQ')
-            % !!!change network_19_hexagon_regions_multi_ds_1012.gms
             run PQ_MFD_Control_19_hexagon_regions_multi_destinations.m
-            filename = strcat('n_19_hexagon_regions_multi_ds_withdemand_7200_',num2str(ite_dem+1),'_', num2str(limit_n(ite_num)),'_PQ_RawCb.mat');
-        elseif strcmp(queueType,'PQ-reduceCbar')
-            % !!!change network_19_hexagon_regions_multi_ds_1012.gms
-            run PQ_MFD_Control_19_hexagon_regions_multi_destinations.m
-            filename = strcat('n_19_hexagon_regions_multi_ds_withdemand_7200_',num2str(ite_dem+1),'_', num2str(limit_n(ite_num)),'_PQ_Reduce.mat');
+            filename = strcat('n_19_hexagon_regions_multi_ds_withdemand_7200_',num2str(ite_dem+1),'_', num2str(limit_n(ite_num)),'_PQ.mat');
         end
 
         save(filename)

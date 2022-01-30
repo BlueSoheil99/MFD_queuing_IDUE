@@ -12,12 +12,13 @@ set coff 'cofficient set' / m3, m2, m1, length, n_bar, m0/;
 parameter
          n(i,d) 'vehicle numbers in region i with destination d',
          qD(i,j,d) 'downstream queued vehicle numbers at the boundary of (i,j) with destination d',
+         v(i,j,d) 'region-inflow of region j from region i for vehicles with destination d',
          demand(i,d) 'demand from region i to d',
          MFD_Para(i, coff) 'cost parameter table'
          tau0BZ(i,j) 'minimum travel time in buffer zone (i,j)';
 
 $GDXIN MtoG2
-$LOAD n qD demand MFD_Para tau0BZ
+$LOAD n qD v demand MFD_Para tau0BZ
 
 MFD_Para(j, 'm3')$(sum(d2, n(j,d2))>10000)=0;
 MFD_Para(j, 'm2')$(sum(d2, n(j,d2))>10000)=0;

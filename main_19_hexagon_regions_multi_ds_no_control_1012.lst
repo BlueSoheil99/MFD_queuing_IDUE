@@ -1,0 +1,4853 @@
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                 12/25/21 16:53:14 Page 1
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+      This is the implementation of the MFD based perimeter control considering Instanteneous Dynamic User Equilibrium (DCS part)
+      Given the vehicle number, queue length, and demand profiles, this program aims to find the shortest paths and assign the traffic accordingly
+      July 26th, Qiangqiang Guo
+   6   
+   7  * settings and import parameters
+   8  option limrow = 300, limcol = 100, solprint = on;
+   9   
+INCLUDE    D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\network_19_hexagon_regions_multi_ds_1012.gms
+      Network configuration data file
+      region and link sets are defined in this file, together with the data needed to define the MFD function
+  15   
+  16  set nodes 'nodes set' /1*19/;
+  17  alias(nodes, i, j, h, k);
+  18  set desti(i) 'destination set' /13, 14, 15, 16, 17, 18, 19/;
+  19  alias(desti, d, d2);
+  20  set coff 'cofficient set' / m3, m2, m1, length, n_bar, m0/;
+  21   
+  22  parameter
+  23           n(i,d) 'vehicle numbers in region i with destination d',
+  24           q(i,j,d) 'queued vehicle numbers at the boundary of (i,j) with destination d',
+  25           v(i,j,d) 'region-inflow of region j from region i for vehicles with destination d',
+  26           demand(i,d) 'demand from region i to d',
+  27           MFD_Para(i, coff) 'cost parameter table';
+  28   
+GDXIN   D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\MtoG2.gdx
+--- LOAD  n = 1:n
+--- LOAD  q = 2:q
+--- LOAD  v = 3:v
+--- LOAD  demand = 4:demand
+--- LOAD  MFD_Para = 5:MFD_Para
+  31   
+  32  MFD_Para(j, 'm3')$(sum(d2, n(j,d2))>10000)=0;
+  33  MFD_Para(j, 'm2')$(sum(d2, n(j,d2))>10000)=0;
+  34  MFD_Para(j, 'm1')$(sum(d2, n(j,d2))>10000)=0;
+  35  MFD_Para(j, 'm0')$(sum(d2, n(j,d2))>10000)=4256;
+  36   
+  37  parameter u_bar(i,j) 'the control limit at boundary (i,j)'
+  38  /
+  39  1.2   3
+  40  1.12  3
+  41  1.13  3
+  42  2.1   3
+  43  2.3   3
+  44  2.13  3
+  45  2.14  3
+  46  3.2   3
+  47  3.4   3
+  48  3.14  3
+  49  4.3   3
+  50  4.5   3
+  51  4.14  3
+  52  4.15  3
+  53  5.4   3
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                 12/25/21 16:53:14 Page 2
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+  54  5.6   3
+  55  5.15  3
+  56  6.5   3
+  57  6.7   3
+  58  6.15  3
+  59  6.16  3
+  60  7.6   3
+  61  7.8   3
+  62  7.16  3
+  63  8.7   3
+  64  8.9   3
+  65  8.16  3
+  66  8.17  3
+  67  9.8   3
+  68  9.10  3
+  69  9.17  3
+  70  10.9  3
+  71  10.11 3
+  72  10.17 3
+  73  10.18 3
+  74  11.10 3
+  75  11.12 3
+  76  11.18 3
+  77  12.1  3
+  78  12.11 3
+  79  12.13 3
+  80  12.18 3
+  81  13.1  3
+  82  13.2  3
+  83  13.12 3
+  84  13.14 4
+  85  13.18 4
+  86  13.19 5
+  87  14.2  3
+  88  14.3  3
+  89  14.4  3
+  90  14.13 4
+  91  14.15 4
+  92  14.19 4
+  93  15.4  3
+  94  15.5  3
+  95  15.6  3
+  96  15.14 4
+  97  15.16 4
+  98  15.19 5
+  99  16.6  3
+ 100  16.7  3
+ 101  16.8  3
+ 102  16.15 4
+ 103  16.17 5
+ 104  16.19 5
+ 105  17.8  3
+ 106  17.9  3
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                 12/25/21 16:53:14 Page 3
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+ 107  17.10 3
+ 108  17.16 4
+ 109  17.18 4
+ 110  17.19 5
+ 111  18.10 3
+ 112  18.11 3
+ 113  18.12 3
+ 114  18.13 4
+ 115  18.17 4
+ 116  18.19 5
+ 117  19.13 5
+ 118  19.14 5
+ 119  19.15 5
+ 120  19.16 5
+ 121  19.17 5
+ 122  19.18 5
+ 123  /;
+ 124   
+ 125  set region_communi(i,j) /
+ 126  1.2
+ 127  1.12
+ 128  1.13
+ 129  2.1
+ 130  2.3
+ 131  2.13
+ 132  2.14
+ 133  3.2
+ 134  3.4
+ 135  3.14
+ 136  4.3
+ 137  4.5
+ 138  4.14
+ 139  4.15
+ 140  5.4
+ 141  5.6
+ 142  5.15
+ 143  6.5
+ 144  6.7
+ 145  6.15
+ 146  6.16
+ 147  7.6
+ 148  7.8
+ 149  7.16
+ 150  8.7
+ 151  8.9
+ 152  8.16
+ 153  8.17
+ 154  9.8
+ 155  9.10
+ 156  9.17
+ 157  10.9
+ 158  10.11
+ 159  10.17
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                 12/25/21 16:53:14 Page 4
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+ 160  10.18
+ 161  11.10
+ 162  11.12
+ 163  11.18
+ 164  12.1
+ 165  12.11
+ 166  12.13
+ 167  12.18
+ 168  13.1
+ 169  13.2
+ 170  13.12
+ 171  13.14
+ 172  13.18
+ 173  13.19
+ 174  14.2
+ 175  14.3
+ 176  14.4
+ 177  14.13
+ 178  14.15
+ 179  14.19
+ 180  15.4
+ 181  15.5
+ 182  15.6
+ 183  15.14
+ 184  15.16
+ 185  15.19
+ 186  16.6
+ 187  16.7
+ 188  16.8
+ 189  16.15
+ 190  16.17
+ 191  16.19
+ 192  17.8
+ 193  17.9
+ 194  17.10
+ 195  17.16
+ 196  17.18
+ 197  17.19
+ 198  18.10
+ 199  18.11
+ 200  18.12
+ 201  18.13
+ 202  18.17
+ 203  18.19
+ 204  19.13
+ 205  19.14
+ 206  19.15
+ 207  19.16
+ 208  19.17
+ 209  19.18
+ 210  /;
+ 211   
+ 212  *variables
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                 12/25/21 16:53:14 Page 5
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+ 213  nonnegative variable
+ 214           p(i,j,d) 'the queue inflow of the boundary (i,j)',
+ 215           eta(i,d) 'the minimum travel time from region i to destination',
+ 216           y(i,j) 'auxiliary variable for u(i,j)',
+ 217           lamda(i,j) 'auxiliary variable for u(i,j)',
+ 218           mu(i,j) 'auxiliary variable for u(i,j)' ;
+ 219   
+ 220  equations
+ 221           p_com(i,j,d) 'the complimentary term of p(i,j,d)',
+ 222           eta_com(i,d) 'the complimentary term of eta(i,d)',
+ 223           y_com(i,j) 'the complimentary term of y(i,j)',
+ 224           lamda_com(i,j) 'the complimentary term of lamda(i,j)',
+ 225           mu_com(i,j) 'the complimentary term of mu(i,j)';
+ 226   
+ 227   
+ 228  * the DCS formulation
+ 229  p_com(i,j,d)$region_communi(i,j) ..              MFD_Para(j, 'length')*sum(d2, n(j,d2))/(MFD_Para(j, 'm3')*power(sum(d2, n(j,d2)),3)+MFD_Para(j, 'm2')*power(sum(d2, n(j,d2)),2)+MFD_Para(j, 'm1')*sum(d2, n(j,d2)) + MFD_Para(j, 'm0'))+ sum(d2, q(i,j,d
+      2))/(y(i,j)*(MFD_Para(j, 'n_bar')-sum(d2, n(j,d2)))+0.0001)+eta(j,d)-eta(i,d) =g= 0;
+ 230  eta_com(i,d)..                                   sum(region_communi(i,j), p(i,j,d))-(MFD_Para(i, 'm3')*power(sum(d2, n(i,d2)),3)+MFD_Para(i, 'm2')*power(sum(d2, n(i,d2)),2)+MFD_Para(i, 'm1')*sum(d2, n(i,d2)) + MFD_Para(i, 'm0'))/sum(d2, n(i,d2))*n(i
+      ,d)/MFD_Para(i, 'length') =g= 0;
+ 231  *eta_com(i,d)..                                   (MFD_Para(i, 'm3')*power(sum(d2, n(i,d2)),3)+MFD_Para(i, 'm2')*power(sum(d2, n(i,d2)),2)+MFD_Para(i, 'm1')*sum(d2, n(i,d2)) + MFD_Para(i, 'm0'))/sum(d2, n(i,d2))*n(i,d)/MFD_Para(i, 'length') - sum(re
+      gion_communi(i,j), p(i,j,d))=g= 0;
+ 232  y_com(i,j)$region_communi(i,j)..                 (lamda(i,j)-mu(i,j)-1)*(MFD_Para(j, 'n_bar')-sum(d2, n(j,d2))) =g= 0;
+ 233  lamda_com(i,j)$region_communi(i,j)..             u_bar(i,j)-y(i,j)*(MFD_Para(j, 'n_bar')-sum(d2, n(j,d2))) =g= 0;
+ 234  mu_com(i,j)$region_communi(i,j)..                y(i,j)*(MFD_Para(j, 'n_bar')-sum(d2, n(j,d2))) =g= 0;
+ 235   
+ 236  eta.fx(i,d)$(sameas(i,d))=0;
+ 237   
+ 238  * solve the problem
+ 239  model mfd / p_com.p, eta_com.eta, y_com.y, lamda_com.lamda, mu_com.mu /;
+ 240  solve mfd using mcp
+ 241   
+ 242  scalar Umodstat, Usolstat,Tmodstat, Tsolstat;
+ 243  Umodstat = mfd.Modelstat;
+ 244  Usolstat = mfd.solvestat;
+
+**** LIST OF STRAY NAMES - CHECK DECLARATIONS FOR SPURIOUS COMMAS
+**** STRAY NAME Tmodstat OF TYPE PARAM
+**** STRAY NAME Tsolstat OF TYPE PARAM
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                 12/25/21 16:53:14 Page 6
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Include File Summary
+
+
+   SEQ   GLOBAL TYPE      PARENT   LOCAL  FILENAME
+
+     1        1 INPUT          0       0  D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\main_19_hexagon_regions_multi_ds_no_control_1012.gms
+     2       10 INCLUDE        1      10  .D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\network_19_hexagon_regions_multi_ds_1012.gms
+     3       29 GDXIN          2      19  .D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\MtoG2.gdx
+
+
+COMPILATION TIME     =        0.000 SECONDS      3 MB  24.9.2 r64480 WEX-WEI
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                 12/25/21 16:53:14 Page 7
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE mfd Using MCP From line 242
+
+
+---- p_com  =G=  the complimentary term of p(i,j,d)
+
+p_com(1,2,13)..  - eta(1,13) + eta(2,13) =G= 0 ; (LHS = 0)
+     
+p_com(1,2,14)..  - eta(1,14) + eta(2,14) =G= 0 ; (LHS = 0)
+     
+p_com(1,2,15)..  - eta(1,15) + eta(2,15) =G= 0 ; (LHS = 0)
+     
+p_com(1,2,16)..  - eta(1,16) + eta(2,16) =G= 0 ; (LHS = 0)
+     
+p_com(1,2,17)..  - eta(1,17) + eta(2,17) =G= 0 ; (LHS = 0)
+     
+p_com(1,2,18)..  - eta(1,18) + eta(2,18) =G= 0 ; (LHS = 0)
+     
+p_com(1,2,19)..  - eta(1,19) + eta(2,19) =G= 0 ; (LHS = 0)
+     
+p_com(1,12,13)..  - eta(1,13) + eta(12,13) =G= 0 ; (LHS = 0)
+     
+p_com(1,12,14)..  - eta(1,14) + eta(12,14) =G= 0 ; (LHS = 0)
+     
+p_com(1,12,15)..  - eta(1,15) + eta(12,15) =G= 0 ; (LHS = 0)
+     
+p_com(1,12,16)..  - eta(1,16) + eta(12,16) =G= 0 ; (LHS = 0)
+     
+p_com(1,12,17)..  - eta(1,17) + eta(12,17) =G= 0 ; (LHS = 0)
+     
+p_com(1,12,18)..  - eta(1,18) + eta(12,18) =G= 0 ; (LHS = 0)
+     
+p_com(1,12,19)..  - eta(1,19) + eta(12,19) =G= 0 ; (LHS = 0)
+     
+p_com(1,13,13)..  - eta(1,13) + eta(13,13) =G= 0 ; (LHS = 0)
+     
+p_com(1,13,14)..  - eta(1,14) + eta(13,14) =G= 0 ; (LHS = 0)
+     
+p_com(1,13,15)..  - eta(1,15) + eta(13,15) =G= 0 ; (LHS = 0)
+     
+p_com(1,13,16)..  - eta(1,16) + eta(13,16) =G= 0 ; (LHS = 0)
+     
+p_com(1,13,17)..  - eta(1,17) + eta(13,17) =G= 0 ; (LHS = 0)
+     
+p_com(1,13,18)..  - eta(1,18) + eta(13,18) =G= 0 ; (LHS = 0)
+     
+p_com(1,13,19)..  - eta(1,19) + eta(13,19) =G= 0 ; (LHS = 0)
+     
+p_com(2,1,13)..  eta(1,13) - eta(2,13) =G= 0 ; (LHS = 0)
+     
+p_com(2,1,14)..  eta(1,14) - eta(2,14) =G= 0 ; (LHS = 0)
+     
+p_com(2,1,15)..  eta(1,15) - eta(2,15) =G= 0 ; (LHS = 0)
+     
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                 12/25/21 16:53:14 Page 8
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE mfd Using MCP From line 242
+
+
+     p_com  =G=  the complimentary term of p(i,j,d)
+
+p_com(2,1,16)..  eta(1,16) - eta(2,16) =G= 0 ; (LHS = 0)
+     
+p_com(2,1,17)..  eta(1,17) - eta(2,17) =G= 0 ; (LHS = 0)
+     
+p_com(2,1,18)..  eta(1,18) - eta(2,18) =G= 0 ; (LHS = 0)
+     
+p_com(2,1,19)..  eta(1,19) - eta(2,19) =G= 0 ; (LHS = 0)
+     
+p_com(2,3,13)..  - eta(2,13) + eta(3,13) =G= 0 ; (LHS = 0)
+     
+p_com(2,3,14)..  - eta(2,14) + eta(3,14) =G= 0 ; (LHS = 0)
+     
+p_com(2,3,15)..  - eta(2,15) + eta(3,15) =G= 0 ; (LHS = 0)
+     
+p_com(2,3,16)..  - eta(2,16) + eta(3,16) =G= 0 ; (LHS = 0)
+     
+p_com(2,3,17)..  - eta(2,17) + eta(3,17) =G= 0 ; (LHS = 0)
+     
+p_com(2,3,18)..  - eta(2,18) + eta(3,18) =G= 0 ; (LHS = 0)
+     
+p_com(2,3,19)..  - eta(2,19) + eta(3,19) =G= 0 ; (LHS = 0)
+     
+p_com(2,13,13)..  - eta(2,13) + eta(13,13) =G= 0 ; (LHS = 0)
+     
+p_com(2,13,14)..  - eta(2,14) + eta(13,14) =G= 0 ; (LHS = 0)
+     
+p_com(2,13,15)..  - eta(2,15) + eta(13,15) =G= 0 ; (LHS = 0)
+     
+p_com(2,13,16)..  - eta(2,16) + eta(13,16) =G= 0 ; (LHS = 0)
+     
+p_com(2,13,17)..  - eta(2,17) + eta(13,17) =G= 0 ; (LHS = 0)
+     
+p_com(2,13,18)..  - eta(2,18) + eta(13,18) =G= 0 ; (LHS = 0)
+     
+p_com(2,13,19)..  - eta(2,19) + eta(13,19) =G= 0 ; (LHS = 0)
+     
+p_com(2,14,13)..  - eta(2,13) + eta(14,13) =G= 0 ; (LHS = 0)
+     
+p_com(2,14,14)..  - eta(2,14) + eta(14,14) =G= 0 ; (LHS = 0)
+     
+p_com(2,14,15)..  - eta(2,15) + eta(14,15) =G= 0 ; (LHS = 0)
+     
+p_com(2,14,16)..  - eta(2,16) + eta(14,16) =G= 0 ; (LHS = 0)
+     
+p_com(2,14,17)..  - eta(2,17) + eta(14,17) =G= 0 ; (LHS = 0)
+     
+p_com(2,14,18)..  - eta(2,18) + eta(14,18) =G= 0 ; (LHS = 0)
+     
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                 12/25/21 16:53:14 Page 9
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE mfd Using MCP From line 242
+
+
+     p_com  =G=  the complimentary term of p(i,j,d)
+
+p_com(2,14,19)..  - eta(2,19) + eta(14,19) =G= 0 ; (LHS = 0)
+     
+p_com(3,2,13)..  eta(2,13) - eta(3,13) =G= 0 ; (LHS = 0)
+     
+p_com(3,2,14)..  eta(2,14) - eta(3,14) =G= 0 ; (LHS = 0)
+     
+p_com(3,2,15)..  eta(2,15) - eta(3,15) =G= 0 ; (LHS = 0)
+     
+p_com(3,2,16)..  eta(2,16) - eta(3,16) =G= 0 ; (LHS = 0)
+     
+p_com(3,2,17)..  eta(2,17) - eta(3,17) =G= 0 ; (LHS = 0)
+     
+p_com(3,2,18)..  eta(2,18) - eta(3,18) =G= 0 ; (LHS = 0)
+     
+p_com(3,2,19)..  eta(2,19) - eta(3,19) =G= 0 ; (LHS = 0)
+     
+p_com(3,4,13)..  - eta(3,13) + eta(4,13) =G= 0 ; (LHS = 0)
+     
+p_com(3,4,14)..  - eta(3,14) + eta(4,14) =G= 0 ; (LHS = 0)
+     
+p_com(3,4,15)..  - eta(3,15) + eta(4,15) =G= 0 ; (LHS = 0)
+     
+p_com(3,4,16)..  - eta(3,16) + eta(4,16) =G= 0 ; (LHS = 0)
+     
+p_com(3,4,17)..  - eta(3,17) + eta(4,17) =G= 0 ; (LHS = 0)
+     
+p_com(3,4,18)..  - eta(3,18) + eta(4,18) =G= 0 ; (LHS = 0)
+     
+p_com(3,4,19)..  - eta(3,19) + eta(4,19) =G= 0 ; (LHS = 0)
+     
+p_com(3,14,13)..  - eta(3,13) + eta(14,13) =G= 0 ; (LHS = 0)
+     
+p_com(3,14,14)..  - eta(3,14) + eta(14,14) =G= 0 ; (LHS = 0)
+     
+p_com(3,14,15)..  - eta(3,15) + eta(14,15) =G= 0 ; (LHS = 0)
+     
+p_com(3,14,16)..  - eta(3,16) + eta(14,16) =G= 0 ; (LHS = 0)
+     
+p_com(3,14,17)..  - eta(3,17) + eta(14,17) =G= 0 ; (LHS = 0)
+     
+p_com(3,14,18)..  - eta(3,18) + eta(14,18) =G= 0 ; (LHS = 0)
+     
+p_com(3,14,19)..  - eta(3,19) + eta(14,19) =G= 0 ; (LHS = 0)
+     
+p_com(4,3,13)..  eta(3,13) - eta(4,13) =G= 0 ; (LHS = 0)
+     
+p_com(4,3,14)..  eta(3,14) - eta(4,14) =G= 0 ; (LHS = 0)
+     
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 10
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE mfd Using MCP From line 242
+
+
+     p_com  =G=  the complimentary term of p(i,j,d)
+
+p_com(4,3,15)..  eta(3,15) - eta(4,15) =G= 0 ; (LHS = 0)
+     
+p_com(4,3,16)..  eta(3,16) - eta(4,16) =G= 0 ; (LHS = 0)
+     
+p_com(4,3,17)..  eta(3,17) - eta(4,17) =G= 0 ; (LHS = 0)
+     
+p_com(4,3,18)..  eta(3,18) - eta(4,18) =G= 0 ; (LHS = 0)
+     
+p_com(4,3,19)..  eta(3,19) - eta(4,19) =G= 0 ; (LHS = 0)
+     
+p_com(4,5,13)..  - eta(4,13) + eta(5,13) =G= 0 ; (LHS = 0)
+     
+p_com(4,5,14)..  - eta(4,14) + eta(5,14) =G= 0 ; (LHS = 0)
+     
+p_com(4,5,15)..  - eta(4,15) + eta(5,15) =G= 0 ; (LHS = 0)
+     
+p_com(4,5,16)..  - eta(4,16) + eta(5,16) =G= 0 ; (LHS = 0)
+     
+p_com(4,5,17)..  - eta(4,17) + eta(5,17) =G= 0 ; (LHS = 0)
+     
+p_com(4,5,18)..  - eta(4,18) + eta(5,18) =G= 0 ; (LHS = 0)
+     
+p_com(4,5,19)..  - eta(4,19) + eta(5,19) =G= 0 ; (LHS = 0)
+     
+p_com(4,14,13)..  - eta(4,13) + eta(14,13) =G= 0 ; (LHS = 0)
+     
+p_com(4,14,14)..  - eta(4,14) + eta(14,14) =G= 0 ; (LHS = 0)
+     
+p_com(4,14,15)..  - eta(4,15) + eta(14,15) =G= 0 ; (LHS = 0)
+     
+p_com(4,14,16)..  - eta(4,16) + eta(14,16) =G= 0 ; (LHS = 0)
+     
+p_com(4,14,17)..  - eta(4,17) + eta(14,17) =G= 0 ; (LHS = 0)
+     
+p_com(4,14,18)..  - eta(4,18) + eta(14,18) =G= 0 ; (LHS = 0)
+     
+p_com(4,14,19)..  - eta(4,19) + eta(14,19) =G= 0 ; (LHS = 0)
+     
+p_com(4,15,13)..  - eta(4,13) + eta(15,13) =G= 0 ; (LHS = 0)
+     
+p_com(4,15,14)..  - eta(4,14) + eta(15,14) =G= 0 ; (LHS = 0)
+     
+p_com(4,15,15)..  - eta(4,15) + eta(15,15) =G= 0 ; (LHS = 0)
+     
+p_com(4,15,16)..  - eta(4,16) + eta(15,16) =G= 0 ; (LHS = 0)
+     
+p_com(4,15,17)..  - eta(4,17) + eta(15,17) =G= 0 ; (LHS = 0)
+     
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 11
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE mfd Using MCP From line 242
+
+
+     p_com  =G=  the complimentary term of p(i,j,d)
+
+p_com(4,15,18)..  - eta(4,18) + eta(15,18) =G= 0 ; (LHS = 0)
+     
+p_com(4,15,19)..  - eta(4,19) + eta(15,19) =G= 0 ; (LHS = 0)
+     
+p_com(5,4,13)..  eta(4,13) - eta(5,13) =G= 0 ; (LHS = 0)
+     
+p_com(5,4,14)..  eta(4,14) - eta(5,14) =G= 0 ; (LHS = 0)
+     
+p_com(5,4,15)..  eta(4,15) - eta(5,15) =G= 0 ; (LHS = 0)
+     
+p_com(5,4,16)..  eta(4,16) - eta(5,16) =G= 0 ; (LHS = 0)
+     
+p_com(5,4,17)..  eta(4,17) - eta(5,17) =G= 0 ; (LHS = 0)
+     
+p_com(5,4,18)..  eta(4,18) - eta(5,18) =G= 0 ; (LHS = 0)
+     
+p_com(5,4,19)..  eta(4,19) - eta(5,19) =G= 0 ; (LHS = 0)
+     
+p_com(5,6,13)..  - eta(5,13) + eta(6,13) =G= 0 ; (LHS = 0)
+     
+p_com(5,6,14)..  - eta(5,14) + eta(6,14) =G= 0 ; (LHS = 0)
+     
+p_com(5,6,15)..  - eta(5,15) + eta(6,15) =G= 0 ; (LHS = 0)
+     
+p_com(5,6,16)..  - eta(5,16) + eta(6,16) =G= 0 ; (LHS = 0)
+     
+p_com(5,6,17)..  - eta(5,17) + eta(6,17) =G= 0 ; (LHS = 0)
+     
+p_com(5,6,18)..  - eta(5,18) + eta(6,18) =G= 0 ; (LHS = 0)
+     
+p_com(5,6,19)..  - eta(5,19) + eta(6,19) =G= 0 ; (LHS = 0)
+     
+p_com(5,15,13)..  - eta(5,13) + eta(15,13) =G= 0 ; (LHS = 0)
+     
+p_com(5,15,14)..  - eta(5,14) + eta(15,14) =G= 0 ; (LHS = 0)
+     
+p_com(5,15,15)..  - eta(5,15) + eta(15,15) =G= 0 ; (LHS = 0)
+     
+p_com(5,15,16)..  - eta(5,16) + eta(15,16) =G= 0 ; (LHS = 0)
+     
+p_com(5,15,17)..  - eta(5,17) + eta(15,17) =G= 0 ; (LHS = 0)
+     
+p_com(5,15,18)..  - eta(5,18) + eta(15,18) =G= 0 ; (LHS = 0)
+     
+p_com(5,15,19)..  - eta(5,19) + eta(15,19) =G= 0 ; (LHS = 0)
+     
+p_com(6,5,13)..  eta(5,13) - eta(6,13) =G= 0 ; (LHS = 0)
+     
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 12
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE mfd Using MCP From line 242
+
+
+     p_com  =G=  the complimentary term of p(i,j,d)
+
+p_com(6,5,14)..  eta(5,14) - eta(6,14) =G= 0 ; (LHS = 0)
+     
+p_com(6,5,15)..  eta(5,15) - eta(6,15) =G= 0 ; (LHS = 0)
+     
+p_com(6,5,16)..  eta(5,16) - eta(6,16) =G= 0 ; (LHS = 0)
+     
+p_com(6,5,17)..  eta(5,17) - eta(6,17) =G= 0 ; (LHS = 0)
+     
+p_com(6,5,18)..  eta(5,18) - eta(6,18) =G= 0 ; (LHS = 0)
+     
+p_com(6,5,19)..  eta(5,19) - eta(6,19) =G= 0 ; (LHS = 0)
+     
+p_com(6,7,13)..  - eta(6,13) + eta(7,13) =G= 0 ; (LHS = 0)
+     
+p_com(6,7,14)..  - eta(6,14) + eta(7,14) =G= 0 ; (LHS = 0)
+     
+p_com(6,7,15)..  - eta(6,15) + eta(7,15) =G= 0 ; (LHS = 0)
+     
+p_com(6,7,16)..  - eta(6,16) + eta(7,16) =G= 0 ; (LHS = 0)
+     
+p_com(6,7,17)..  - eta(6,17) + eta(7,17) =G= 0 ; (LHS = 0)
+     
+p_com(6,7,18)..  - eta(6,18) + eta(7,18) =G= 0 ; (LHS = 0)
+     
+p_com(6,7,19)..  - eta(6,19) + eta(7,19) =G= 0 ; (LHS = 0)
+     
+p_com(6,15,13)..  - eta(6,13) + eta(15,13) =G= 0 ; (LHS = 0)
+     
+p_com(6,15,14)..  - eta(6,14) + eta(15,14) =G= 0 ; (LHS = 0)
+     
+p_com(6,15,15)..  - eta(6,15) + eta(15,15) =G= 0 ; (LHS = 0)
+     
+p_com(6,15,16)..  - eta(6,16) + eta(15,16) =G= 0 ; (LHS = 0)
+     
+p_com(6,15,17)..  - eta(6,17) + eta(15,17) =G= 0 ; (LHS = 0)
+     
+p_com(6,15,18)..  - eta(6,18) + eta(15,18) =G= 0 ; (LHS = 0)
+     
+p_com(6,15,19)..  - eta(6,19) + eta(15,19) =G= 0 ; (LHS = 0)
+     
+p_com(6,16,13)..  - eta(6,13) + eta(16,13) =G= 0 ; (LHS = 0)
+     
+p_com(6,16,14)..  - eta(6,14) + eta(16,14) =G= 0 ; (LHS = 0)
+     
+p_com(6,16,15)..  - eta(6,15) + eta(16,15) =G= 0 ; (LHS = 0)
+     
+p_com(6,16,16)..  - eta(6,16) + eta(16,16) =G= 0 ; (LHS = 0)
+     
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 13
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE mfd Using MCP From line 242
+
+
+     p_com  =G=  the complimentary term of p(i,j,d)
+
+p_com(6,16,17)..  - eta(6,17) + eta(16,17) =G= 0 ; (LHS = 0)
+     
+p_com(6,16,18)..  - eta(6,18) + eta(16,18) =G= 0 ; (LHS = 0)
+     
+p_com(6,16,19)..  - eta(6,19) + eta(16,19) =G= 0 ; (LHS = 0)
+     
+p_com(7,6,13)..  eta(6,13) - eta(7,13) =G= 0 ; (LHS = 0)
+     
+p_com(7,6,14)..  eta(6,14) - eta(7,14) =G= 0 ; (LHS = 0)
+     
+p_com(7,6,15)..  eta(6,15) - eta(7,15) =G= 0 ; (LHS = 0)
+     
+p_com(7,6,16)..  eta(6,16) - eta(7,16) =G= 0 ; (LHS = 0)
+     
+p_com(7,6,17)..  eta(6,17) - eta(7,17) =G= 0 ; (LHS = 0)
+     
+p_com(7,6,18)..  eta(6,18) - eta(7,18) =G= 0 ; (LHS = 0)
+     
+p_com(7,6,19)..  eta(6,19) - eta(7,19) =G= 0 ; (LHS = 0)
+     
+p_com(7,8,13)..  - eta(7,13) + eta(8,13) =G= 0 ; (LHS = 0)
+     
+p_com(7,8,14)..  - eta(7,14) + eta(8,14) =G= 0 ; (LHS = 0)
+     
+p_com(7,8,15)..  - eta(7,15) + eta(8,15) =G= 0 ; (LHS = 0)
+     
+p_com(7,8,16)..  - eta(7,16) + eta(8,16) =G= 0 ; (LHS = 0)
+     
+p_com(7,8,17)..  - eta(7,17) + eta(8,17) =G= 0 ; (LHS = 0)
+     
+p_com(7,8,18)..  - eta(7,18) + eta(8,18) =G= 0 ; (LHS = 0)
+     
+p_com(7,8,19)..  - eta(7,19) + eta(8,19) =G= 0 ; (LHS = 0)
+     
+p_com(7,16,13)..  - eta(7,13) + eta(16,13) =G= 0 ; (LHS = 0)
+     
+p_com(7,16,14)..  - eta(7,14) + eta(16,14) =G= 0 ; (LHS = 0)
+     
+p_com(7,16,15)..  - eta(7,15) + eta(16,15) =G= 0 ; (LHS = 0)
+     
+p_com(7,16,16)..  - eta(7,16) + eta(16,16) =G= 0 ; (LHS = 0)
+     
+p_com(7,16,17)..  - eta(7,17) + eta(16,17) =G= 0 ; (LHS = 0)
+     
+p_com(7,16,18)..  - eta(7,18) + eta(16,18) =G= 0 ; (LHS = 0)
+     
+p_com(7,16,19)..  - eta(7,19) + eta(16,19) =G= 0 ; (LHS = 0)
+     
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 14
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE mfd Using MCP From line 242
+
+
+     p_com  =G=  the complimentary term of p(i,j,d)
+
+p_com(8,7,13)..  eta(7,13) - eta(8,13) =G= 0 ; (LHS = 0)
+     
+p_com(8,7,14)..  eta(7,14) - eta(8,14) =G= 0 ; (LHS = 0)
+     
+p_com(8,7,15)..  eta(7,15) - eta(8,15) =G= 0 ; (LHS = 0)
+     
+p_com(8,7,16)..  eta(7,16) - eta(8,16) =G= 0 ; (LHS = 0)
+     
+p_com(8,7,17)..  eta(7,17) - eta(8,17) =G= 0 ; (LHS = 0)
+     
+p_com(8,7,18)..  eta(7,18) - eta(8,18) =G= 0 ; (LHS = 0)
+     
+p_com(8,7,19)..  eta(7,19) - eta(8,19) =G= 0 ; (LHS = 0)
+     
+p_com(8,9,13)..  - eta(8,13) + eta(9,13) =G= 0 ; (LHS = 0)
+     
+p_com(8,9,14)..  - eta(8,14) + eta(9,14) =G= 0 ; (LHS = 0)
+     
+p_com(8,9,15)..  - eta(8,15) + eta(9,15) =G= 0 ; (LHS = 0)
+     
+p_com(8,9,16)..  - eta(8,16) + eta(9,16) =G= 0 ; (LHS = 0)
+     
+p_com(8,9,17)..  - eta(8,17) + eta(9,17) =G= 0 ; (LHS = 0)
+     
+p_com(8,9,18)..  - eta(8,18) + eta(9,18) =G= 0 ; (LHS = 0)
+     
+p_com(8,9,19)..  - eta(8,19) + eta(9,19) =G= 0 ; (LHS = 0)
+     
+p_com(8,16,13)..  - eta(8,13) + eta(16,13) =G= 0 ; (LHS = 0)
+     
+p_com(8,16,14)..  - eta(8,14) + eta(16,14) =G= 0 ; (LHS = 0)
+     
+p_com(8,16,15)..  - eta(8,15) + eta(16,15) =G= 0 ; (LHS = 0)
+     
+p_com(8,16,16)..  - eta(8,16) + eta(16,16) =G= 0 ; (LHS = 0)
+     
+p_com(8,16,17)..  - eta(8,17) + eta(16,17) =G= 0 ; (LHS = 0)
+     
+p_com(8,16,18)..  - eta(8,18) + eta(16,18) =G= 0 ; (LHS = 0)
+     
+p_com(8,16,19)..  - eta(8,19) + eta(16,19) =G= 0 ; (LHS = 0)
+     
+p_com(8,17,13)..  - eta(8,13) + eta(17,13) =G= 0 ; (LHS = 0)
+     
+p_com(8,17,14)..  - eta(8,14) + eta(17,14) =G= 0 ; (LHS = 0)
+     
+p_com(8,17,15)..  - eta(8,15) + eta(17,15) =G= 0 ; (LHS = 0)
+     
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 15
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE mfd Using MCP From line 242
+
+
+     p_com  =G=  the complimentary term of p(i,j,d)
+
+p_com(8,17,16)..  - eta(8,16) + eta(17,16) =G= 0 ; (LHS = 0)
+     
+p_com(8,17,17)..  - eta(8,17) + eta(17,17) =G= 0 ; (LHS = 0)
+     
+p_com(8,17,18)..  - eta(8,18) + eta(17,18) =G= 0 ; (LHS = 0)
+     
+p_com(8,17,19)..  - eta(8,19) + eta(17,19) =G= 0 ; (LHS = 0)
+     
+p_com(9,8,13)..  eta(8,13) - eta(9,13) =G= 0 ; (LHS = 0)
+     
+p_com(9,8,14)..  eta(8,14) - eta(9,14) =G= 0 ; (LHS = 0)
+     
+p_com(9,8,15)..  eta(8,15) - eta(9,15) =G= 0 ; (LHS = 0)
+     
+p_com(9,8,16)..  eta(8,16) - eta(9,16) =G= 0 ; (LHS = 0)
+     
+p_com(9,8,17)..  eta(8,17) - eta(9,17) =G= 0 ; (LHS = 0)
+     
+p_com(9,8,18)..  eta(8,18) - eta(9,18) =G= 0 ; (LHS = 0)
+     
+p_com(9,8,19)..  eta(8,19) - eta(9,19) =G= 0 ; (LHS = 0)
+     
+p_com(9,10,13)..  - eta(9,13) + eta(10,13) =G= 0 ; (LHS = 0)
+     
+p_com(9,10,14)..  - eta(9,14) + eta(10,14) =G= 0 ; (LHS = 0)
+     
+p_com(9,10,15)..  - eta(9,15) + eta(10,15) =G= 0 ; (LHS = 0)
+     
+p_com(9,10,16)..  - eta(9,16) + eta(10,16) =G= 0 ; (LHS = 0)
+     
+p_com(9,10,17)..  - eta(9,17) + eta(10,17) =G= 0 ; (LHS = 0)
+     
+p_com(9,10,18)..  - eta(9,18) + eta(10,18) =G= 0 ; (LHS = 0)
+     
+p_com(9,10,19)..  - eta(9,19) + eta(10,19) =G= 0 ; (LHS = 0)
+     
+p_com(9,17,13)..  - eta(9,13) + eta(17,13) =G= 0 ; (LHS = 0)
+     
+p_com(9,17,14)..  - eta(9,14) + eta(17,14) =G= 0 ; (LHS = 0)
+     
+p_com(9,17,15)..  - eta(9,15) + eta(17,15) =G= 0 ; (LHS = 0)
+     
+p_com(9,17,16)..  - eta(9,16) + eta(17,16) =G= 0 ; (LHS = 0)
+     
+p_com(9,17,17)..  - eta(9,17) + eta(17,17) =G= 0 ; (LHS = 0)
+     
+p_com(9,17,18)..  - eta(9,18) + eta(17,18) =G= 0 ; (LHS = 0)
+     
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 16
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE mfd Using MCP From line 242
+
+
+     p_com  =G=  the complimentary term of p(i,j,d)
+
+p_com(9,17,19)..  - eta(9,19) + eta(17,19) =G= 0 ; (LHS = 0)
+     
+p_com(10,9,13)..  eta(9,13) - eta(10,13) =G= 0 ; (LHS = 0)
+     
+p_com(10,9,14)..  eta(9,14) - eta(10,14) =G= 0 ; (LHS = 0)
+     
+p_com(10,9,15)..  eta(9,15) - eta(10,15) =G= 0 ; (LHS = 0)
+     
+p_com(10,9,16)..  eta(9,16) - eta(10,16) =G= 0 ; (LHS = 0)
+     
+p_com(10,9,17)..  eta(9,17) - eta(10,17) =G= 0 ; (LHS = 0)
+     
+p_com(10,9,18)..  eta(9,18) - eta(10,18) =G= 0 ; (LHS = 0)
+     
+p_com(10,9,19)..  eta(9,19) - eta(10,19) =G= 0 ; (LHS = 0)
+     
+p_com(10,11,13)..  - eta(10,13) + eta(11,13) =G= 0 ; (LHS = 0)
+     
+p_com(10,11,14)..  - eta(10,14) + eta(11,14) =G= 0 ; (LHS = 0)
+     
+p_com(10,11,15)..  - eta(10,15) + eta(11,15) =G= 0 ; (LHS = 0)
+     
+p_com(10,11,16)..  - eta(10,16) + eta(11,16) =G= 0 ; (LHS = 0)
+     
+p_com(10,11,17)..  - eta(10,17) + eta(11,17) =G= 0 ; (LHS = 0)
+     
+p_com(10,11,18)..  - eta(10,18) + eta(11,18) =G= 0 ; (LHS = 0)
+     
+p_com(10,11,19)..  - eta(10,19) + eta(11,19) =G= 0 ; (LHS = 0)
+     
+p_com(10,17,13)..  - eta(10,13) + eta(17,13) =G= 0 ; (LHS = 0)
+     
+p_com(10,17,14)..  - eta(10,14) + eta(17,14) =G= 0 ; (LHS = 0)
+     
+p_com(10,17,15)..  - eta(10,15) + eta(17,15) =G= 0 ; (LHS = 0)
+     
+p_com(10,17,16)..  - eta(10,16) + eta(17,16) =G= 0 ; (LHS = 0)
+     
+p_com(10,17,17)..  - eta(10,17) + eta(17,17) =G= 0 ; (LHS = 0)
+     
+p_com(10,17,18)..  - eta(10,18) + eta(17,18) =G= 0 ; (LHS = 0)
+     
+p_com(10,17,19)..  - eta(10,19) + eta(17,19) =G= 0 ; (LHS = 0)
+     
+p_com(10,18,13)..  - eta(10,13) + eta(18,13) =G= 0 ; (LHS = 0)
+     
+p_com(10,18,14)..  - eta(10,14) + eta(18,14) =G= 0 ; (LHS = 0)
+     
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 17
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE mfd Using MCP From line 242
+
+
+     p_com  =G=  the complimentary term of p(i,j,d)
+
+p_com(10,18,15)..  - eta(10,15) + eta(18,15) =G= 0 ; (LHS = 0)
+     
+p_com(10,18,16)..  - eta(10,16) + eta(18,16) =G= 0 ; (LHS = 0)
+     
+p_com(10,18,17)..  - eta(10,17) + eta(18,17) =G= 0 ; (LHS = 0)
+     
+p_com(10,18,18)..  - eta(10,18) + eta(18,18) =G= 0 ; (LHS = 0)
+     
+p_com(10,18,19)..  - eta(10,19) + eta(18,19) =G= 0 ; (LHS = 0)
+     
+p_com(11,10,13)..  eta(10,13) - eta(11,13) =G= 0 ; (LHS = 0)
+     
+p_com(11,10,14)..  eta(10,14) - eta(11,14) =G= 0 ; (LHS = 0)
+     
+p_com(11,10,15)..  eta(10,15) - eta(11,15) =G= 0 ; (LHS = 0)
+     
+p_com(11,10,16)..  eta(10,16) - eta(11,16) =G= 0 ; (LHS = 0)
+     
+p_com(11,10,17)..  eta(10,17) - eta(11,17) =G= 0 ; (LHS = 0)
+     
+p_com(11,10,18)..  eta(10,18) - eta(11,18) =G= 0 ; (LHS = 0)
+     
+p_com(11,10,19)..  eta(10,19) - eta(11,19) =G= 0 ; (LHS = 0)
+     
+p_com(11,12,13)..  - eta(11,13) + eta(12,13) =G= 0 ; (LHS = 0)
+     
+p_com(11,12,14)..  - eta(11,14) + eta(12,14) =G= 0 ; (LHS = 0)
+     
+p_com(11,12,15)..  - eta(11,15) + eta(12,15) =G= 0 ; (LHS = 0)
+     
+p_com(11,12,16)..  - eta(11,16) + eta(12,16) =G= 0 ; (LHS = 0)
+     
+p_com(11,12,17)..  - eta(11,17) + eta(12,17) =G= 0 ; (LHS = 0)
+     
+p_com(11,12,18)..  - eta(11,18) + eta(12,18) =G= 0 ; (LHS = 0)
+     
+p_com(11,12,19)..  - eta(11,19) + eta(12,19) =G= 0 ; (LHS = 0)
+     
+p_com(11,18,13)..  - eta(11,13) + eta(18,13) =G= 0 ; (LHS = 0)
+     
+p_com(11,18,14)..  - eta(11,14) + eta(18,14) =G= 0 ; (LHS = 0)
+     
+p_com(11,18,15)..  - eta(11,15) + eta(18,15) =G= 0 ; (LHS = 0)
+     
+p_com(11,18,16)..  - eta(11,16) + eta(18,16) =G= 0 ; (LHS = 0)
+     
+p_com(11,18,17)..  - eta(11,17) + eta(18,17) =G= 0 ; (LHS = 0)
+     
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 18
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE mfd Using MCP From line 242
+
+
+     p_com  =G=  the complimentary term of p(i,j,d)
+
+p_com(11,18,18)..  - eta(11,18) + eta(18,18) =G= 0 ; (LHS = 0)
+     
+p_com(11,18,19)..  - eta(11,19) + eta(18,19) =G= 0 ; (LHS = 0)
+     
+p_com(12,1,13)..  eta(1,13) - eta(12,13) =G= 0 ; (LHS = 0)
+     
+p_com(12,1,14)..  eta(1,14) - eta(12,14) =G= 0 ; (LHS = 0)
+     
+p_com(12,1,15)..  eta(1,15) - eta(12,15) =G= 0 ; (LHS = 0)
+     
+p_com(12,1,16)..  eta(1,16) - eta(12,16) =G= 0 ; (LHS = 0)
+     
+p_com(12,1,17)..  eta(1,17) - eta(12,17) =G= 0 ; (LHS = 0)
+     
+p_com(12,1,18)..  eta(1,18) - eta(12,18) =G= 0 ; (LHS = 0)
+     
+p_com(12,1,19)..  eta(1,19) - eta(12,19) =G= 0 ; (LHS = 0)
+     
+p_com(12,11,13)..  eta(11,13) - eta(12,13) =G= 0 ; (LHS = 0)
+     
+p_com(12,11,14)..  eta(11,14) - eta(12,14) =G= 0 ; (LHS = 0)
+     
+p_com(12,11,15)..  eta(11,15) - eta(12,15) =G= 0 ; (LHS = 0)
+     
+p_com(12,11,16)..  eta(11,16) - eta(12,16) =G= 0 ; (LHS = 0)
+     
+p_com(12,11,17)..  eta(11,17) - eta(12,17) =G= 0 ; (LHS = 0)
+     
+p_com(12,11,18)..  eta(11,18) - eta(12,18) =G= 0 ; (LHS = 0)
+     
+p_com(12,11,19)..  eta(11,19) - eta(12,19) =G= 0 ; (LHS = 0)
+     
+p_com(12,13,13)..  - eta(12,13) + eta(13,13) =G= 0 ; (LHS = 0)
+     
+p_com(12,13,14)..  - eta(12,14) + eta(13,14) =G= 0 ; (LHS = 0)
+     
+p_com(12,13,15)..  - eta(12,15) + eta(13,15) =G= 0 ; (LHS = 0)
+     
+p_com(12,13,16)..  - eta(12,16) + eta(13,16) =G= 0 ; (LHS = 0)
+     
+p_com(12,13,17)..  - eta(12,17) + eta(13,17) =G= 0 ; (LHS = 0)
+     
+p_com(12,13,18)..  - eta(12,18) + eta(13,18) =G= 0 ; (LHS = 0)
+     
+p_com(12,13,19)..  - eta(12,19) + eta(13,19) =G= 0 ; (LHS = 0)
+     
+p_com(12,18,13)..  - eta(12,13) + eta(18,13) =G= 0 ; (LHS = 0)
+     
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 19
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE mfd Using MCP From line 242
+
+
+     p_com  =G=  the complimentary term of p(i,j,d)
+
+p_com(12,18,14)..  - eta(12,14) + eta(18,14) =G= 0 ; (LHS = 0)
+     
+p_com(12,18,15)..  - eta(12,15) + eta(18,15) =G= 0 ; (LHS = 0)
+     
+p_com(12,18,16)..  - eta(12,16) + eta(18,16) =G= 0 ; (LHS = 0)
+     
+p_com(12,18,17)..  - eta(12,17) + eta(18,17) =G= 0 ; (LHS = 0)
+     
+p_com(12,18,18)..  - eta(12,18) + eta(18,18) =G= 0 ; (LHS = 0)
+     
+p_com(12,18,19)..  - eta(12,19) + eta(18,19) =G= 0 ; (LHS = 0)
+     
+p_com(13,1,13)..  eta(1,13) - eta(13,13) =G= 0 ; (LHS = 0)
+     
+p_com(13,1,14)..  eta(1,14) - eta(13,14) =G= 0 ; (LHS = 0)
+     
+p_com(13,1,15)..  eta(1,15) - eta(13,15) =G= 0 ; (LHS = 0)
+     
+p_com(13,1,16)..  eta(1,16) - eta(13,16) =G= 0 ; (LHS = 0)
+     
+p_com(13,1,17)..  eta(1,17) - eta(13,17) =G= 0 ; (LHS = 0)
+     
+p_com(13,1,18)..  eta(1,18) - eta(13,18) =G= 0 ; (LHS = 0)
+     
+REMAINING 288 ENTRIES SKIPPED
+
+**** Exec Error at line 230: division by zero (0)
+
+---- eta_com  =G=  the complimentary term of eta(i,d)
+
+eta_com(1,13)..  p(1,2,13) + p(1,12,13) + p(1,13,13) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(1,14)..  p(1,2,14) + p(1,12,14) + p(1,13,14) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(1,15)..  p(1,2,15) + p(1,12,15) + p(1,13,15) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(1,16)..  p(1,2,16) + p(1,12,16) + p(1,13,16) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(1,17)..  p(1,2,17) + p(1,12,17) + p(1,13,17) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(1,18)..  p(1,2,18) + p(1,12,18) + p(1,13,18) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(1,19)..  p(1,2,19) + p(1,12,19) + p(1,13,19) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(2,13)..  p(2,1,13) + p(2,3,13) + p(2,13,13) + p(2,14,13) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(2,14)..  p(2,1,14) + p(2,3,14) + p(2,13,14) + p(2,14,14) =G= UNDF ; (LHS = UNDF)
+     
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 20
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE mfd Using MCP From line 242
+
+
+     eta_com  =G=  the complimentary term of eta(i,d)
+
+eta_com(2,15)..  p(2,1,15) + p(2,3,15) + p(2,13,15) + p(2,14,15) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(2,16)..  p(2,1,16) + p(2,3,16) + p(2,13,16) + p(2,14,16) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(2,17)..  p(2,1,17) + p(2,3,17) + p(2,13,17) + p(2,14,17) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(2,18)..  p(2,1,18) + p(2,3,18) + p(2,13,18) + p(2,14,18) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(2,19)..  p(2,1,19) + p(2,3,19) + p(2,13,19) + p(2,14,19) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(3,13)..  p(3,2,13) + p(3,4,13) + p(3,14,13) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(3,14)..  p(3,2,14) + p(3,4,14) + p(3,14,14) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(3,15)..  p(3,2,15) + p(3,4,15) + p(3,14,15) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(3,16)..  p(3,2,16) + p(3,4,16) + p(3,14,16) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(3,17)..  p(3,2,17) + p(3,4,17) + p(3,14,17) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(3,18)..  p(3,2,18) + p(3,4,18) + p(3,14,18) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(3,19)..  p(3,2,19) + p(3,4,19) + p(3,14,19) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(4,13)..  p(4,3,13) + p(4,5,13) + p(4,14,13) + p(4,15,13) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(4,14)..  p(4,3,14) + p(4,5,14) + p(4,14,14) + p(4,15,14) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(4,15)..  p(4,3,15) + p(4,5,15) + p(4,14,15) + p(4,15,15) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(4,16)..  p(4,3,16) + p(4,5,16) + p(4,14,16) + p(4,15,16) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(4,17)..  p(4,3,17) + p(4,5,17) + p(4,14,17) + p(4,15,17) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(4,18)..  p(4,3,18) + p(4,5,18) + p(4,14,18) + p(4,15,18) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(4,19)..  p(4,3,19) + p(4,5,19) + p(4,14,19) + p(4,15,19) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(5,13)..  p(5,4,13) + p(5,6,13) + p(5,15,13) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(5,14)..  p(5,4,14) + p(5,6,14) + p(5,15,14) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(5,15)..  p(5,4,15) + p(5,6,15) + p(5,15,15) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(5,16)..  p(5,4,16) + p(5,6,16) + p(5,15,16) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(5,17)..  p(5,4,17) + p(5,6,17) + p(5,15,17) =G= UNDF ; (LHS = UNDF)
+     
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 21
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE mfd Using MCP From line 242
+
+
+     eta_com  =G=  the complimentary term of eta(i,d)
+
+eta_com(5,18)..  p(5,4,18) + p(5,6,18) + p(5,15,18) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(5,19)..  p(5,4,19) + p(5,6,19) + p(5,15,19) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(6,13)..  p(6,5,13) + p(6,7,13) + p(6,15,13) + p(6,16,13) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(6,14)..  p(6,5,14) + p(6,7,14) + p(6,15,14) + p(6,16,14) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(6,15)..  p(6,5,15) + p(6,7,15) + p(6,15,15) + p(6,16,15) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(6,16)..  p(6,5,16) + p(6,7,16) + p(6,15,16) + p(6,16,16) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(6,17)..  p(6,5,17) + p(6,7,17) + p(6,15,17) + p(6,16,17) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(6,18)..  p(6,5,18) + p(6,7,18) + p(6,15,18) + p(6,16,18) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(6,19)..  p(6,5,19) + p(6,7,19) + p(6,15,19) + p(6,16,19) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(7,13)..  p(7,6,13) + p(7,8,13) + p(7,16,13) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(7,14)..  p(7,6,14) + p(7,8,14) + p(7,16,14) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(7,15)..  p(7,6,15) + p(7,8,15) + p(7,16,15) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(7,16)..  p(7,6,16) + p(7,8,16) + p(7,16,16) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(7,17)..  p(7,6,17) + p(7,8,17) + p(7,16,17) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(7,18)..  p(7,6,18) + p(7,8,18) + p(7,16,18) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(7,19)..  p(7,6,19) + p(7,8,19) + p(7,16,19) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(8,13)..  p(8,7,13) + p(8,9,13) + p(8,16,13) + p(8,17,13) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(8,14)..  p(8,7,14) + p(8,9,14) + p(8,16,14) + p(8,17,14) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(8,15)..  p(8,7,15) + p(8,9,15) + p(8,16,15) + p(8,17,15) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(8,16)..  p(8,7,16) + p(8,9,16) + p(8,16,16) + p(8,17,16) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(8,17)..  p(8,7,17) + p(8,9,17) + p(8,16,17) + p(8,17,17) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(8,18)..  p(8,7,18) + p(8,9,18) + p(8,16,18) + p(8,17,18) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(8,19)..  p(8,7,19) + p(8,9,19) + p(8,16,19) + p(8,17,19) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(9,13)..  p(9,8,13) + p(9,10,13) + p(9,17,13) =G= UNDF ; (LHS = UNDF)
+     
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 22
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE mfd Using MCP From line 242
+
+
+     eta_com  =G=  the complimentary term of eta(i,d)
+
+eta_com(9,14)..  p(9,8,14) + p(9,10,14) + p(9,17,14) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(9,15)..  p(9,8,15) + p(9,10,15) + p(9,17,15) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(9,16)..  p(9,8,16) + p(9,10,16) + p(9,17,16) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(9,17)..  p(9,8,17) + p(9,10,17) + p(9,17,17) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(9,18)..  p(9,8,18) + p(9,10,18) + p(9,17,18) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(9,19)..  p(9,8,19) + p(9,10,19) + p(9,17,19) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(10,13)..  p(10,9,13) + p(10,11,13) + p(10,17,13) + p(10,18,13) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(10,14)..  p(10,9,14) + p(10,11,14) + p(10,17,14) + p(10,18,14) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(10,15)..  p(10,9,15) + p(10,11,15) + p(10,17,15) + p(10,18,15) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(10,16)..  p(10,9,16) + p(10,11,16) + p(10,17,16) + p(10,18,16) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(10,17)..  p(10,9,17) + p(10,11,17) + p(10,17,17) + p(10,18,17) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(10,18)..  p(10,9,18) + p(10,11,18) + p(10,17,18) + p(10,18,18) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(10,19)..  p(10,9,19) + p(10,11,19) + p(10,17,19) + p(10,18,19) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(11,13)..  p(11,10,13) + p(11,12,13) + p(11,18,13) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(11,14)..  p(11,10,14) + p(11,12,14) + p(11,18,14) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(11,15)..  p(11,10,15) + p(11,12,15) + p(11,18,15) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(11,16)..  p(11,10,16) + p(11,12,16) + p(11,18,16) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(11,17)..  p(11,10,17) + p(11,12,17) + p(11,18,17) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(11,18)..  p(11,10,18) + p(11,12,18) + p(11,18,18) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(11,19)..  p(11,10,19) + p(11,12,19) + p(11,18,19) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(12,13)..  p(12,1,13) + p(12,11,13) + p(12,13,13) + p(12,18,13) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(12,14)..  p(12,1,14) + p(12,11,14) + p(12,13,14) + p(12,18,14) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(12,15)..  p(12,1,15) + p(12,11,15) + p(12,13,15) + p(12,18,15) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(12,16)..  p(12,1,16) + p(12,11,16) + p(12,13,16) + p(12,18,16) =G= UNDF ; (LHS = UNDF)
+     
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 23
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE mfd Using MCP From line 242
+
+
+     eta_com  =G=  the complimentary term of eta(i,d)
+
+eta_com(12,17)..  p(12,1,17) + p(12,11,17) + p(12,13,17) + p(12,18,17) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(12,18)..  p(12,1,18) + p(12,11,18) + p(12,13,18) + p(12,18,18) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(12,19)..  p(12,1,19) + p(12,11,19) + p(12,13,19) + p(12,18,19) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(13,13)..  p(13,1,13) + p(13,2,13) + p(13,12,13) + p(13,14,13) + p(13,18,13) + p(13,19,13) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(13,14)..  p(13,1,14) + p(13,2,14) + p(13,12,14) + p(13,14,14) + p(13,18,14) + p(13,19,14) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(13,15)..  p(13,1,15) + p(13,2,15) + p(13,12,15) + p(13,14,15) + p(13,18,15) + p(13,19,15) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(13,16)..  p(13,1,16) + p(13,2,16) + p(13,12,16) + p(13,14,16) + p(13,18,16) + p(13,19,16) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(13,17)..  p(13,1,17) + p(13,2,17) + p(13,12,17) + p(13,14,17) + p(13,18,17) + p(13,19,17) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(13,18)..  p(13,1,18) + p(13,2,18) + p(13,12,18) + p(13,14,18) + p(13,18,18) + p(13,19,18) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(13,19)..  p(13,1,19) + p(13,2,19) + p(13,12,19) + p(13,14,19) + p(13,18,19) + p(13,19,19) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(14,13)..  p(14,2,13) + p(14,3,13) + p(14,4,13) + p(14,13,13) + p(14,15,13) + p(14,19,13) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(14,14)..  p(14,2,14) + p(14,3,14) + p(14,4,14) + p(14,13,14) + p(14,15,14) + p(14,19,14) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(14,15)..  p(14,2,15) + p(14,3,15) + p(14,4,15) + p(14,13,15) + p(14,15,15) + p(14,19,15) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(14,16)..  p(14,2,16) + p(14,3,16) + p(14,4,16) + p(14,13,16) + p(14,15,16) + p(14,19,16) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(14,17)..  p(14,2,17) + p(14,3,17) + p(14,4,17) + p(14,13,17) + p(14,15,17) + p(14,19,17) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(14,18)..  p(14,2,18) + p(14,3,18) + p(14,4,18) + p(14,13,18) + p(14,15,18) + p(14,19,18) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(14,19)..  p(14,2,19) + p(14,3,19) + p(14,4,19) + p(14,13,19) + p(14,15,19) + p(14,19,19) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(15,13)..  p(15,4,13) + p(15,5,13) + p(15,6,13) + p(15,14,13) + p(15,16,13) + p(15,19,13) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(15,14)..  p(15,4,14) + p(15,5,14) + p(15,6,14) + p(15,14,14) + p(15,16,14) + p(15,19,14) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(15,15)..  p(15,4,15) + p(15,5,15) + p(15,6,15) + p(15,14,15) + p(15,16,15) + p(15,19,15) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(15,16)..  p(15,4,16) + p(15,5,16) + p(15,6,16) + p(15,14,16) + p(15,16,16) + p(15,19,16) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(15,17)..  p(15,4,17) + p(15,5,17) + p(15,6,17) + p(15,14,17) + p(15,16,17) + p(15,19,17) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(15,18)..  p(15,4,18) + p(15,5,18) + p(15,6,18) + p(15,14,18) + p(15,16,18) + p(15,19,18) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(15,19)..  p(15,4,19) + p(15,5,19) + p(15,6,19) + p(15,14,19) + p(15,16,19) + p(15,19,19) =G= UNDF ; (LHS = UNDF)
+     
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 24
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE mfd Using MCP From line 242
+
+
+     eta_com  =G=  the complimentary term of eta(i,d)
+
+eta_com(16,13)..  p(16,6,13) + p(16,7,13) + p(16,8,13) + p(16,15,13) + p(16,17,13) + p(16,19,13) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(16,14)..  p(16,6,14) + p(16,7,14) + p(16,8,14) + p(16,15,14) + p(16,17,14) + p(16,19,14) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(16,15)..  p(16,6,15) + p(16,7,15) + p(16,8,15) + p(16,15,15) + p(16,17,15) + p(16,19,15) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(16,16)..  p(16,6,16) + p(16,7,16) + p(16,8,16) + p(16,15,16) + p(16,17,16) + p(16,19,16) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(16,17)..  p(16,6,17) + p(16,7,17) + p(16,8,17) + p(16,15,17) + p(16,17,17) + p(16,19,17) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(16,18)..  p(16,6,18) + p(16,7,18) + p(16,8,18) + p(16,15,18) + p(16,17,18) + p(16,19,18) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(16,19)..  p(16,6,19) + p(16,7,19) + p(16,8,19) + p(16,15,19) + p(16,17,19) + p(16,19,19) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(17,13)..  p(17,8,13) + p(17,9,13) + p(17,10,13) + p(17,16,13) + p(17,18,13) + p(17,19,13) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(17,14)..  p(17,8,14) + p(17,9,14) + p(17,10,14) + p(17,16,14) + p(17,18,14) + p(17,19,14) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(17,15)..  p(17,8,15) + p(17,9,15) + p(17,10,15) + p(17,16,15) + p(17,18,15) + p(17,19,15) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(17,16)..  p(17,8,16) + p(17,9,16) + p(17,10,16) + p(17,16,16) + p(17,18,16) + p(17,19,16) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(17,17)..  p(17,8,17) + p(17,9,17) + p(17,10,17) + p(17,16,17) + p(17,18,17) + p(17,19,17) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(17,18)..  p(17,8,18) + p(17,9,18) + p(17,10,18) + p(17,16,18) + p(17,18,18) + p(17,19,18) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(17,19)..  p(17,8,19) + p(17,9,19) + p(17,10,19) + p(17,16,19) + p(17,18,19) + p(17,19,19) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(18,13)..  p(18,10,13) + p(18,11,13) + p(18,12,13) + p(18,13,13) + p(18,17,13) + p(18,19,13) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(18,14)..  p(18,10,14) + p(18,11,14) + p(18,12,14) + p(18,13,14) + p(18,17,14) + p(18,19,14) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(18,15)..  p(18,10,15) + p(18,11,15) + p(18,12,15) + p(18,13,15) + p(18,17,15) + p(18,19,15) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(18,16)..  p(18,10,16) + p(18,11,16) + p(18,12,16) + p(18,13,16) + p(18,17,16) + p(18,19,16) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(18,17)..  p(18,10,17) + p(18,11,17) + p(18,12,17) + p(18,13,17) + p(18,17,17) + p(18,19,17) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(18,18)..  p(18,10,18) + p(18,11,18) + p(18,12,18) + p(18,13,18) + p(18,17,18) + p(18,19,18) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(18,19)..  p(18,10,19) + p(18,11,19) + p(18,12,19) + p(18,13,19) + p(18,17,19) + p(18,19,19) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(19,13)..  p(19,13,13) + p(19,14,13) + p(19,15,13) + p(19,16,13) + p(19,17,13) + p(19,18,13) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(19,14)..  p(19,13,14) + p(19,14,14) + p(19,15,14) + p(19,16,14) + p(19,17,14) + p(19,18,14) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(19,15)..  p(19,13,15) + p(19,14,15) + p(19,15,15) + p(19,16,15) + p(19,17,15) + p(19,18,15) =G= UNDF ; (LHS = UNDF)
+     
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 25
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE mfd Using MCP From line 242
+
+
+     eta_com  =G=  the complimentary term of eta(i,d)
+
+eta_com(19,16)..  p(19,13,16) + p(19,14,16) + p(19,15,16) + p(19,16,16) + p(19,17,16) + p(19,18,16) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(19,17)..  p(19,13,17) + p(19,14,17) + p(19,15,17) + p(19,16,17) + p(19,17,17) + p(19,18,17) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(19,18)..  p(19,13,18) + p(19,14,18) + p(19,15,18) + p(19,16,18) + p(19,17,18) + p(19,18,18) =G= UNDF ; (LHS = UNDF)
+     
+eta_com(19,19)..  p(19,13,19) + p(19,14,19) + p(19,15,19) + p(19,16,19) + p(19,17,19) + p(19,18,19) =G= UNDF ; (LHS = UNDF)
+     
+
+---- y_com  =G=  the complimentary term of y(i,j)
+
+y_com(1,2)..  5300*lamda(1,2) - 5300*mu(1,2) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(1,12)..  5300*lamda(1,12) - 5300*mu(1,12) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(1,13)..  5300*lamda(1,13) - 5300*mu(1,13) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(2,1)..  5300*lamda(2,1) - 5300*mu(2,1) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(2,3)..  5300*lamda(2,3) - 5300*mu(2,3) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(2,13)..  5300*lamda(2,13) - 5300*mu(2,13) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(2,14)..  5300*lamda(2,14) - 5300*mu(2,14) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(3,2)..  5300*lamda(3,2) - 5300*mu(3,2) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(3,4)..  5300*lamda(3,4) - 5300*mu(3,4) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(3,14)..  5300*lamda(3,14) - 5300*mu(3,14) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(4,3)..  5300*lamda(4,3) - 5300*mu(4,3) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(4,5)..  5300*lamda(4,5) - 5300*mu(4,5) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(4,14)..  5300*lamda(4,14) - 5300*mu(4,14) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(4,15)..  5300*lamda(4,15) - 5300*mu(4,15) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(5,4)..  5300*lamda(5,4) - 5300*mu(5,4) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(5,6)..  5300*lamda(5,6) - 5300*mu(5,6) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(5,15)..  5300*lamda(5,15) - 5300*mu(5,15) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(6,5)..  5300*lamda(6,5) - 5300*mu(6,5) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(6,7)..  5300*lamda(6,7) - 5300*mu(6,7) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 26
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE mfd Using MCP From line 242
+
+
+     y_com  =G=  the complimentary term of y(i,j)
+
+y_com(6,15)..  5300*lamda(6,15) - 5300*mu(6,15) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(6,16)..  5300*lamda(6,16) - 5300*mu(6,16) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(7,6)..  5300*lamda(7,6) - 5300*mu(7,6) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(7,8)..  5300*lamda(7,8) - 5300*mu(7,8) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(7,16)..  5300*lamda(7,16) - 5300*mu(7,16) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(8,7)..  5300*lamda(8,7) - 5300*mu(8,7) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(8,9)..  5300*lamda(8,9) - 5300*mu(8,9) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(8,16)..  5300*lamda(8,16) - 5300*mu(8,16) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(8,17)..  5300*lamda(8,17) - 5300*mu(8,17) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(9,8)..  5300*lamda(9,8) - 5300*mu(9,8) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(9,10)..  5300*lamda(9,10) - 5300*mu(9,10) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(9,17)..  5300*lamda(9,17) - 5300*mu(9,17) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(10,9)..  5300*lamda(10,9) - 5300*mu(10,9) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(10,11)..  5300*lamda(10,11) - 5300*mu(10,11) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(10,17)..  5300*lamda(10,17) - 5300*mu(10,17) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(10,18)..  5300*lamda(10,18) - 5300*mu(10,18) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(11,10)..  5300*lamda(11,10) - 5300*mu(11,10) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(11,12)..  5300*lamda(11,12) - 5300*mu(11,12) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(11,18)..  5300*lamda(11,18) - 5300*mu(11,18) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(12,1)..  5300*lamda(12,1) - 5300*mu(12,1) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(12,11)..  5300*lamda(12,11) - 5300*mu(12,11) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(12,13)..  5300*lamda(12,13) - 5300*mu(12,13) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(12,18)..  5300*lamda(12,18) - 5300*mu(12,18) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(13,1)..  5300*lamda(13,1) - 5300*mu(13,1) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 27
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE mfd Using MCP From line 242
+
+
+     y_com  =G=  the complimentary term of y(i,j)
+
+y_com(13,2)..  5300*lamda(13,2) - 5300*mu(13,2) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(13,12)..  5300*lamda(13,12) - 5300*mu(13,12) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(13,14)..  5300*lamda(13,14) - 5300*mu(13,14) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(13,18)..  5300*lamda(13,18) - 5300*mu(13,18) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(13,19)..  5300*lamda(13,19) - 5300*mu(13,19) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(14,2)..  5300*lamda(14,2) - 5300*mu(14,2) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(14,3)..  5300*lamda(14,3) - 5300*mu(14,3) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(14,4)..  5300*lamda(14,4) - 5300*mu(14,4) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(14,13)..  5300*lamda(14,13) - 5300*mu(14,13) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(14,15)..  5300*lamda(14,15) - 5300*mu(14,15) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(14,19)..  5300*lamda(14,19) - 5300*mu(14,19) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(15,4)..  5300*lamda(15,4) - 5300*mu(15,4) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(15,5)..  5300*lamda(15,5) - 5300*mu(15,5) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(15,6)..  5300*lamda(15,6) - 5300*mu(15,6) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(15,14)..  5300*lamda(15,14) - 5300*mu(15,14) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(15,16)..  5300*lamda(15,16) - 5300*mu(15,16) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(15,19)..  5300*lamda(15,19) - 5300*mu(15,19) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(16,6)..  5300*lamda(16,6) - 5300*mu(16,6) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(16,7)..  5300*lamda(16,7) - 5300*mu(16,7) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(16,8)..  5300*lamda(16,8) - 5300*mu(16,8) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(16,15)..  5300*lamda(16,15) - 5300*mu(16,15) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(16,17)..  5300*lamda(16,17) - 5300*mu(16,17) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(16,19)..  5300*lamda(16,19) - 5300*mu(16,19) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(17,8)..  5300*lamda(17,8) - 5300*mu(17,8) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 28
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE mfd Using MCP From line 242
+
+
+     y_com  =G=  the complimentary term of y(i,j)
+
+y_com(17,9)..  5300*lamda(17,9) - 5300*mu(17,9) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(17,10)..  5300*lamda(17,10) - 5300*mu(17,10) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(17,16)..  5300*lamda(17,16) - 5300*mu(17,16) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(17,18)..  5300*lamda(17,18) - 5300*mu(17,18) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(17,19)..  5300*lamda(17,19) - 5300*mu(17,19) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(18,10)..  5300*lamda(18,10) - 5300*mu(18,10) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(18,11)..  5300*lamda(18,11) - 5300*mu(18,11) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(18,12)..  5300*lamda(18,12) - 5300*mu(18,12) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(18,13)..  5300*lamda(18,13) - 5300*mu(18,13) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(18,17)..  5300*lamda(18,17) - 5300*mu(18,17) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(18,19)..  5300*lamda(18,19) - 5300*mu(18,19) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(19,13)..  5300*lamda(19,13) - 5300*mu(19,13) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(19,14)..  5300*lamda(19,14) - 5300*mu(19,14) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(19,15)..  5300*lamda(19,15) - 5300*mu(19,15) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(19,16)..  5300*lamda(19,16) - 5300*mu(19,16) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(19,17)..  5300*lamda(19,17) - 5300*mu(19,17) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+y_com(19,18)..  5300*lamda(19,18) - 5300*mu(19,18) =G= 5300 ; (LHS = 0, INFES = 5300 ****)
+     
+
+---- lamda_com  =G=  the complimentary term of lamda(i,j)
+
+lamda_com(1,2)..  - 5300*y(1,2) =G= -3 ; (LHS = 0)
+     
+lamda_com(1,12)..  - 5300*y(1,12) =G= -3 ; (LHS = 0)
+     
+lamda_com(1,13)..  - 5300*y(1,13) =G= -3 ; (LHS = 0)
+     
+lamda_com(2,1)..  - 5300*y(2,1) =G= -3 ; (LHS = 0)
+     
+lamda_com(2,3)..  - 5300*y(2,3) =G= -3 ; (LHS = 0)
+     
+lamda_com(2,13)..  - 5300*y(2,13) =G= -3 ; (LHS = 0)
+     
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 29
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE mfd Using MCP From line 242
+
+
+     lamda_com  =G=  the complimentary term of lamda(i,j)
+
+lamda_com(2,14)..  - 5300*y(2,14) =G= -3 ; (LHS = 0)
+     
+lamda_com(3,2)..  - 5300*y(3,2) =G= -3 ; (LHS = 0)
+     
+lamda_com(3,4)..  - 5300*y(3,4) =G= -3 ; (LHS = 0)
+     
+lamda_com(3,14)..  - 5300*y(3,14) =G= -3 ; (LHS = 0)
+     
+lamda_com(4,3)..  - 5300*y(4,3) =G= -3 ; (LHS = 0)
+     
+lamda_com(4,5)..  - 5300*y(4,5) =G= -3 ; (LHS = 0)
+     
+lamda_com(4,14)..  - 5300*y(4,14) =G= -3 ; (LHS = 0)
+     
+lamda_com(4,15)..  - 5300*y(4,15) =G= -3 ; (LHS = 0)
+     
+lamda_com(5,4)..  - 5300*y(5,4) =G= -3 ; (LHS = 0)
+     
+lamda_com(5,6)..  - 5300*y(5,6) =G= -3 ; (LHS = 0)
+     
+lamda_com(5,15)..  - 5300*y(5,15) =G= -3 ; (LHS = 0)
+     
+lamda_com(6,5)..  - 5300*y(6,5) =G= -3 ; (LHS = 0)
+     
+lamda_com(6,7)..  - 5300*y(6,7) =G= -3 ; (LHS = 0)
+     
+lamda_com(6,15)..  - 5300*y(6,15) =G= -3 ; (LHS = 0)
+     
+lamda_com(6,16)..  - 5300*y(6,16) =G= -3 ; (LHS = 0)
+     
+lamda_com(7,6)..  - 5300*y(7,6) =G= -3 ; (LHS = 0)
+     
+lamda_com(7,8)..  - 5300*y(7,8) =G= -3 ; (LHS = 0)
+     
+lamda_com(7,16)..  - 5300*y(7,16) =G= -3 ; (LHS = 0)
+     
+lamda_com(8,7)..  - 5300*y(8,7) =G= -3 ; (LHS = 0)
+     
+lamda_com(8,9)..  - 5300*y(8,9) =G= -3 ; (LHS = 0)
+     
+lamda_com(8,16)..  - 5300*y(8,16) =G= -3 ; (LHS = 0)
+     
+lamda_com(8,17)..  - 5300*y(8,17) =G= -3 ; (LHS = 0)
+     
+lamda_com(9,8)..  - 5300*y(9,8) =G= -3 ; (LHS = 0)
+     
+lamda_com(9,10)..  - 5300*y(9,10) =G= -3 ; (LHS = 0)
+     
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 30
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE mfd Using MCP From line 242
+
+
+     lamda_com  =G=  the complimentary term of lamda(i,j)
+
+lamda_com(9,17)..  - 5300*y(9,17) =G= -3 ; (LHS = 0)
+     
+lamda_com(10,9)..  - 5300*y(10,9) =G= -3 ; (LHS = 0)
+     
+lamda_com(10,11)..  - 5300*y(10,11) =G= -3 ; (LHS = 0)
+     
+lamda_com(10,17)..  - 5300*y(10,17) =G= -3 ; (LHS = 0)
+     
+lamda_com(10,18)..  - 5300*y(10,18) =G= -3 ; (LHS = 0)
+     
+lamda_com(11,10)..  - 5300*y(11,10) =G= -3 ; (LHS = 0)
+     
+lamda_com(11,12)..  - 5300*y(11,12) =G= -3 ; (LHS = 0)
+     
+lamda_com(11,18)..  - 5300*y(11,18) =G= -3 ; (LHS = 0)
+     
+lamda_com(12,1)..  - 5300*y(12,1) =G= -3 ; (LHS = 0)
+     
+lamda_com(12,11)..  - 5300*y(12,11) =G= -3 ; (LHS = 0)
+     
+lamda_com(12,13)..  - 5300*y(12,13) =G= -3 ; (LHS = 0)
+     
+lamda_com(12,18)..  - 5300*y(12,18) =G= -3 ; (LHS = 0)
+     
+lamda_com(13,1)..  - 5300*y(13,1) =G= -3 ; (LHS = 0)
+     
+lamda_com(13,2)..  - 5300*y(13,2) =G= -3 ; (LHS = 0)
+     
+lamda_com(13,12)..  - 5300*y(13,12) =G= -3 ; (LHS = 0)
+     
+lamda_com(13,14)..  - 5300*y(13,14) =G= -4 ; (LHS = 0)
+     
+lamda_com(13,18)..  - 5300*y(13,18) =G= -4 ; (LHS = 0)
+     
+lamda_com(13,19)..  - 5300*y(13,19) =G= -5 ; (LHS = 0)
+     
+lamda_com(14,2)..  - 5300*y(14,2) =G= -3 ; (LHS = 0)
+     
+lamda_com(14,3)..  - 5300*y(14,3) =G= -3 ; (LHS = 0)
+     
+lamda_com(14,4)..  - 5300*y(14,4) =G= -3 ; (LHS = 0)
+     
+lamda_com(14,13)..  - 5300*y(14,13) =G= -4 ; (LHS = 0)
+     
+lamda_com(14,15)..  - 5300*y(14,15) =G= -4 ; (LHS = 0)
+     
+lamda_com(14,19)..  - 5300*y(14,19) =G= -4 ; (LHS = 0)
+     
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 31
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE mfd Using MCP From line 242
+
+
+     lamda_com  =G=  the complimentary term of lamda(i,j)
+
+lamda_com(15,4)..  - 5300*y(15,4) =G= -3 ; (LHS = 0)
+     
+lamda_com(15,5)..  - 5300*y(15,5) =G= -3 ; (LHS = 0)
+     
+lamda_com(15,6)..  - 5300*y(15,6) =G= -3 ; (LHS = 0)
+     
+lamda_com(15,14)..  - 5300*y(15,14) =G= -4 ; (LHS = 0)
+     
+lamda_com(15,16)..  - 5300*y(15,16) =G= -4 ; (LHS = 0)
+     
+lamda_com(15,19)..  - 5300*y(15,19) =G= -5 ; (LHS = 0)
+     
+lamda_com(16,6)..  - 5300*y(16,6) =G= -3 ; (LHS = 0)
+     
+lamda_com(16,7)..  - 5300*y(16,7) =G= -3 ; (LHS = 0)
+     
+lamda_com(16,8)..  - 5300*y(16,8) =G= -3 ; (LHS = 0)
+     
+lamda_com(16,15)..  - 5300*y(16,15) =G= -4 ; (LHS = 0)
+     
+lamda_com(16,17)..  - 5300*y(16,17) =G= -5 ; (LHS = 0)
+     
+lamda_com(16,19)..  - 5300*y(16,19) =G= -5 ; (LHS = 0)
+     
+lamda_com(17,8)..  - 5300*y(17,8) =G= -3 ; (LHS = 0)
+     
+lamda_com(17,9)..  - 5300*y(17,9) =G= -3 ; (LHS = 0)
+     
+lamda_com(17,10)..  - 5300*y(17,10) =G= -3 ; (LHS = 0)
+     
+lamda_com(17,16)..  - 5300*y(17,16) =G= -4 ; (LHS = 0)
+     
+lamda_com(17,18)..  - 5300*y(17,18) =G= -4 ; (LHS = 0)
+     
+lamda_com(17,19)..  - 5300*y(17,19) =G= -5 ; (LHS = 0)
+     
+lamda_com(18,10)..  - 5300*y(18,10) =G= -3 ; (LHS = 0)
+     
+lamda_com(18,11)..  - 5300*y(18,11) =G= -3 ; (LHS = 0)
+     
+lamda_com(18,12)..  - 5300*y(18,12) =G= -3 ; (LHS = 0)
+     
+lamda_com(18,13)..  - 5300*y(18,13) =G= -4 ; (LHS = 0)
+     
+lamda_com(18,17)..  - 5300*y(18,17) =G= -4 ; (LHS = 0)
+     
+lamda_com(18,19)..  - 5300*y(18,19) =G= -5 ; (LHS = 0)
+     
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 32
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE mfd Using MCP From line 242
+
+
+     lamda_com  =G=  the complimentary term of lamda(i,j)
+
+lamda_com(19,13)..  - 5300*y(19,13) =G= -5 ; (LHS = 0)
+     
+lamda_com(19,14)..  - 5300*y(19,14) =G= -5 ; (LHS = 0)
+     
+lamda_com(19,15)..  - 5300*y(19,15) =G= -5 ; (LHS = 0)
+     
+lamda_com(19,16)..  - 5300*y(19,16) =G= -5 ; (LHS = 0)
+     
+lamda_com(19,17)..  - 5300*y(19,17) =G= -5 ; (LHS = 0)
+     
+lamda_com(19,18)..  - 5300*y(19,18) =G= -5 ; (LHS = 0)
+     
+
+---- mu_com  =G=  the complimentary term of mu(i,j)
+
+mu_com(1,2)..  5300*y(1,2) =G= 0 ; (LHS = 0)
+     
+mu_com(1,12)..  5300*y(1,12) =G= 0 ; (LHS = 0)
+     
+mu_com(1,13)..  5300*y(1,13) =G= 0 ; (LHS = 0)
+     
+mu_com(2,1)..  5300*y(2,1) =G= 0 ; (LHS = 0)
+     
+mu_com(2,3)..  5300*y(2,3) =G= 0 ; (LHS = 0)
+     
+mu_com(2,13)..  5300*y(2,13) =G= 0 ; (LHS = 0)
+     
+mu_com(2,14)..  5300*y(2,14) =G= 0 ; (LHS = 0)
+     
+mu_com(3,2)..  5300*y(3,2) =G= 0 ; (LHS = 0)
+     
+mu_com(3,4)..  5300*y(3,4) =G= 0 ; (LHS = 0)
+     
+mu_com(3,14)..  5300*y(3,14) =G= 0 ; (LHS = 0)
+     
+mu_com(4,3)..  5300*y(4,3) =G= 0 ; (LHS = 0)
+     
+mu_com(4,5)..  5300*y(4,5) =G= 0 ; (LHS = 0)
+     
+mu_com(4,14)..  5300*y(4,14) =G= 0 ; (LHS = 0)
+     
+mu_com(4,15)..  5300*y(4,15) =G= 0 ; (LHS = 0)
+     
+mu_com(5,4)..  5300*y(5,4) =G= 0 ; (LHS = 0)
+     
+mu_com(5,6)..  5300*y(5,6) =G= 0 ; (LHS = 0)
+     
+mu_com(5,15)..  5300*y(5,15) =G= 0 ; (LHS = 0)
+     
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 33
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE mfd Using MCP From line 242
+
+
+     mu_com  =G=  the complimentary term of mu(i,j)
+
+mu_com(6,5)..  5300*y(6,5) =G= 0 ; (LHS = 0)
+     
+mu_com(6,7)..  5300*y(6,7) =G= 0 ; (LHS = 0)
+     
+mu_com(6,15)..  5300*y(6,15) =G= 0 ; (LHS = 0)
+     
+mu_com(6,16)..  5300*y(6,16) =G= 0 ; (LHS = 0)
+     
+mu_com(7,6)..  5300*y(7,6) =G= 0 ; (LHS = 0)
+     
+mu_com(7,8)..  5300*y(7,8) =G= 0 ; (LHS = 0)
+     
+mu_com(7,16)..  5300*y(7,16) =G= 0 ; (LHS = 0)
+     
+mu_com(8,7)..  5300*y(8,7) =G= 0 ; (LHS = 0)
+     
+mu_com(8,9)..  5300*y(8,9) =G= 0 ; (LHS = 0)
+     
+mu_com(8,16)..  5300*y(8,16) =G= 0 ; (LHS = 0)
+     
+mu_com(8,17)..  5300*y(8,17) =G= 0 ; (LHS = 0)
+     
+mu_com(9,8)..  5300*y(9,8) =G= 0 ; (LHS = 0)
+     
+mu_com(9,10)..  5300*y(9,10) =G= 0 ; (LHS = 0)
+     
+mu_com(9,17)..  5300*y(9,17) =G= 0 ; (LHS = 0)
+     
+mu_com(10,9)..  5300*y(10,9) =G= 0 ; (LHS = 0)
+     
+mu_com(10,11)..  5300*y(10,11) =G= 0 ; (LHS = 0)
+     
+mu_com(10,17)..  5300*y(10,17) =G= 0 ; (LHS = 0)
+     
+mu_com(10,18)..  5300*y(10,18) =G= 0 ; (LHS = 0)
+     
+mu_com(11,10)..  5300*y(11,10) =G= 0 ; (LHS = 0)
+     
+mu_com(11,12)..  5300*y(11,12) =G= 0 ; (LHS = 0)
+     
+mu_com(11,18)..  5300*y(11,18) =G= 0 ; (LHS = 0)
+     
+mu_com(12,1)..  5300*y(12,1) =G= 0 ; (LHS = 0)
+     
+mu_com(12,11)..  5300*y(12,11) =G= 0 ; (LHS = 0)
+     
+mu_com(12,13)..  5300*y(12,13) =G= 0 ; (LHS = 0)
+     
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 34
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE mfd Using MCP From line 242
+
+
+     mu_com  =G=  the complimentary term of mu(i,j)
+
+mu_com(12,18)..  5300*y(12,18) =G= 0 ; (LHS = 0)
+     
+mu_com(13,1)..  5300*y(13,1) =G= 0 ; (LHS = 0)
+     
+mu_com(13,2)..  5300*y(13,2) =G= 0 ; (LHS = 0)
+     
+mu_com(13,12)..  5300*y(13,12) =G= 0 ; (LHS = 0)
+     
+mu_com(13,14)..  5300*y(13,14) =G= 0 ; (LHS = 0)
+     
+mu_com(13,18)..  5300*y(13,18) =G= 0 ; (LHS = 0)
+     
+mu_com(13,19)..  5300*y(13,19) =G= 0 ; (LHS = 0)
+     
+mu_com(14,2)..  5300*y(14,2) =G= 0 ; (LHS = 0)
+     
+mu_com(14,3)..  5300*y(14,3) =G= 0 ; (LHS = 0)
+     
+mu_com(14,4)..  5300*y(14,4) =G= 0 ; (LHS = 0)
+     
+mu_com(14,13)..  5300*y(14,13) =G= 0 ; (LHS = 0)
+     
+mu_com(14,15)..  5300*y(14,15) =G= 0 ; (LHS = 0)
+     
+mu_com(14,19)..  5300*y(14,19) =G= 0 ; (LHS = 0)
+     
+mu_com(15,4)..  5300*y(15,4) =G= 0 ; (LHS = 0)
+     
+mu_com(15,5)..  5300*y(15,5) =G= 0 ; (LHS = 0)
+     
+mu_com(15,6)..  5300*y(15,6) =G= 0 ; (LHS = 0)
+     
+mu_com(15,14)..  5300*y(15,14) =G= 0 ; (LHS = 0)
+     
+mu_com(15,16)..  5300*y(15,16) =G= 0 ; (LHS = 0)
+     
+mu_com(15,19)..  5300*y(15,19) =G= 0 ; (LHS = 0)
+     
+mu_com(16,6)..  5300*y(16,6) =G= 0 ; (LHS = 0)
+     
+mu_com(16,7)..  5300*y(16,7) =G= 0 ; (LHS = 0)
+     
+mu_com(16,8)..  5300*y(16,8) =G= 0 ; (LHS = 0)
+     
+mu_com(16,15)..  5300*y(16,15) =G= 0 ; (LHS = 0)
+     
+mu_com(16,17)..  5300*y(16,17) =G= 0 ; (LHS = 0)
+     
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 35
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE mfd Using MCP From line 242
+
+
+     mu_com  =G=  the complimentary term of mu(i,j)
+
+mu_com(16,19)..  5300*y(16,19) =G= 0 ; (LHS = 0)
+     
+mu_com(17,8)..  5300*y(17,8) =G= 0 ; (LHS = 0)
+     
+mu_com(17,9)..  5300*y(17,9) =G= 0 ; (LHS = 0)
+     
+mu_com(17,10)..  5300*y(17,10) =G= 0 ; (LHS = 0)
+     
+mu_com(17,16)..  5300*y(17,16) =G= 0 ; (LHS = 0)
+     
+mu_com(17,18)..  5300*y(17,18) =G= 0 ; (LHS = 0)
+     
+mu_com(17,19)..  5300*y(17,19) =G= 0 ; (LHS = 0)
+     
+mu_com(18,10)..  5300*y(18,10) =G= 0 ; (LHS = 0)
+     
+mu_com(18,11)..  5300*y(18,11) =G= 0 ; (LHS = 0)
+     
+mu_com(18,12)..  5300*y(18,12) =G= 0 ; (LHS = 0)
+     
+mu_com(18,13)..  5300*y(18,13) =G= 0 ; (LHS = 0)
+     
+mu_com(18,17)..  5300*y(18,17) =G= 0 ; (LHS = 0)
+     
+mu_com(18,19)..  5300*y(18,19) =G= 0 ; (LHS = 0)
+     
+mu_com(19,13)..  5300*y(19,13) =G= 0 ; (LHS = 0)
+     
+mu_com(19,14)..  5300*y(19,14) =G= 0 ; (LHS = 0)
+     
+mu_com(19,15)..  5300*y(19,15) =G= 0 ; (LHS = 0)
+     
+mu_com(19,16)..  5300*y(19,16) =G= 0 ; (LHS = 0)
+     
+mu_com(19,17)..  5300*y(19,17) =G= 0 ; (LHS = 0)
+     
+mu_com(19,18)..  5300*y(19,18) =G= 0 ; (LHS = 0)
+     
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 36
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+---- p  the queue inflow of the boundary (i,j)
+
+p(1,2,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(1,13)
+
+p(1,2,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(1,14)
+
+p(1,2,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(1,15)
+
+p(1,2,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(1,16)
+
+p(1,2,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(1,17)
+
+p(1,2,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(1,18)
+
+p(1,2,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(1,19)
+
+p(1,12,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(1,13)
+
+p(1,12,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(1,14)
+
+p(1,12,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(1,15)
+
+p(1,12,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(1,16)
+
+p(1,12,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(1,17)
+
+p(1,12,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(1,18)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 37
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     p  the queue inflow of the boundary (i,j)
+
+
+p(1,12,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(1,19)
+
+p(1,13,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(1,13)
+
+p(1,13,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(1,14)
+
+p(1,13,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(1,15)
+
+p(1,13,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(1,16)
+
+p(1,13,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(1,17)
+
+p(1,13,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(1,18)
+
+p(1,13,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(1,19)
+
+p(2,1,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(2,13)
+
+p(2,1,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(2,14)
+
+p(2,1,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(2,15)
+
+p(2,1,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(2,16)
+
+p(2,1,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 38
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     p  the queue inflow of the boundary (i,j)
+
+        1       eta_com(2,17)
+
+p(2,1,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(2,18)
+
+p(2,1,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(2,19)
+
+p(2,3,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(2,13)
+
+p(2,3,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(2,14)
+
+p(2,3,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(2,15)
+
+p(2,3,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(2,16)
+
+p(2,3,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(2,17)
+
+p(2,3,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(2,18)
+
+p(2,3,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(2,19)
+
+p(2,13,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(2,13)
+
+p(2,13,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(2,14)
+
+p(2,13,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(2,15)
+
+p(2,13,16)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 39
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     p  the queue inflow of the boundary (i,j)
+
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(2,16)
+
+p(2,13,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(2,17)
+
+p(2,13,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(2,18)
+
+p(2,13,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(2,19)
+
+p(2,14,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(2,13)
+
+p(2,14,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(2,14)
+
+p(2,14,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(2,15)
+
+p(2,14,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(2,16)
+
+p(2,14,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(2,17)
+
+p(2,14,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(2,18)
+
+p(2,14,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(2,19)
+
+p(3,2,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(3,13)
+
+p(3,2,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(3,14)
+
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 40
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     p  the queue inflow of the boundary (i,j)
+
+p(3,2,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(3,15)
+
+p(3,2,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(3,16)
+
+p(3,2,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(3,17)
+
+p(3,2,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(3,18)
+
+p(3,2,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(3,19)
+
+p(3,4,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(3,13)
+
+p(3,4,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(3,14)
+
+p(3,4,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(3,15)
+
+p(3,4,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(3,16)
+
+p(3,4,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(3,17)
+
+p(3,4,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(3,18)
+
+p(3,4,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(3,19)
+
+p(3,14,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(3,13)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 41
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     p  the queue inflow of the boundary (i,j)
+
+
+p(3,14,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(3,14)
+
+p(3,14,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(3,15)
+
+p(3,14,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(3,16)
+
+p(3,14,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(3,17)
+
+p(3,14,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(3,18)
+
+p(3,14,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(3,19)
+
+p(4,3,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(4,13)
+
+p(4,3,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(4,14)
+
+p(4,3,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(4,15)
+
+p(4,3,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(4,16)
+
+p(4,3,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(4,17)
+
+p(4,3,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(4,18)
+
+p(4,3,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 42
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     p  the queue inflow of the boundary (i,j)
+
+        1       eta_com(4,19)
+
+p(4,5,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(4,13)
+
+p(4,5,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(4,14)
+
+p(4,5,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(4,15)
+
+p(4,5,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(4,16)
+
+p(4,5,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(4,17)
+
+p(4,5,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(4,18)
+
+p(4,5,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(4,19)
+
+p(4,14,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(4,13)
+
+p(4,14,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(4,14)
+
+p(4,14,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(4,15)
+
+p(4,14,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(4,16)
+
+p(4,14,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(4,17)
+
+p(4,14,18)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 43
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     p  the queue inflow of the boundary (i,j)
+
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(4,18)
+
+p(4,14,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(4,19)
+
+p(4,15,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(4,13)
+
+p(4,15,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(4,14)
+
+p(4,15,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(4,15)
+
+p(4,15,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(4,16)
+
+p(4,15,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(4,17)
+
+p(4,15,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(4,18)
+
+p(4,15,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(4,19)
+
+p(5,4,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(5,13)
+
+p(5,4,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       eta_com(5,14)
+
+REMAINING 488 ENTRIES SKIPPED
+
+---- eta  the minimum travel time from region i to destination
+
+eta(1,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -1       p_com(1,2,13)
+       -1       p_com(1,12,13)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 44
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     eta  the minimum travel time from region i to destination
+
+       -1       p_com(1,13,13)
+        1       p_com(2,1,13)
+        1       p_com(12,1,13)
+        1       p_com(13,1,13)
+
+eta(1,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -1       p_com(1,2,14)
+       -1       p_com(1,12,14)
+       -1       p_com(1,13,14)
+        1       p_com(2,1,14)
+        1       p_com(12,1,14)
+        1       p_com(13,1,14)
+
+eta(1,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -1       p_com(1,2,15)
+       -1       p_com(1,12,15)
+       -1       p_com(1,13,15)
+        1       p_com(2,1,15)
+        1       p_com(12,1,15)
+        1       p_com(13,1,15)
+
+eta(1,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -1       p_com(1,2,16)
+       -1       p_com(1,12,16)
+       -1       p_com(1,13,16)
+        1       p_com(2,1,16)
+        1       p_com(12,1,16)
+        1       p_com(13,1,16)
+
+eta(1,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -1       p_com(1,2,17)
+       -1       p_com(1,12,17)
+       -1       p_com(1,13,17)
+        1       p_com(2,1,17)
+        1       p_com(12,1,17)
+        1       p_com(13,1,17)
+
+eta(1,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -1       p_com(1,2,18)
+       -1       p_com(1,12,18)
+       -1       p_com(1,13,18)
+        1       p_com(2,1,18)
+        1       p_com(12,1,18)
+        1       p_com(13,1,18)
+
+eta(1,19)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 45
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     eta  the minimum travel time from region i to destination
+
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -1       p_com(1,2,19)
+       -1       p_com(1,12,19)
+       -1       p_com(1,13,19)
+        1       p_com(2,1,19)
+        1       p_com(12,1,19)
+        1       p_com(13,1,19)
+
+eta(2,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(1,2,13)
+       -1       p_com(2,1,13)
+       -1       p_com(2,3,13)
+       -1       p_com(2,13,13)
+       -1       p_com(2,14,13)
+        1       p_com(3,2,13)
+        1       p_com(13,2,13)
+        1       p_com(14,2,13)
+
+eta(2,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(1,2,14)
+       -1       p_com(2,1,14)
+       -1       p_com(2,3,14)
+       -1       p_com(2,13,14)
+       -1       p_com(2,14,14)
+        1       p_com(3,2,14)
+        1       p_com(13,2,14)
+        1       p_com(14,2,14)
+
+eta(2,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(1,2,15)
+       -1       p_com(2,1,15)
+       -1       p_com(2,3,15)
+       -1       p_com(2,13,15)
+       -1       p_com(2,14,15)
+        1       p_com(3,2,15)
+        1       p_com(13,2,15)
+        1       p_com(14,2,15)
+
+eta(2,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(1,2,16)
+       -1       p_com(2,1,16)
+       -1       p_com(2,3,16)
+       -1       p_com(2,13,16)
+       -1       p_com(2,14,16)
+        1       p_com(3,2,16)
+        1       p_com(13,2,16)
+        1       p_com(14,2,16)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 46
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     eta  the minimum travel time from region i to destination
+
+
+eta(2,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(1,2,17)
+       -1       p_com(2,1,17)
+       -1       p_com(2,3,17)
+       -1       p_com(2,13,17)
+       -1       p_com(2,14,17)
+        1       p_com(3,2,17)
+        1       p_com(13,2,17)
+        1       p_com(14,2,17)
+
+eta(2,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(1,2,18)
+       -1       p_com(2,1,18)
+       -1       p_com(2,3,18)
+       -1       p_com(2,13,18)
+       -1       p_com(2,14,18)
+        1       p_com(3,2,18)
+        1       p_com(13,2,18)
+        1       p_com(14,2,18)
+
+eta(2,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(1,2,19)
+       -1       p_com(2,1,19)
+       -1       p_com(2,3,19)
+       -1       p_com(2,13,19)
+       -1       p_com(2,14,19)
+        1       p_com(3,2,19)
+        1       p_com(13,2,19)
+        1       p_com(14,2,19)
+
+eta(3,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(2,3,13)
+       -1       p_com(3,2,13)
+       -1       p_com(3,4,13)
+       -1       p_com(3,14,13)
+        1       p_com(4,3,13)
+        1       p_com(14,3,13)
+
+eta(3,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(2,3,14)
+       -1       p_com(3,2,14)
+       -1       p_com(3,4,14)
+       -1       p_com(3,14,14)
+        1       p_com(4,3,14)
+        1       p_com(14,3,14)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 47
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     eta  the minimum travel time from region i to destination
+
+
+eta(3,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(2,3,15)
+       -1       p_com(3,2,15)
+       -1       p_com(3,4,15)
+       -1       p_com(3,14,15)
+        1       p_com(4,3,15)
+        1       p_com(14,3,15)
+
+eta(3,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(2,3,16)
+       -1       p_com(3,2,16)
+       -1       p_com(3,4,16)
+       -1       p_com(3,14,16)
+        1       p_com(4,3,16)
+        1       p_com(14,3,16)
+
+eta(3,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(2,3,17)
+       -1       p_com(3,2,17)
+       -1       p_com(3,4,17)
+       -1       p_com(3,14,17)
+        1       p_com(4,3,17)
+        1       p_com(14,3,17)
+
+eta(3,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(2,3,18)
+       -1       p_com(3,2,18)
+       -1       p_com(3,4,18)
+       -1       p_com(3,14,18)
+        1       p_com(4,3,18)
+        1       p_com(14,3,18)
+
+eta(3,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(2,3,19)
+       -1       p_com(3,2,19)
+       -1       p_com(3,4,19)
+       -1       p_com(3,14,19)
+        1       p_com(4,3,19)
+        1       p_com(14,3,19)
+
+eta(4,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(3,4,13)
+       -1       p_com(4,3,13)
+       -1       p_com(4,5,13)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 48
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     eta  the minimum travel time from region i to destination
+
+       -1       p_com(4,14,13)
+       -1       p_com(4,15,13)
+        1       p_com(5,4,13)
+        1       p_com(14,4,13)
+        1       p_com(15,4,13)
+
+eta(4,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(3,4,14)
+       -1       p_com(4,3,14)
+       -1       p_com(4,5,14)
+       -1       p_com(4,14,14)
+       -1       p_com(4,15,14)
+        1       p_com(5,4,14)
+        1       p_com(14,4,14)
+        1       p_com(15,4,14)
+
+eta(4,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(3,4,15)
+       -1       p_com(4,3,15)
+       -1       p_com(4,5,15)
+       -1       p_com(4,14,15)
+       -1       p_com(4,15,15)
+        1       p_com(5,4,15)
+        1       p_com(14,4,15)
+        1       p_com(15,4,15)
+
+eta(4,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(3,4,16)
+       -1       p_com(4,3,16)
+       -1       p_com(4,5,16)
+       -1       p_com(4,14,16)
+       -1       p_com(4,15,16)
+        1       p_com(5,4,16)
+        1       p_com(14,4,16)
+        1       p_com(15,4,16)
+
+eta(4,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(3,4,17)
+       -1       p_com(4,3,17)
+       -1       p_com(4,5,17)
+       -1       p_com(4,14,17)
+       -1       p_com(4,15,17)
+        1       p_com(5,4,17)
+        1       p_com(14,4,17)
+        1       p_com(15,4,17)
+
+eta(4,18)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 49
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     eta  the minimum travel time from region i to destination
+
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(3,4,18)
+       -1       p_com(4,3,18)
+       -1       p_com(4,5,18)
+       -1       p_com(4,14,18)
+       -1       p_com(4,15,18)
+        1       p_com(5,4,18)
+        1       p_com(14,4,18)
+        1       p_com(15,4,18)
+
+eta(4,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(3,4,19)
+       -1       p_com(4,3,19)
+       -1       p_com(4,5,19)
+       -1       p_com(4,14,19)
+       -1       p_com(4,15,19)
+        1       p_com(5,4,19)
+        1       p_com(14,4,19)
+        1       p_com(15,4,19)
+
+eta(5,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(4,5,13)
+       -1       p_com(5,4,13)
+       -1       p_com(5,6,13)
+       -1       p_com(5,15,13)
+        1       p_com(6,5,13)
+        1       p_com(15,5,13)
+
+eta(5,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(4,5,14)
+       -1       p_com(5,4,14)
+       -1       p_com(5,6,14)
+       -1       p_com(5,15,14)
+        1       p_com(6,5,14)
+        1       p_com(15,5,14)
+
+eta(5,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(4,5,15)
+       -1       p_com(5,4,15)
+       -1       p_com(5,6,15)
+       -1       p_com(5,15,15)
+        1       p_com(6,5,15)
+        1       p_com(15,5,15)
+
+eta(5,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(4,5,16)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 50
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     eta  the minimum travel time from region i to destination
+
+       -1       p_com(5,4,16)
+       -1       p_com(5,6,16)
+       -1       p_com(5,15,16)
+        1       p_com(6,5,16)
+        1       p_com(15,5,16)
+
+eta(5,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(4,5,17)
+       -1       p_com(5,4,17)
+       -1       p_com(5,6,17)
+       -1       p_com(5,15,17)
+        1       p_com(6,5,17)
+        1       p_com(15,5,17)
+
+eta(5,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(4,5,18)
+       -1       p_com(5,4,18)
+       -1       p_com(5,6,18)
+       -1       p_com(5,15,18)
+        1       p_com(6,5,18)
+        1       p_com(15,5,18)
+
+eta(5,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(4,5,19)
+       -1       p_com(5,4,19)
+       -1       p_com(5,6,19)
+       -1       p_com(5,15,19)
+        1       p_com(6,5,19)
+        1       p_com(15,5,19)
+
+eta(6,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(5,6,13)
+       -1       p_com(6,5,13)
+       -1       p_com(6,7,13)
+       -1       p_com(6,15,13)
+       -1       p_com(6,16,13)
+        1       p_com(7,6,13)
+        1       p_com(15,6,13)
+        1       p_com(16,6,13)
+
+eta(6,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(5,6,14)
+       -1       p_com(6,5,14)
+       -1       p_com(6,7,14)
+       -1       p_com(6,15,14)
+       -1       p_com(6,16,14)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 51
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     eta  the minimum travel time from region i to destination
+
+        1       p_com(7,6,14)
+        1       p_com(15,6,14)
+        1       p_com(16,6,14)
+
+eta(6,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(5,6,15)
+       -1       p_com(6,5,15)
+       -1       p_com(6,7,15)
+       -1       p_com(6,15,15)
+       -1       p_com(6,16,15)
+        1       p_com(7,6,15)
+        1       p_com(15,6,15)
+        1       p_com(16,6,15)
+
+eta(6,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(5,6,16)
+       -1       p_com(6,5,16)
+       -1       p_com(6,7,16)
+       -1       p_com(6,15,16)
+       -1       p_com(6,16,16)
+        1       p_com(7,6,16)
+        1       p_com(15,6,16)
+        1       p_com(16,6,16)
+
+eta(6,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(5,6,17)
+       -1       p_com(6,5,17)
+       -1       p_com(6,7,17)
+       -1       p_com(6,15,17)
+       -1       p_com(6,16,17)
+        1       p_com(7,6,17)
+        1       p_com(15,6,17)
+        1       p_com(16,6,17)
+
+eta(6,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(5,6,18)
+       -1       p_com(6,5,18)
+       -1       p_com(6,7,18)
+       -1       p_com(6,15,18)
+       -1       p_com(6,16,18)
+        1       p_com(7,6,18)
+        1       p_com(15,6,18)
+        1       p_com(16,6,18)
+
+eta(6,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(5,6,19)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 52
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     eta  the minimum travel time from region i to destination
+
+       -1       p_com(6,5,19)
+       -1       p_com(6,7,19)
+       -1       p_com(6,15,19)
+       -1       p_com(6,16,19)
+        1       p_com(7,6,19)
+        1       p_com(15,6,19)
+        1       p_com(16,6,19)
+
+eta(7,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(6,7,13)
+       -1       p_com(7,6,13)
+       -1       p_com(7,8,13)
+       -1       p_com(7,16,13)
+        1       p_com(8,7,13)
+        1       p_com(16,7,13)
+
+eta(7,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(6,7,14)
+       -1       p_com(7,6,14)
+       -1       p_com(7,8,14)
+       -1       p_com(7,16,14)
+        1       p_com(8,7,14)
+        1       p_com(16,7,14)
+
+eta(7,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(6,7,15)
+       -1       p_com(7,6,15)
+       -1       p_com(7,8,15)
+       -1       p_com(7,16,15)
+        1       p_com(8,7,15)
+        1       p_com(16,7,15)
+
+eta(7,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(6,7,16)
+       -1       p_com(7,6,16)
+       -1       p_com(7,8,16)
+       -1       p_com(7,16,16)
+        1       p_com(8,7,16)
+        1       p_com(16,7,16)
+
+eta(7,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(6,7,17)
+       -1       p_com(7,6,17)
+       -1       p_com(7,8,17)
+       -1       p_com(7,16,17)
+        1       p_com(8,7,17)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 53
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     eta  the minimum travel time from region i to destination
+
+        1       p_com(16,7,17)
+
+eta(7,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(6,7,18)
+       -1       p_com(7,6,18)
+       -1       p_com(7,8,18)
+       -1       p_com(7,16,18)
+        1       p_com(8,7,18)
+        1       p_com(16,7,18)
+
+eta(7,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(6,7,19)
+       -1       p_com(7,6,19)
+       -1       p_com(7,8,19)
+       -1       p_com(7,16,19)
+        1       p_com(8,7,19)
+        1       p_com(16,7,19)
+
+eta(8,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(7,8,13)
+       -1       p_com(8,7,13)
+       -1       p_com(8,9,13)
+       -1       p_com(8,16,13)
+       -1       p_com(8,17,13)
+        1       p_com(9,8,13)
+        1       p_com(16,8,13)
+        1       p_com(17,8,13)
+
+eta(8,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(7,8,14)
+       -1       p_com(8,7,14)
+       -1       p_com(8,9,14)
+       -1       p_com(8,16,14)
+       -1       p_com(8,17,14)
+        1       p_com(9,8,14)
+        1       p_com(16,8,14)
+        1       p_com(17,8,14)
+
+eta(8,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(7,8,15)
+       -1       p_com(8,7,15)
+       -1       p_com(8,9,15)
+       -1       p_com(8,16,15)
+       -1       p_com(8,17,15)
+        1       p_com(9,8,15)
+        1       p_com(16,8,15)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 54
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     eta  the minimum travel time from region i to destination
+
+        1       p_com(17,8,15)
+
+eta(8,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(7,8,16)
+       -1       p_com(8,7,16)
+       -1       p_com(8,9,16)
+       -1       p_com(8,16,16)
+       -1       p_com(8,17,16)
+        1       p_com(9,8,16)
+        1       p_com(16,8,16)
+        1       p_com(17,8,16)
+
+eta(8,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(7,8,17)
+       -1       p_com(8,7,17)
+       -1       p_com(8,9,17)
+       -1       p_com(8,16,17)
+       -1       p_com(8,17,17)
+        1       p_com(9,8,17)
+        1       p_com(16,8,17)
+        1       p_com(17,8,17)
+
+eta(8,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(7,8,18)
+       -1       p_com(8,7,18)
+       -1       p_com(8,9,18)
+       -1       p_com(8,16,18)
+       -1       p_com(8,17,18)
+        1       p_com(9,8,18)
+        1       p_com(16,8,18)
+        1       p_com(17,8,18)
+
+eta(8,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(7,8,19)
+       -1       p_com(8,7,19)
+       -1       p_com(8,9,19)
+       -1       p_com(8,16,19)
+       -1       p_com(8,17,19)
+        1       p_com(9,8,19)
+        1       p_com(16,8,19)
+        1       p_com(17,8,19)
+
+eta(9,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(8,9,13)
+       -1       p_com(9,8,13)
+       -1       p_com(9,10,13)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 55
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     eta  the minimum travel time from region i to destination
+
+       -1       p_com(9,17,13)
+        1       p_com(10,9,13)
+        1       p_com(17,9,13)
+
+eta(9,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(8,9,14)
+       -1       p_com(9,8,14)
+       -1       p_com(9,10,14)
+       -1       p_com(9,17,14)
+        1       p_com(10,9,14)
+        1       p_com(17,9,14)
+
+eta(9,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(8,9,15)
+       -1       p_com(9,8,15)
+       -1       p_com(9,10,15)
+       -1       p_com(9,17,15)
+        1       p_com(10,9,15)
+        1       p_com(17,9,15)
+
+eta(9,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(8,9,16)
+       -1       p_com(9,8,16)
+       -1       p_com(9,10,16)
+       -1       p_com(9,17,16)
+        1       p_com(10,9,16)
+        1       p_com(17,9,16)
+
+eta(9,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(8,9,17)
+       -1       p_com(9,8,17)
+       -1       p_com(9,10,17)
+       -1       p_com(9,17,17)
+        1       p_com(10,9,17)
+        1       p_com(17,9,17)
+
+eta(9,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(8,9,18)
+       -1       p_com(9,8,18)
+       -1       p_com(9,10,18)
+       -1       p_com(9,17,18)
+        1       p_com(10,9,18)
+        1       p_com(17,9,18)
+
+eta(9,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 56
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     eta  the minimum travel time from region i to destination
+
+        1       p_com(8,9,19)
+       -1       p_com(9,8,19)
+       -1       p_com(9,10,19)
+       -1       p_com(9,17,19)
+        1       p_com(10,9,19)
+        1       p_com(17,9,19)
+
+eta(10,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(9,10,13)
+       -1       p_com(10,9,13)
+       -1       p_com(10,11,13)
+       -1       p_com(10,17,13)
+       -1       p_com(10,18,13)
+        1       p_com(11,10,13)
+        1       p_com(17,10,13)
+        1       p_com(18,10,13)
+
+eta(10,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(9,10,14)
+       -1       p_com(10,9,14)
+       -1       p_com(10,11,14)
+       -1       p_com(10,17,14)
+       -1       p_com(10,18,14)
+        1       p_com(11,10,14)
+        1       p_com(17,10,14)
+        1       p_com(18,10,14)
+
+eta(10,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(9,10,15)
+       -1       p_com(10,9,15)
+       -1       p_com(10,11,15)
+       -1       p_com(10,17,15)
+       -1       p_com(10,18,15)
+        1       p_com(11,10,15)
+        1       p_com(17,10,15)
+        1       p_com(18,10,15)
+
+eta(10,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(9,10,16)
+       -1       p_com(10,9,16)
+       -1       p_com(10,11,16)
+       -1       p_com(10,17,16)
+       -1       p_com(10,18,16)
+        1       p_com(11,10,16)
+        1       p_com(17,10,16)
+        1       p_com(18,10,16)
+
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 57
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     eta  the minimum travel time from region i to destination
+
+eta(10,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(9,10,17)
+       -1       p_com(10,9,17)
+       -1       p_com(10,11,17)
+       -1       p_com(10,17,17)
+       -1       p_com(10,18,17)
+        1       p_com(11,10,17)
+        1       p_com(17,10,17)
+        1       p_com(18,10,17)
+
+eta(10,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(9,10,18)
+       -1       p_com(10,9,18)
+       -1       p_com(10,11,18)
+       -1       p_com(10,17,18)
+       -1       p_com(10,18,18)
+        1       p_com(11,10,18)
+        1       p_com(17,10,18)
+        1       p_com(18,10,18)
+
+eta(10,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(9,10,19)
+       -1       p_com(10,9,19)
+       -1       p_com(10,11,19)
+       -1       p_com(10,17,19)
+       -1       p_com(10,18,19)
+        1       p_com(11,10,19)
+        1       p_com(17,10,19)
+        1       p_com(18,10,19)
+
+eta(11,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(10,11,13)
+       -1       p_com(11,10,13)
+       -1       p_com(11,12,13)
+       -1       p_com(11,18,13)
+        1       p_com(12,11,13)
+        1       p_com(18,11,13)
+
+eta(11,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(10,11,14)
+       -1       p_com(11,10,14)
+       -1       p_com(11,12,14)
+       -1       p_com(11,18,14)
+        1       p_com(12,11,14)
+        1       p_com(18,11,14)
+
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 58
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     eta  the minimum travel time from region i to destination
+
+eta(11,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(10,11,15)
+       -1       p_com(11,10,15)
+       -1       p_com(11,12,15)
+       -1       p_com(11,18,15)
+        1       p_com(12,11,15)
+        1       p_com(18,11,15)
+
+eta(11,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(10,11,16)
+       -1       p_com(11,10,16)
+       -1       p_com(11,12,16)
+       -1       p_com(11,18,16)
+        1       p_com(12,11,16)
+        1       p_com(18,11,16)
+
+eta(11,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(10,11,17)
+       -1       p_com(11,10,17)
+       -1       p_com(11,12,17)
+       -1       p_com(11,18,17)
+        1       p_com(12,11,17)
+        1       p_com(18,11,17)
+
+eta(11,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(10,11,18)
+       -1       p_com(11,10,18)
+       -1       p_com(11,12,18)
+       -1       p_com(11,18,18)
+        1       p_com(12,11,18)
+        1       p_com(18,11,18)
+
+eta(11,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(10,11,19)
+       -1       p_com(11,10,19)
+       -1       p_com(11,12,19)
+       -1       p_com(11,18,19)
+        1       p_com(12,11,19)
+        1       p_com(18,11,19)
+
+eta(12,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(1,12,13)
+        1       p_com(11,12,13)
+       -1       p_com(12,1,13)
+       -1       p_com(12,11,13)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 59
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     eta  the minimum travel time from region i to destination
+
+       -1       p_com(12,13,13)
+       -1       p_com(12,18,13)
+        1       p_com(13,12,13)
+        1       p_com(18,12,13)
+
+eta(12,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(1,12,14)
+        1       p_com(11,12,14)
+       -1       p_com(12,1,14)
+       -1       p_com(12,11,14)
+       -1       p_com(12,13,14)
+       -1       p_com(12,18,14)
+        1       p_com(13,12,14)
+        1       p_com(18,12,14)
+
+eta(12,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(1,12,15)
+        1       p_com(11,12,15)
+       -1       p_com(12,1,15)
+       -1       p_com(12,11,15)
+       -1       p_com(12,13,15)
+       -1       p_com(12,18,15)
+        1       p_com(13,12,15)
+        1       p_com(18,12,15)
+
+eta(12,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(1,12,16)
+        1       p_com(11,12,16)
+       -1       p_com(12,1,16)
+       -1       p_com(12,11,16)
+       -1       p_com(12,13,16)
+       -1       p_com(12,18,16)
+        1       p_com(13,12,16)
+        1       p_com(18,12,16)
+
+eta(12,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(1,12,17)
+        1       p_com(11,12,17)
+       -1       p_com(12,1,17)
+       -1       p_com(12,11,17)
+       -1       p_com(12,13,17)
+       -1       p_com(12,18,17)
+        1       p_com(13,12,17)
+        1       p_com(18,12,17)
+
+eta(12,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 60
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     eta  the minimum travel time from region i to destination
+
+        1       p_com(1,12,18)
+        1       p_com(11,12,18)
+       -1       p_com(12,1,18)
+       -1       p_com(12,11,18)
+       -1       p_com(12,13,18)
+       -1       p_com(12,18,18)
+        1       p_com(13,12,18)
+        1       p_com(18,12,18)
+
+eta(12,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(1,12,19)
+        1       p_com(11,12,19)
+       -1       p_com(12,1,19)
+       -1       p_com(12,11,19)
+       -1       p_com(12,13,19)
+       -1       p_com(12,18,19)
+        1       p_com(13,12,19)
+        1       p_com(18,12,19)
+
+eta(13,13)
+                (.LO, .L, .UP, .M = 0, 0, 0, 0)
+        1       p_com(1,13,13)
+        1       p_com(2,13,13)
+        1       p_com(12,13,13)
+       -1       p_com(13,1,13)
+       -1       p_com(13,2,13)
+       -1       p_com(13,12,13)
+       -1       p_com(13,14,13)
+       -1       p_com(13,18,13)
+       -1       p_com(13,19,13)
+        1       p_com(14,13,13)
+        1       p_com(18,13,13)
+        1       p_com(19,13,13)
+
+eta(13,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(1,13,14)
+        1       p_com(2,13,14)
+        1       p_com(12,13,14)
+       -1       p_com(13,1,14)
+       -1       p_com(13,2,14)
+       -1       p_com(13,12,14)
+       -1       p_com(13,14,14)
+       -1       p_com(13,18,14)
+       -1       p_com(13,19,14)
+        1       p_com(14,13,14)
+        1       p_com(18,13,14)
+        1       p_com(19,13,14)
+
+eta(13,15)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 61
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     eta  the minimum travel time from region i to destination
+
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(1,13,15)
+        1       p_com(2,13,15)
+        1       p_com(12,13,15)
+       -1       p_com(13,1,15)
+       -1       p_com(13,2,15)
+       -1       p_com(13,12,15)
+       -1       p_com(13,14,15)
+       -1       p_com(13,18,15)
+       -1       p_com(13,19,15)
+        1       p_com(14,13,15)
+        1       p_com(18,13,15)
+        1       p_com(19,13,15)
+
+eta(13,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(1,13,16)
+        1       p_com(2,13,16)
+        1       p_com(12,13,16)
+       -1       p_com(13,1,16)
+       -1       p_com(13,2,16)
+       -1       p_com(13,12,16)
+       -1       p_com(13,14,16)
+       -1       p_com(13,18,16)
+       -1       p_com(13,19,16)
+        1       p_com(14,13,16)
+        1       p_com(18,13,16)
+        1       p_com(19,13,16)
+
+eta(13,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(1,13,17)
+        1       p_com(2,13,17)
+        1       p_com(12,13,17)
+       -1       p_com(13,1,17)
+       -1       p_com(13,2,17)
+       -1       p_com(13,12,17)
+       -1       p_com(13,14,17)
+       -1       p_com(13,18,17)
+       -1       p_com(13,19,17)
+        1       p_com(14,13,17)
+        1       p_com(18,13,17)
+        1       p_com(19,13,17)
+
+eta(13,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(1,13,18)
+        1       p_com(2,13,18)
+        1       p_com(12,13,18)
+       -1       p_com(13,1,18)
+       -1       p_com(13,2,18)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 62
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     eta  the minimum travel time from region i to destination
+
+       -1       p_com(13,12,18)
+       -1       p_com(13,14,18)
+       -1       p_com(13,18,18)
+       -1       p_com(13,19,18)
+        1       p_com(14,13,18)
+        1       p_com(18,13,18)
+        1       p_com(19,13,18)
+
+eta(13,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(1,13,19)
+        1       p_com(2,13,19)
+        1       p_com(12,13,19)
+       -1       p_com(13,1,19)
+       -1       p_com(13,2,19)
+       -1       p_com(13,12,19)
+       -1       p_com(13,14,19)
+       -1       p_com(13,18,19)
+       -1       p_com(13,19,19)
+        1       p_com(14,13,19)
+        1       p_com(18,13,19)
+        1       p_com(19,13,19)
+
+eta(14,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(2,14,13)
+        1       p_com(3,14,13)
+        1       p_com(4,14,13)
+        1       p_com(13,14,13)
+       -1       p_com(14,2,13)
+       -1       p_com(14,3,13)
+       -1       p_com(14,4,13)
+       -1       p_com(14,13,13)
+       -1       p_com(14,15,13)
+       -1       p_com(14,19,13)
+        1       p_com(15,14,13)
+        1       p_com(19,14,13)
+
+eta(14,14)
+                (.LO, .L, .UP, .M = 0, 0, 0, 0)
+        1       p_com(2,14,14)
+        1       p_com(3,14,14)
+        1       p_com(4,14,14)
+        1       p_com(13,14,14)
+       -1       p_com(14,2,14)
+       -1       p_com(14,3,14)
+       -1       p_com(14,4,14)
+       -1       p_com(14,13,14)
+       -1       p_com(14,15,14)
+       -1       p_com(14,19,14)
+        1       p_com(15,14,14)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 63
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     eta  the minimum travel time from region i to destination
+
+        1       p_com(19,14,14)
+
+eta(14,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(2,14,15)
+        1       p_com(3,14,15)
+        1       p_com(4,14,15)
+        1       p_com(13,14,15)
+       -1       p_com(14,2,15)
+       -1       p_com(14,3,15)
+       -1       p_com(14,4,15)
+       -1       p_com(14,13,15)
+       -1       p_com(14,15,15)
+       -1       p_com(14,19,15)
+        1       p_com(15,14,15)
+        1       p_com(19,14,15)
+
+eta(14,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(2,14,16)
+        1       p_com(3,14,16)
+        1       p_com(4,14,16)
+        1       p_com(13,14,16)
+       -1       p_com(14,2,16)
+       -1       p_com(14,3,16)
+       -1       p_com(14,4,16)
+       -1       p_com(14,13,16)
+       -1       p_com(14,15,16)
+       -1       p_com(14,19,16)
+        1       p_com(15,14,16)
+        1       p_com(19,14,16)
+
+eta(14,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(2,14,17)
+        1       p_com(3,14,17)
+        1       p_com(4,14,17)
+        1       p_com(13,14,17)
+       -1       p_com(14,2,17)
+       -1       p_com(14,3,17)
+       -1       p_com(14,4,17)
+       -1       p_com(14,13,17)
+       -1       p_com(14,15,17)
+       -1       p_com(14,19,17)
+        1       p_com(15,14,17)
+        1       p_com(19,14,17)
+
+eta(14,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(2,14,18)
+        1       p_com(3,14,18)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 64
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     eta  the minimum travel time from region i to destination
+
+        1       p_com(4,14,18)
+        1       p_com(13,14,18)
+       -1       p_com(14,2,18)
+       -1       p_com(14,3,18)
+       -1       p_com(14,4,18)
+       -1       p_com(14,13,18)
+       -1       p_com(14,15,18)
+       -1       p_com(14,19,18)
+        1       p_com(15,14,18)
+        1       p_com(19,14,18)
+
+eta(14,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(2,14,19)
+        1       p_com(3,14,19)
+        1       p_com(4,14,19)
+        1       p_com(13,14,19)
+       -1       p_com(14,2,19)
+       -1       p_com(14,3,19)
+       -1       p_com(14,4,19)
+       -1       p_com(14,13,19)
+       -1       p_com(14,15,19)
+       -1       p_com(14,19,19)
+        1       p_com(15,14,19)
+        1       p_com(19,14,19)
+
+eta(15,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(4,15,13)
+        1       p_com(5,15,13)
+        1       p_com(6,15,13)
+        1       p_com(14,15,13)
+       -1       p_com(15,4,13)
+       -1       p_com(15,5,13)
+       -1       p_com(15,6,13)
+       -1       p_com(15,14,13)
+       -1       p_com(15,16,13)
+       -1       p_com(15,19,13)
+        1       p_com(16,15,13)
+        1       p_com(19,15,13)
+
+eta(15,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       p_com(4,15,14)
+        1       p_com(5,15,14)
+        1       p_com(6,15,14)
+        1       p_com(14,15,14)
+       -1       p_com(15,4,14)
+       -1       p_com(15,5,14)
+       -1       p_com(15,6,14)
+       -1       p_com(15,14,14)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 65
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     eta  the minimum travel time from region i to destination
+
+       -1       p_com(15,16,14)
+       -1       p_com(15,19,14)
+        1       p_com(16,15,14)
+        1       p_com(19,15,14)
+
+REMAINING 33 ENTRIES SKIPPED
+
+---- y  auxiliary variable for u(i,j)
+
+y(1,2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(1,2)
+     5300       mu_com(1,2)
+
+y(1,12)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(1,12)
+     5300       mu_com(1,12)
+
+y(1,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(1,13)
+     5300       mu_com(1,13)
+
+y(2,1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(2,1)
+     5300       mu_com(2,1)
+
+y(2,3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(2,3)
+     5300       mu_com(2,3)
+
+y(2,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(2,13)
+     5300       mu_com(2,13)
+
+y(2,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(2,14)
+     5300       mu_com(2,14)
+
+y(3,2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(3,2)
+     5300       mu_com(3,2)
+
+y(3,4)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 66
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     y  auxiliary variable for u(i,j)
+
+    -5300       lamda_com(3,4)
+     5300       mu_com(3,4)
+
+y(3,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(3,14)
+     5300       mu_com(3,14)
+
+y(4,3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(4,3)
+     5300       mu_com(4,3)
+
+y(4,5)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(4,5)
+     5300       mu_com(4,5)
+
+y(4,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(4,14)
+     5300       mu_com(4,14)
+
+y(4,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(4,15)
+     5300       mu_com(4,15)
+
+y(5,4)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(5,4)
+     5300       mu_com(5,4)
+
+y(5,6)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(5,6)
+     5300       mu_com(5,6)
+
+y(5,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(5,15)
+     5300       mu_com(5,15)
+
+y(6,5)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(6,5)
+     5300       mu_com(6,5)
+
+y(6,7)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(6,7)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 67
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     y  auxiliary variable for u(i,j)
+
+     5300       mu_com(6,7)
+
+y(6,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(6,15)
+     5300       mu_com(6,15)
+
+y(6,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(6,16)
+     5300       mu_com(6,16)
+
+y(7,6)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(7,6)
+     5300       mu_com(7,6)
+
+y(7,8)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(7,8)
+     5300       mu_com(7,8)
+
+y(7,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(7,16)
+     5300       mu_com(7,16)
+
+y(8,7)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(8,7)
+     5300       mu_com(8,7)
+
+y(8,9)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(8,9)
+     5300       mu_com(8,9)
+
+y(8,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(8,16)
+     5300       mu_com(8,16)
+
+y(8,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(8,17)
+     5300       mu_com(8,17)
+
+y(9,8)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(9,8)
+     5300       mu_com(9,8)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 68
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     y  auxiliary variable for u(i,j)
+
+
+y(9,10)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(9,10)
+     5300       mu_com(9,10)
+
+y(9,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(9,17)
+     5300       mu_com(9,17)
+
+y(10,9)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(10,9)
+     5300       mu_com(10,9)
+
+y(10,11)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(10,11)
+     5300       mu_com(10,11)
+
+y(10,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(10,17)
+     5300       mu_com(10,17)
+
+y(10,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(10,18)
+     5300       mu_com(10,18)
+
+y(11,10)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(11,10)
+     5300       mu_com(11,10)
+
+y(11,12)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(11,12)
+     5300       mu_com(11,12)
+
+y(11,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(11,18)
+     5300       mu_com(11,18)
+
+y(12,1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(12,1)
+     5300       mu_com(12,1)
+
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 69
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     y  auxiliary variable for u(i,j)
+
+y(12,11)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(12,11)
+     5300       mu_com(12,11)
+
+y(12,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(12,13)
+     5300       mu_com(12,13)
+
+y(12,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(12,18)
+     5300       mu_com(12,18)
+
+y(13,1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(13,1)
+     5300       mu_com(13,1)
+
+y(13,2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(13,2)
+     5300       mu_com(13,2)
+
+y(13,12)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(13,12)
+     5300       mu_com(13,12)
+
+y(13,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(13,14)
+     5300       mu_com(13,14)
+
+y(13,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(13,18)
+     5300       mu_com(13,18)
+
+y(13,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(13,19)
+     5300       mu_com(13,19)
+
+y(14,2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(14,2)
+     5300       mu_com(14,2)
+
+y(14,3)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 70
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     y  auxiliary variable for u(i,j)
+
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(14,3)
+     5300       mu_com(14,3)
+
+y(14,4)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(14,4)
+     5300       mu_com(14,4)
+
+y(14,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(14,13)
+     5300       mu_com(14,13)
+
+y(14,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(14,15)
+     5300       mu_com(14,15)
+
+y(14,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(14,19)
+     5300       mu_com(14,19)
+
+y(15,4)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(15,4)
+     5300       mu_com(15,4)
+
+y(15,5)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(15,5)
+     5300       mu_com(15,5)
+
+y(15,6)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(15,6)
+     5300       mu_com(15,6)
+
+y(15,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(15,14)
+     5300       mu_com(15,14)
+
+y(15,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(15,16)
+     5300       mu_com(15,16)
+
+y(15,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 71
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     y  auxiliary variable for u(i,j)
+
+    -5300       lamda_com(15,19)
+     5300       mu_com(15,19)
+
+y(16,6)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(16,6)
+     5300       mu_com(16,6)
+
+y(16,7)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(16,7)
+     5300       mu_com(16,7)
+
+y(16,8)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(16,8)
+     5300       mu_com(16,8)
+
+y(16,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(16,15)
+     5300       mu_com(16,15)
+
+y(16,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(16,17)
+     5300       mu_com(16,17)
+
+y(16,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(16,19)
+     5300       mu_com(16,19)
+
+y(17,8)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(17,8)
+     5300       mu_com(17,8)
+
+y(17,9)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(17,9)
+     5300       mu_com(17,9)
+
+y(17,10)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(17,10)
+     5300       mu_com(17,10)
+
+y(17,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(17,16)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 72
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     y  auxiliary variable for u(i,j)
+
+     5300       mu_com(17,16)
+
+y(17,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(17,18)
+     5300       mu_com(17,18)
+
+y(17,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(17,19)
+     5300       mu_com(17,19)
+
+y(18,10)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(18,10)
+     5300       mu_com(18,10)
+
+y(18,11)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(18,11)
+     5300       mu_com(18,11)
+
+y(18,12)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(18,12)
+     5300       mu_com(18,12)
+
+y(18,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(18,13)
+     5300       mu_com(18,13)
+
+y(18,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(18,17)
+     5300       mu_com(18,17)
+
+y(18,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(18,19)
+     5300       mu_com(18,19)
+
+y(19,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(19,13)
+     5300       mu_com(19,13)
+
+y(19,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(19,14)
+     5300       mu_com(19,14)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 73
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     y  auxiliary variable for u(i,j)
+
+
+y(19,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(19,15)
+     5300       mu_com(19,15)
+
+y(19,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(19,16)
+     5300       mu_com(19,16)
+
+y(19,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(19,17)
+     5300       mu_com(19,17)
+
+y(19,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       lamda_com(19,18)
+     5300       mu_com(19,18)
+
+
+---- lamda  auxiliary variable for u(i,j)
+
+lamda(1,2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(1,2)
+
+lamda(1,12)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(1,12)
+
+lamda(1,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(1,13)
+
+lamda(2,1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(2,1)
+
+lamda(2,3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(2,3)
+
+lamda(2,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(2,13)
+
+lamda(2,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(2,14)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 74
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     lamda  auxiliary variable for u(i,j)
+
+
+lamda(3,2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(3,2)
+
+lamda(3,4)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(3,4)
+
+lamda(3,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(3,14)
+
+lamda(4,3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(4,3)
+
+lamda(4,5)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(4,5)
+
+lamda(4,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(4,14)
+
+lamda(4,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(4,15)
+
+lamda(5,4)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(5,4)
+
+lamda(5,6)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(5,6)
+
+lamda(5,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(5,15)
+
+lamda(6,5)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(6,5)
+
+lamda(6,7)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(6,7)
+
+lamda(6,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 75
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     lamda  auxiliary variable for u(i,j)
+
+     5300       y_com(6,15)
+
+lamda(6,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(6,16)
+
+lamda(7,6)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(7,6)
+
+lamda(7,8)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(7,8)
+
+lamda(7,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(7,16)
+
+lamda(8,7)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(8,7)
+
+lamda(8,9)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(8,9)
+
+lamda(8,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(8,16)
+
+lamda(8,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(8,17)
+
+lamda(9,8)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(9,8)
+
+lamda(9,10)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(9,10)
+
+lamda(9,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(9,17)
+
+lamda(10,9)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(10,9)
+
+lamda(10,11)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 76
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     lamda  auxiliary variable for u(i,j)
+
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(10,11)
+
+lamda(10,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(10,17)
+
+lamda(10,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(10,18)
+
+lamda(11,10)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(11,10)
+
+lamda(11,12)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(11,12)
+
+lamda(11,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(11,18)
+
+lamda(12,1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(12,1)
+
+lamda(12,11)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(12,11)
+
+lamda(12,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(12,13)
+
+lamda(12,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(12,18)
+
+lamda(13,1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(13,1)
+
+lamda(13,2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(13,2)
+
+lamda(13,12)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(13,12)
+
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 77
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     lamda  auxiliary variable for u(i,j)
+
+lamda(13,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(13,14)
+
+lamda(13,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(13,18)
+
+lamda(13,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(13,19)
+
+lamda(14,2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(14,2)
+
+lamda(14,3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(14,3)
+
+lamda(14,4)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(14,4)
+
+lamda(14,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(14,13)
+
+lamda(14,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(14,15)
+
+lamda(14,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(14,19)
+
+lamda(15,4)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(15,4)
+
+lamda(15,5)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(15,5)
+
+lamda(15,6)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(15,6)
+
+lamda(15,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(15,14)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 78
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     lamda  auxiliary variable for u(i,j)
+
+
+lamda(15,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(15,16)
+
+lamda(15,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(15,19)
+
+lamda(16,6)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(16,6)
+
+lamda(16,7)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(16,7)
+
+lamda(16,8)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(16,8)
+
+lamda(16,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(16,15)
+
+lamda(16,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(16,17)
+
+lamda(16,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(16,19)
+
+lamda(17,8)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(17,8)
+
+lamda(17,9)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(17,9)
+
+lamda(17,10)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(17,10)
+
+lamda(17,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(17,16)
+
+lamda(17,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 79
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     lamda  auxiliary variable for u(i,j)
+
+     5300       y_com(17,18)
+
+lamda(17,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(17,19)
+
+lamda(18,10)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(18,10)
+
+lamda(18,11)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(18,11)
+
+lamda(18,12)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(18,12)
+
+lamda(18,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(18,13)
+
+lamda(18,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(18,17)
+
+lamda(18,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(18,19)
+
+lamda(19,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(19,13)
+
+lamda(19,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(19,14)
+
+lamda(19,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(19,15)
+
+lamda(19,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(19,16)
+
+lamda(19,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(19,17)
+
+lamda(19,18)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 80
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     lamda  auxiliary variable for u(i,j)
+
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+     5300       y_com(19,18)
+
+
+---- mu  auxiliary variable for u(i,j)
+
+mu(1,2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(1,2)
+
+mu(1,12)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(1,12)
+
+mu(1,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(1,13)
+
+mu(2,1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(2,1)
+
+mu(2,3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(2,3)
+
+mu(2,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(2,13)
+
+mu(2,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(2,14)
+
+mu(3,2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(3,2)
+
+mu(3,4)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(3,4)
+
+mu(3,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(3,14)
+
+mu(4,3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(4,3)
+
+mu(4,5)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 81
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     mu  auxiliary variable for u(i,j)
+
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(4,5)
+
+mu(4,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(4,14)
+
+mu(4,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(4,15)
+
+mu(5,4)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(5,4)
+
+mu(5,6)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(5,6)
+
+mu(5,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(5,15)
+
+mu(6,5)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(6,5)
+
+mu(6,7)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(6,7)
+
+mu(6,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(6,15)
+
+mu(6,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(6,16)
+
+mu(7,6)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(7,6)
+
+mu(7,8)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(7,8)
+
+mu(7,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(7,16)
+
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 82
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     mu  auxiliary variable for u(i,j)
+
+mu(8,7)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(8,7)
+
+mu(8,9)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(8,9)
+
+mu(8,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(8,16)
+
+mu(8,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(8,17)
+
+mu(9,8)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(9,8)
+
+mu(9,10)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(9,10)
+
+mu(9,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(9,17)
+
+mu(10,9)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(10,9)
+
+mu(10,11)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(10,11)
+
+mu(10,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(10,17)
+
+mu(10,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(10,18)
+
+mu(11,10)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(11,10)
+
+mu(11,12)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(11,12)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 83
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     mu  auxiliary variable for u(i,j)
+
+
+mu(11,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(11,18)
+
+mu(12,1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(12,1)
+
+mu(12,11)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(12,11)
+
+mu(12,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(12,13)
+
+mu(12,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(12,18)
+
+mu(13,1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(13,1)
+
+mu(13,2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(13,2)
+
+mu(13,12)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(13,12)
+
+mu(13,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(13,14)
+
+mu(13,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(13,18)
+
+mu(13,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(13,19)
+
+mu(14,2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(14,2)
+
+mu(14,3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 84
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     mu  auxiliary variable for u(i,j)
+
+    -5300       y_com(14,3)
+
+mu(14,4)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(14,4)
+
+mu(14,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(14,13)
+
+mu(14,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(14,15)
+
+mu(14,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(14,19)
+
+mu(15,4)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(15,4)
+
+mu(15,5)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(15,5)
+
+mu(15,6)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(15,6)
+
+mu(15,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(15,14)
+
+mu(15,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(15,16)
+
+mu(15,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(15,19)
+
+mu(16,6)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(16,6)
+
+mu(16,7)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(16,7)
+
+mu(16,8)
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 85
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     mu  auxiliary variable for u(i,j)
+
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(16,8)
+
+mu(16,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(16,15)
+
+mu(16,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(16,17)
+
+mu(16,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(16,19)
+
+mu(17,8)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(17,8)
+
+mu(17,9)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(17,9)
+
+mu(17,10)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(17,10)
+
+mu(17,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(17,16)
+
+mu(17,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(17,18)
+
+mu(17,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(17,19)
+
+mu(18,10)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(18,10)
+
+mu(18,11)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(18,11)
+
+mu(18,12)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(18,12)
+
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 86
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE mfd Using MCP From line 242
+
+
+     mu  auxiliary variable for u(i,j)
+
+mu(18,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(18,13)
+
+mu(18,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(18,17)
+
+mu(18,19)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(18,19)
+
+mu(19,13)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(19,13)
+
+mu(19,14)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(19,14)
+
+mu(19,15)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(19,15)
+
+mu(19,16)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(19,16)
+
+mu(19,17)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(19,17)
+
+mu(19,18)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+    -5300       y_com(19,18)
+
+GAMS 24.9.2  r64480 Released Nov 14, 2017 WEX-WEI x86 64bit/MS Windows                                                                                                                                                                12/25/21 16:53:14 Page 87
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Model Statistics    SOLVE mfd Using MCP From line 242
+
+
+MODEL STATISTICS
+
+BLOCKS OF EQUATIONS           5     SINGLE EQUATIONS          973
+BLOCKS OF VARIABLES           5     SINGLE VARIABLES          973
+NON ZERO ELEMENTS         2,100     NON LINEAR N-Z              0
+DERIVATIVE POOL              20     CONSTANT POOL              16
+CODE LENGTH                   0
+
+
+GENERATION TIME      =        0.016 SECONDS      4 MB  24.9.2 r64480 WEX-WEI
+
+**** SOLVE from line 242 ABORTED, EXECERROR = 1
+
+
+EXECUTION TIME       =        0.016 SECONDS      4 MB  24.9.2 r64480 WEX-WEI
+
+
+USER: Small MUD - 5 User License                     G161020:1349AO-WIN
+      University of Washington, Seattle, Civil and EnvironmentalDC12815
+      License for teaching and research at degree granting institutions
+
+
+**** FILE SUMMARY
+
+Input      D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\main_19_hexagon_regions_multi_ds_no_control_1012.gms
+Output     D:\DTA\Codes\MFD_Codes_DQ\MFD-DQ\main_19_hexagon_regions_multi_ds_no_control_1012.lst
+
+**** USER ERROR(S) ENCOUNTERED
