@@ -9,7 +9,7 @@
 % step 2: solve the DCS problem by calling GAMS program, and get the result
 % step 3: update the vehicle number, queue length
 % step 4: go back to step 1
-run PQ_Demand_loading
+run Demand_loading
 
 cycle_length = 60;
 cycle_index = 0;

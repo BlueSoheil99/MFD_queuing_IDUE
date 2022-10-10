@@ -75,9 +75,9 @@ vt_control = sum(sum(n_data))+sum(sum(q_data_all));
 
 %% Flow rates and Queues
 figure(2)
-% communi = 48; %in = 13;out = 19;
+communi = 48; %in = 13;out = 19;
 % communi = 21; in = 6;out = 16;
-communi = 66; in = 16; out = 19;
+% communi = 66; in = 16; out = 19;
 for t = 1:N
     plot_p(t) = p_data_all(communi,t);
     plot_v(t) = min(u_data(communi,t), p_data_all(communi,t)+q_data_all(communi,t));

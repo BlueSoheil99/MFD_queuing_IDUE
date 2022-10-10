@@ -4,27 +4,26 @@
 close all
 clear
 
-% load('n_19_hexagon_regions_multi_ds_withdemand_7200_2_5300_DQ_Reduce.mat');
-% load('n_19_hexagon_regions_multi_ds_withdemand_7200_2_5300_DQ_RawCb.mat');
-load('n_19_hexagon_regions_multi_ds_withdemand_8000_2_5300_DQ_Reduce.mat');
+%change-Pranati - to files
+load('n_19_hexagon_regions_multi_ds_withdemand_7200_2_20000_DQ.mat');
 
 %% temp
 pp = zeros(1,N);
-qqD = zeros(1,N);
+% qqD = zeros(1,N);
 qqU = zeros(1,N);
 for i = 1:N
     pp(1,i) = sum(p(2,13,19,i));
-    qqD(1,i) = sum(qD_trans(2,13,19,i));
+%     qqD(1,i) = sum(qD_trans(2,13,19,i));
     qqU(1,i) = sum(qU(2,13,19,i));
 end
 plot(1:N,pp)
 hold on
-plot(1:N,qqD)
+% plot(1:N,qqD)
 plot(1:N,qqU)
 hold off
 
 %% MFD functions
-coef = 100;
+coef = 1;
 a = 1.4877e-7*coef;
 b = -2.9815e-3*coef;
 c = 15.0912*coef;
@@ -51,6 +50,7 @@ set(gca, 'FontName', 'Times New Roman', 'FontSize', 12);
 set(gcf,'unit','centimeters','position',[10 5 15 10]);
 %set(gca,'Position',[.1 .1 .7 .65]);
 xlabel('Density [veh/m]');
+% xlabel('Number of vehicles [veh]');
 ylabel('Completion rate [veh/s]');
 legend('region 19', 'region 15/16/17/18', 'region 13/14', 'region 7/8/9', 'region 4/5/6/10/11/12', 'region 1/2/3')
 %ylimit = get(gca, 'Ylim');
@@ -59,16 +59,17 @@ legend('region 19', 'region 15/16/17/18', 'region 13/14', 'region 7/8/9', 'regio
 
 %% Flow rates and Queues
 figure(2)
-in = 13;
+in = 15;
 out = 19;
 for t = 1:N
     plot_p(t) = p_all(in,out,t);
     plot_v(t) = v_all(in,out,t);
-    plot_qD(t) = qD_all(in,out,t);
-    plot_qU(t) = qU_all(in,out,t) + plot_p(t);
-    plot_withheld(t) = sum(withheld(in,out,:,t));
-    plot_pTilda(t) = min(plot_withheld(t) + plot_p(t), Cbar_trans_trans(in,out));
-    plot_withheld(t) = plot_pTilda(t) - plot_p(t);
+%     plot_qD(t) = qD_all(in,out,t);
+%     plot_qU1(t) = qU_all1(in,out,t);
+    plot_qU(t) = qU_all(in,out,t);% + plot_p(t);
+%     plot_withheld(t) = sum(withheld(in,out,:,t));
+%     plot_pTilda(t) = min(plot_withheld(t) + plot_p(t), CbarIn_trans_trans(in,out));
+%     plot_withheld(t) = plot_pTilda(t) - plot_p(t);
 end
 hold on
 yyaxis left
@@ -77,8 +78,8 @@ yyaxis left
 % plot(plot_withheld,'LineWidth',1.5,'LineStyle','--','Marker','square','Color','[0.5 0 0.8]');
 plot(plot_p,'LineWidth',2,'LineStyle','--','Color','b');
 plot(plot_v,'LineWidth',1.5,'LineStyle',':','Color','k');
-plot(plot_pTilda,'LineWidth',1.5);
-plot(plot_withheld,'LineWidth',1.5,'LineStyle','--','Color','[0.5 0 0.8]');
+% plot(plot_pTilda,'LineWidth',1.5);
+% plot(plot_withheld,'LineWidth',1.5,'LineStyle','--','Color','[0.5 0 0.8]');
 % ylimit = 5;
 % plot(1:N, ones(1,N)*ylimit,'LineStyle','--','Color',[0.5,0.5,0.5]);
 ylabel('Flow rate[veh/s]');
@@ -97,13 +98,14 @@ ylabel('Queue length [veh]');
 legend(['Buffer zone inflow via link (' num2str(in) ',' num2str(out) ')'], ['Buffer zone outflow via link (' num2str(in) ',' num2str(out) ')'],...
         ['Region outflow to link (' num2str(in) ',' num2str(out) ')'], ['Withheld flow via link (' num2str(in) ',' num2str(out) ')'],...
         ['Buffer zone qD via link (' num2str(in) ',' num2str(out) ')'], ['Buffer zone qU via link (' num2str(in) ',' num2str(out) ')'])
-ylim([0,5]);
-yticks(0:1:5);
+ylim([0,250]);
+% yticks(0:1:5);
 xlim([0,N]);
+% plot(plot_qU1)
 hold off
 
 %% number of vehicles over time
-load('n_19_hexagon_regions_multi_ds_withdemand_7200_2_5300_DQ_Reduce.mat');
+load('n_19_hexagon_regions_multi_ds_withdemand_7200_2_20000_DQ.mat');
 figure(3)
 plot(n_region(1,:),'LineWidth',1.5,'LineStyle','-.')
 hold on
@@ -125,81 +127,146 @@ legend('region 1', 'region 2', 'region 3', 'region 4', 'region 5', 'region 6', '
     'region 10', 'region 11', 'region 12', 'region 13', 'region 14', 'region 15', 'region 16', 'region 17', 'region 18', ...
     'region 19')
 xlim([0 N])
-%ylim([0 6000])
+% ylim([0 12000])
 xlabel('Time [s]');
 ylabel('Vehicle number [veh]');
 
 %% DQ-PQ comparison
-plot_p_DQ = plot_p;
-plot_v_DQ = plot_v;
-plot_qD_DQ = plot_qD;
-load('n_19_hexagon_regions_multi_ds_withdemand_7200_2_20000_PQ_RawCb.mat');
-communi = 48; %in = 13;out = 19;
-for t = 1:N
-    plot_p_PQ(t) = p_data_all(communi,t);
-    plot_v_PQ(t) = min(u_data(communi,t), p_data_all(communi,t)+q_data_all(communi,t));
-    plot_qD_PQ(t) = q_data_all(communi,t);
-end
-
-hold on
-yyaxis left
-plot(plot_p_DQ-plot_p_PQ,'LineWidth',2,'LineStyle','--','Color','b');
-plot(plot_v_DQ-plot_v_PQ,'LineWidth',1.5,'LineStyle',':','Color','k');
-ylabel('Flow rate[veh/s]');
-% ylim([0,4]);
-% yticks(0:1:4);
-
-yyaxis right
-plot(plot_qD_DQ-plot_qD_PQ,'LineWidth',1.5,'LineStyle','--','Color','r');
-plot(plot_qU,'LineWidth',1.5,'Color','#00841a');
-set(gca, 'FontName', 'Times New Roman', 'FontSize', 18);
-set(gcf,'unit','centimeters','position',[10 5 15 10]);
-xlabel('Time [s]');
-ylabel('Queue length [veh]');
-legend('Buffer zone inflow difference (DQ-PQ) via link (13,19)', 'Buffer zone outflow difference (DQ-PQ) via link (13,19)',...
-        'Buffer zone qD difference (DQ-PQ) via link (13,19)', 'Buffer zone qU (DQ) via link (13,19)')
-ylim([0,5]);
-yticks(0:1:5);
-xlim([0,N]);
-hold off
+% plot_p_DQ = plot_p;
+% plot_v_DQ = plot_v;
+% % plot_qD_DQ = plot_qD;
+% load('n_19_hexagon_regions_multi_ds_withdemand_7200_2_20000_PQ_RawCb.mat');
+% communi = 48; %in = 13;out = 19;
+% for t = 1:N
+%     plot_p_PQ(t) = p_data_all(communi,t);
+%     plot_v_PQ(t) = min(u_data(communi,t), p_data_all(communi,t)+q_data_all(communi,t));
+%     plot_qD_PQ(t) = q_data_all(communi,t);
+% end
+% 
+% hold on
+% yyaxis left
+% plot(plot_p_DQ-plot_p_PQ,'LineWidth',2,'LineStyle','--','Color','b');
+% plot(plot_v_DQ-plot_v_PQ,'LineWidth',1.5,'LineStyle',':','Color','k');
+% ylabel('Flow rate[veh/s]');
+% % ylim([0,4]);
+% % yticks(0:1:4);
+% 
+% yyaxis right
+% plot(plot_qD_DQ-plot_qD_PQ,'LineWidth',1.5,'LineStyle','--','Color','r');
+% plot(plot_qU,'LineWidth',1.5,'Color','#00841a');
+% set(gca, 'FontName', 'Times New Roman', 'FontSize', 18);
+% set(gcf,'unit','centimeters','position',[10 5 15 10]);
+% xlabel('Time [s]');
+% ylabel('Queue length [veh]');
+% legend('Buffer zone inflow difference (DQ-PQ) via link (13,19)', 'Buffer zone outflow difference (DQ-PQ) via link (13,19)',...
+%         'Buffer zone qD difference (DQ-PQ) via link (13,19)', 'Buffer zone qU (DQ) via link (13,19)')
+% ylim([0,5]);
+% yticks(0:1:5);
+% xlim([0,N]);
+% hold off
 
 %% IDUE flow rates
 figure(4)
-from = 2;
-to1 = 13;
-to2 = 14;
-dest = 19;
+from = 16;
+to1 = 19;
+to2 = 15;
+dest = 14;
 for t = 1:N
-    plot_theta_13(t) = theta_region_to_19(from,to1,dest,t)*3600;
-    plot_theta_14(t) = theta_region_to_19(from,to2,dest,t)*3600;
+    plot_theta_19(t) = theta_region_to_19(from,to1,dest,t)*3600;
+    plot_theta_15(t) = theta_region_to_19(from,to2,dest,t)*3600;
 end
-plot(plot_theta_13,'LineWidth',1.5)
+plot(plot_theta_19,'LineWidth',1.5)
 set(gca, 'FontName', 'Times New Roman', 'FontSize', 18);
 set(gcf,'unit','centimeters','position',[11 6 15 9]);
 xlabel('Time [s]');
-ylabel('\theta^{19}_{2,13} [veh/h]');
+ylabel(['\theta^{' num2str(dest) '}_{' num2str(from) ',' num2str(to1) '} [veh/h]']);
 
 figure(5)
-plot(plot_theta_14,'LineWidth',1.5)
+plot(plot_theta_15,'LineWidth',1.5)
 set(gca, 'FontName', 'Times New Roman', 'FontSize', 18);
 set(gcf,'unit','centimeters','position',[11 6 15 9]);
 xlabel('Time [s]');
-ylabel('\theta^{19}_{2,14} [veh/h]');
+ylabel(['\theta^{' num2str(dest) '}_{' num2str(from) ',' num2str(to2) '} [veh/h]']);
+
+% ylabel(['\theta^{' num2str(dest) ';SAC1}_{' num2str(from) ',' num2str(to1) '} - \theta^{' num2str(dest) ';CC1}_{' num2str(from) ',' num2str(to1) '} [veh/h]']);
+
+%% IDUE flow rates
+figure(5)
+from = 6;
+to1 = 15;
+
+for t = 1:N
+    plot_theta(t) = sum(theta_region_to_19(from,to1,:,t))*3600;
+end
+plot(plot_theta,'LineWidth',1.5)
+set(gca, 'FontName', 'Times New Roman', 'FontSize', 18);
+set(gcf,'unit','centimeters','position',[11 6 15 9]);
+legend('region 1', 'region 2', 'region 3', 'region 4', 'region 5', 'region 6', 'region 7', 'region 8', 'region 9', ...
+    'region 10', 'region 11', 'region 12', 'region 13', 'region 14', 'region 15', 'region 16', 'region 17', 'region 18', ...
+    'region 19')
+xlim([0 N])
+ylim([0 450])
+xlabel('Time [s]');
+ylabel('Queue Length [veh]');
+
 
 %% TODO: shortest path
 
-%% Real MFD
-figure(6)
-flow = n_region./T*3600;
-for t = 1:N
-    for ir = 1:num_reg
-        density(ir,t) = n_region(ir,t)/mfd_diff(ir)*1000;
+%% check completion rate is consistent with 
+% the sum of inflow and withheld flow
+for i = 1:num_reg
+    for it = 2:N
+        pAndBlocked(i,it) = sum(sum(p(i,:,:,it))) + sum(sum(withheld(i,:,:,it)));
+        pRegionOut(i,it) = (mfd_common(1)*n_region(i,it)^3+mfd_common(2)*n_region(i,it)^2+mfd_common(3)*n_region(i,it))...
+                                        /mfd_diff(i);
+        pDiff(i,it) = pAndBlocked(i,it) - pRegionOut(i,it);
     end
-    plot(density(:,t),flow(:,t),'kx');
-    hold on
+end
+
+
+figure(7)
+reg = 15;
+plot(n_region(reg,:),pDiff(reg,:),'LineWidth',1.5,'LineStyle','-.')
+set(gca, 'FontName', 'Times New Roman', 'FontSize', 18);
+set(gcf,'unit','centimeters','position',[11 6 15 9]);
+xlabel('Number of Vehicles [veh]');
+ylabel('({$p + \eta) - c$} [veh/s]','Interpreter','latex');
+title(['Region' num2str(reg)])
+
+figure(8)
+reg = 15;
+plot(n_region(reg,:),pRegionOut(reg,:),'LineWidth',1.5,'LineStyle','-.')
+set(gca, 'FontName', 'Times New Roman', 'FontSize', 18);
+set(gcf,'unit','centimeters','position',[11 6 15 9]);
+xlabel('Number of Vehicles [veh]');
+ylabel('({$p + \eta) - c$} [veh/s]','Interpreter','latex');
+title(['Region' num2str(reg)])
+
+figure(9)
+plot(pDiff(1,:),'LineWidth',1.5,'LineStyle','-.')
+hold on
+for ix = 2:num_reg
+    if ix <= 12
+        if mod(ix,2) == 1
+            plot(pDiff(ix,:),'LineWidth',1.5,'LineStyle','-.')
+        else
+            plot(pDiff(ix,:),'LineWidth',1.5,'LineStyle','--')
+        end
+    else
+        plot(pDiff(ix,:),'LineWidth',1.5)
+    end
 end
 hold off
+set(gca, 'FontName', 'Times New Roman', 'FontSize', 18);
+set(gcf,'unit','centimeters','position',[11 6 15 9]);
+legend('region 1', 'region 2', 'region 3', 'region 4', 'region 5', 'region 6', 'region 7', 'region 8', 'region 9', ...
+    'region 10', 'region 11', 'region 12', 'region 13', 'region 14', 'region 15', 'region 16', 'region 17', 'region 18', ...
+    'region 19')
+xlim([0 N])
+xlabel('Time [s]');
+ylabel('Flow Diff [veh/s]');
 
+%%
 
 
 %%
@@ -215,7 +282,7 @@ plot(plot_v','LineWidth',1.5);
 hold off
 
 for t = 1:7200
-    plot_qD(t) = sum(qD_all(13,:,t));
+%     plot_qD(t) = sum(qD_all(13,:,t));
     plot_qU(t) = sum(qU_all(13,:,t));
 end
 plot(plot_qD,'LineWidth',1.5);
@@ -231,10 +298,16 @@ for i = 1:19
 end
 plot(plot_qD','LineWidth',1.5);
 hold on
-plot(plot_qU','LineWidth',1.5);
+plot(plot_qU','LineWidth',1.5,'LineWidth',1.5,'LineStyle','-.');
+set(gca, 'FontName', 'Times New Roman', 'FontSize', 18);
+set(gcf,'unit','centimeters','position',[11 6 15 9]);
+xlim([0 N]);
+xlabel('Time [s]');
+ylabel('Queue Length [veh]');
 hold off
 
-%%
+
+%% Below is by Qiangqiang
 figure(2)
 plot(x, t1, x, t2, x, t3, x, t4, x, t5, x, t6)
 %% plot vehicle number in each region
