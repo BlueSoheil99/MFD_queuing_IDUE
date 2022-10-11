@@ -1,7 +1,7 @@
 clear
 clc
 %% Mode
-limit_n = [20000]; %it doesn't stop running still-Pranati
+limit_n = [20000];
 %demand_choice = [0.3, 0.3, 0.2]; % 0.275, 0.275, 0.2]; %0.3, 0.2, 0.1];
 % demand_choice = [0.3, 0.3, 0.2; 0.275, 0.275, 0.2; 0.25, 0.25, 0.2];
 % demand_choice =[0.3, 0.25, 0.15; 0.325, 0.275, 0.15; 0.275, 0.225, 0.15];
@@ -13,11 +13,9 @@ limit_n = [20000]; %it doesn't stop running still-Pranati
 % demand_choice =[0.35, 0.25, 0.15; 0.3, 0.25, 0.15];
 demand_choice =[0.3, 0.25, 0.15];
 
-queueType = 'PQ'; % PQ; DQ
+queueType = 'DQ'; % PQ; DQ
 
-% for ite_num =1:1:length(limit_n)--- for output file commented-to
-% uncomment-Pranati
-for ite_num =1:1:1 % remove this-Pranati
+for ite_num =1:1:length(limit_n)
     for ite_dem =1:1:size(demand_choice,1)
         % define the MFD parameter (change the average trip length)
         region.name = 'i';
@@ -56,14 +54,12 @@ for ite_num =1:1:1 % remove this-Pranati
         d_low = demand_choice(ite_dem, 3); % 0.1 0.1 0.2
 
         filename = '';
-        %Pranati-CHANGING MADE IN COPY_OF_DQ.... FILE THEREFORE USING THIS BELOW
-        if strcmp(queueType,'PQ') 
-            %changes in Copy_of_DQ_MFD---- file as PQ - Pranati
+        if strcmp(queueType,'DQ') 
             run Copy_of_DQ_MFD_noControl_19_hexagon_regions_multi_destinations.m
             filename = strcat('n_19_hexagon_regions_multi_ds_withdemand_7200_',num2str(ite_dem+1),'_', num2str(limit_n(ite_num)),'_DQ.mat');
-%         elseif strcmp(queueType, 'PQ')
-%             run PQ_MFD_Control_19_hexagon_regions_multi_destinations.m
-%             filename = strcat('n_19_hexagon_regions_multi_ds_withdemand_7200_',num2str(ite_dem+1),'_', num2str(limit_n(ite_num)),'_PQ.mat');
+        elseif strcmp(queueType, 'PQ')
+            run PQ_MFD_Control_19_hexagon_regions_multi_destinations.m
+            filename = strcat('n_19_hexagon_regions_multi_ds_withdemand_7200_',num2str(ite_dem+1),'_', num2str(limit_n(ite_num)),'_PQ.mat');
          end
 
         save(filename)
