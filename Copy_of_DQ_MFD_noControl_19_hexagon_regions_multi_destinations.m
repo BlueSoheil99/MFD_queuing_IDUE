@@ -39,7 +39,7 @@ for t=1:T:T*N
     theta = rgdx('GtoM2', theta);
     tau0.name = 'tau0';
     tau0 = rgdx('GtoM2', tau0);
-    % Now CbarIn and CbarOut are the same (per gams files), we can retain only CbarIn as Cbar - Ohay
+    % Now we can retain only one Cbar at downstream - Ohay
     Cbar.name = 'Cbar';
     Cbar = rgdx('GtoM2', Cbar);
 
@@ -127,6 +127,7 @@ for t=1:T:T*N
         
         if delta_q_i >= 0
             for k = 1:1:size(d,2)
+                % preparing to update v
                 if t > tau0BZFix(pairi,pairj)
                     % queue outgoing is proportional to the inflow rate (pijs/pij)
                     q_out(pairi,pairj,d(k)) = q.val(pairi,pairj,d(k)) + p(pairi,pairj,d(k),t-tau0BZFix(pairi,pairj)) / sum(p(pairi,pairj,:,t)) * (Cbar_i-sum(q_all(pairi,:,t)));
@@ -148,7 +149,7 @@ for t=1:T:T*N
         else
             % everything flows out
             if t > tau0BZFix(pairi,pairj)
-                q_out(pairi,pairj,:) = q.val(pairi,pairj,:) + p(pairi,pairj,:,t);
+                q_out(pairi,pairj,:) = q.val(pairi,pairj,:) + p(pairi,pairj,:,t-tau0BZFix(pairi,pairj));
             else
                 q_out(pairi,pairj,:) = q.val(pairi,pairj,:);
             end
