@@ -62,7 +62,7 @@ for ite_num =1:1:length(limit_n)
             filename = strcat('n_19_hexagon_regions_multi_ds_withdemand_7200_',num2str(ite_dem+1),'_', num2str(limit_n(ite_num)),'_PQ.mat');
         elseif strcmp(queueType, 'PQ_cap')
             run PQ_cap_MFD_noControl_19_hexagon_regions_multi_destinations.m
-            filename = strcat('n_19_hexagon_regions_multi_ds_withdemand_8000_',num2str(ite_dem+1),'_', num2str(limit_n(ite_num)),'_PQ_cap.mat');
+            filename = strcat('n_19_hexagon_regions_multi_ds_withdemand_7200_',num2str(ite_dem+1),'_', num2str(limit_n(ite_num)),'_PQ_cap.mat');
         end
 
         save(filename)
