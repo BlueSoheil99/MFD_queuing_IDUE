@@ -73,6 +73,14 @@ for t=1:T:T*N
         end
         pTilde_all(pairi,pairj,t) = sum(pTilde(pairi,pairj,:,t));
     end
+    % calculate pTilde_iiit using theta and vacancy
+    for i=1:1:num_reg
+        n_regioni = sum(n.val(i,d)); % ni
+        % pTilde_iiit = niiit*Pit / (nit*li) <-- completion rate
+        pTilde(i,i,i,t) = (mfd_common(1)*n_regioni^2+mfd_common(2)*n_regioni+mfd_common(3))...
+                                    /mfd_diff(i)*n_div.val(i,i,i);
+        pTilde_all(i,i,t) = sum(pTilde(i,i,:,t));
+    end
     
     %% check whetehr the buffer zone has enough space to accommodate pTilde
     for i=1:1:size(region_communi,1)
@@ -92,6 +100,19 @@ for t=1:T:T*N
             end
         end
     end
+    % check whetehr the buffer zone has enough space to accommodate
+    % pTilde_iiit
+    for i=1:1:num_reg
+        lambda = proportion * n_bar(i) - q_all(i,i,t);
+        if lambda >= pTilde_all(i,i,t)
+            % pijt = pTilde_iit
+            p(i,i,i,t) = pTilde(i,i,i,t);
+        else
+            % piit = lambda
+            % piist = piit * pTilde_iiit/pTilde_iit
+            p(i,i,i,t) = lambda * pTilde(i,i,i,t) / pTilde_all(i,i,t);
+        end
+    end
     
     %% record p_all, i.e., pij, and update n_div, i.e., nijs
     for i = 1:1:size(region_communi,1)
@@ -103,14 +124,16 @@ for t=1:T:T*N
         for j=1:1:size(d,2)
             region_in = theta_gams(pairi,pairj,d(j));
             region_out = v.val(pairi,pairj,d(j));
-            n_div.val(pairi,pairj,d(j)) = n_div.val(pairi, pairj,d(j)) + region_in - region_out;
+            n_div.val(pairi,pairj,d(j)) = n_div.val(pairi,pairj,d(j)) + region_in - region_out;
         end
     end
     
-    %% update flows going into each region
+    %% update p_all_iit and update n_div_iii, i.e., niii
     for i = 1:1:num_reg
-        region_in = sum(v.val(:,i,i)) + demand.val(i,i);
-        n_div.val(i,i,i) = n_div.val(i,i,i) + region_in - v.val(i,i,i);
+        p_all(i,i,t) = sum(p(i,i,:,t));
+        region_in = demand.val(i,i);
+        region_out = v.val(i,i,i);
+        n_div.val(i,i,i) = n_div.val(i,i,i) + region_in - region_out;
     end
 
     %% update n.val, i.e., nis
@@ -166,11 +189,15 @@ for t=1:T:T*N
                 if t <= tau0BZFix(pairi,pairj)
                     for j=1:1:size(d,2)
                         v.val(pairi,pairj,d(j)) = q.val(pairi,pairj,d(j));
+                        % clean up the previous queue
+                        q.val(pairi,pairj,d(j)) = 0;
                     end
                 else
                     for j=1:1:size(d,2)
                         v.val(pairi,pairj,d(j)) = q.val(pairi,pairj,d(j)) + ...
-                                                  p(pairi,pairj,d(j),t-tau0BZFix(pairi,pairj)); 
+                                                  p(pairi,pairj,d(j),t-tau0BZFix(pairi,pairj));
+                        % clean up the previous queue
+                        q.val(pairi,pairj,d(j)) = 0;
                     end
                 end
             else
@@ -181,21 +208,65 @@ for t=1:T:T*N
                     for j=1:1:size(d,2)
                         v.val(pairi,pairj,d(j)) = Cbar.val(pairi,pairj) * ...
                                                   q.val(pairi,pairj,d(j)) / q_sum;
+                        % clean up the previous queue
+                        q.val(pairi,pairj,d(j)) = 0;
                     end
                 else
                     q_sum = sum(q.val(pairi,pairj,d)) + sum(p(pairi,pairj,d,t-tau0BZFix(pairi,pairj)));
                     for j=1:1:size(d,2)
+                        flow_waiting_ij = q.val(pairi,pairj,d(j)) + p(pairi,pairj,d(j),t-tau0BZFix(pairi,pairj));
                         v.val(pairi,pairj,d(j)) = Cbar.val(pairi,pairj) * ...
-                                                  (q.val(pairi,pairj,d(j)) + p(pairi,pairj,d(j),t-tau0BZFix(pairi,pairj))) / ...
-                                                  q_sum; 
+                                                  flow_waiting_ij / q_sum;
+                        % the remaining flow+queue forms a new queue
+                        q.val(pairi,pairj,d(j)) = q.val(pairi,pairj,d(j)) + flow_waiting_ij - v.val(pairi,pairj,d(j));
                     end
-                end              
+                end
+                
             end
             q_all(pairi,pairj,t) = sum(q.val(pairi,pairj,:));
             v_all(pairi,pairj,t) = sum(v.val(pairi,pairj,:));
         end
         
         % update viiit and qiiit
+        for i = 1:1:num_reg
+            flow_waiting_up = 0;
+            % compute how much flow is waiting for going out at buffer ii
+            flow_waiting_ij = p_all(i,i,t) + q_all(i,i,t-1);
+            % compute how much flow is waiting for going out at all upstreams
+            upstreams = region_communi(:,2) == i;
+            upstreams = region_communi(upstreams,:);
+            for h = 1:1:size(upstreams,1)
+                flow_waiting_up = flow_waiting_up + ...
+                                  p_all(upstreams(h,1),i,t) + ...
+                                  q_all(upstreams(h,1),i,t-1);
+            end
+            % distribute capacities Cbar_ii
+            if flow_waiting_up == 0
+                Cbar.val(i,i) = 20000;
+            else
+                Cbar.val(i,i) = ( n_bar(i) - sum(n.val(i,d)) ) * ...
+                                flow_waiting_ij / flow_waiting_up;
+            end
+                                
+            % update vii and qii
+            if Cbar.val(i,i) >= flow_waiting_ij
+                % viit = flow_waiting_ii
+                v.val(i,i,i) = q.val(i,i,i) + p(i,i,i,t); 
+                % clean up the previous queue
+                q.val(i,i,i) = 0;
+            else
+                % viit = Cbar_iit
+                % viiit = viit * flow_waiting_iii/flow_waiting_ii
+                q_sum = sum(q.val(i,i,d)) + sum(p(i,i,d,t));
+                flow_waiting_ij = q.val(i,i,i) + p(i,i,i,t);
+                v.val(i,i,i) = Cbar.val(i,i) * flow_waiting_ij / q_sum;
+                % the remaining flow+queue forms a new queue
+                q.val(i,i,i) = q.val(i,i,i) + flow_waiting_ij - v.val(i,i,i);
+                
+            end
+            q_all(i,i,t) = sum(q.val(i,i,:));
+            v_all(i,i,t) = sum(v.val(i,i,:));
+        end
     end
     
     %% clear tau0 and theta
