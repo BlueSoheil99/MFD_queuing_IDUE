@@ -180,7 +180,7 @@ for t=1:T:T*N
 				for j=1:1:size(d,2)
                     flow_waiting_ijs = p(pairi,pairj,d(j),t) + q.val(pairi,pairj,d(j));
 					% the remaining qijs
-					v.val(pairi,pairj,d(j)) = u(pairi,pairj).val * flow_waiting_ijs / flow_waiting_ij;
+					v.val(pairi,pairj,d(j)) = u.val(pairi,pairj) * flow_waiting_ijs / flow_waiting_ij;
 					if v.val(pairi,pairj,d(j)) > flow_waiting_ijs
 						v.val(pairi,pairj,d(j)) = flow_waiting_ijs;
 					end
