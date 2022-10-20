@@ -15,11 +15,10 @@ parameter
          v(i,j,d) 'region-inflow of region j from region i for vehicles with destination d',
          demand(i,d) 'demand from region i to d',
          MFD_Para(i,coff) 'cost parameter table',
-         Cbar(i,j) 'capacity of buffer zone (i,j)',
-         tau0BZ(i,j) '';
+         u(i,j) '';
 
 $GDXIN MtoG
-$LOAD n q v demand MFD_Para Cbar tau0BZ
+$LOAD n q v demand MFD_Para u
 
 MFD_Para(j, 'm3')$(sum(d2, n(j,d2))>10000)=0;
 MFD_Para(j, 'm2')$(sum(d2, n(j,d2))>10000)=0;
