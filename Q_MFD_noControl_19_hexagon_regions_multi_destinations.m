@@ -60,15 +60,12 @@ for t=1:T:T*N
             pairi = region_communi(i,1);
             pairj = region_communi(i,2);
             m_regioni = sum(m.val(pairi,d)); % mi_t-1: without counting vehicles in queue
-            % pijst = mijst*Pit / (mit*li) <-- completion rate
-            p_all(pairi,pairj,t) = (mfd_common(1)*m_regioni^2+mfd_common(2)*m_regioni+mfd_common(3)) ...
-                                   /mfd_diff(pairi)*m_div.val(pairi,pairj,d(j));
-            
-            if p_all(pairi,pairj,t) >= ( Qij - q.val(pairi,pairj,d(j)) )
             for j=1:1:size(d,2)
                 % pijst = mijst*Pit / (mit*li) <-- completion rate
-                p(pairi,pairj,d(j),t) = 
+                p(pairi,pairj,d(j),t) = (mfd_common(1)*m_regioni^2+mfd_common(2)*m_regioni+mfd_common(3))...
+                                            /mfd_diff(pairi)*m_div.val(pairi,pairj,d(j));
             end
+            p_all(pairi,pairj,t) = sum(p(pairi,pairj,:,t));
         end
         
         % update wijst
