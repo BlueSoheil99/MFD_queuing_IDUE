@@ -103,8 +103,43 @@ xlim([0,N]);
 % plot(plot_qU1)
 hold off
 
+%% Flow rates and Queues - PQ
+figure(2)
+in = 6;
+out = 16;
+for it = 1:N
+    plot_p(it) = p_all(in,out,it);
+    plot_v(it) = v_all(in,out,it);
+    plot_q(it) = q_all(in,out,it);
+    if it > 1
+        plot_Q(it) = ( n_bar(in) - sum(m.val(in,:)) ) * ( p_all(in,out,it) + q_all(in,out,it-1) ) / sum(p_all(in,:,it) + q_all(in,:,it-1));
+    else
+        plot_Q(it) = 0;
+    end
+    plot_vacancy(it) = plot_Q(it) - plot_q(it);
+end
+
+hold on
+yyaxis left
+plot(plot_p,'LineWidth',2,'LineStyle','--','Color','b');
+plot(plot_v,'LineWidth',1.5,'LineStyle',':','Color','k');
+% plot(plot_vacancy,'LineWidth',1.5,'LineStyle','--','Color','#00841a');
+ylim([0,3.5]);
+ylabel('Flow rate[veh/s]');
+
+yyaxis right
+plot(plot_q,'LineWidth',1.5,'LineStyle','--','Color','r');
+xlabel('Time [s]');
+ylabel('Queue length [veh]');
+ylim([0,600]);
+hold off
+
+legend(['Boundary inflow via link (' num2str(in) ',' num2str(out) ')'], ['Boundary outflow via link (' num2str(in) ',' num2str(out) ')'],...
+        ['Boundary q between link (' num2str(in) ',' num2str(out) ')'])
+
+
 %% number of vehicles over time
-load('n_19_hexagon_regions_multi_ds_withdemand_8000_2_20000_PQ_cap.mat');
+load('n_19_hexagon_regions_multi_ds_withdemand_7200_2_20000_Q.mat');
 figure(3)
 plot(n_region(1,:),'LineWidth',1.5,'LineStyle','-.')
 hold on
@@ -126,9 +161,9 @@ legend('region 1', 'region 2', 'region 3', 'region 4', 'region 5', 'region 6', '
     'region 10', 'region 11', 'region 12', 'region 13', 'region 14', 'region 15', 'region 16', 'region 17', 'region 18', ...
     'region 19')
 xlim([0 N])
-ylim([0 12000])
+ylim([0 6000])
 xlabel('Time [s]');
-ylabel('Vehicle number [veh]');
+ylabel('Number of vehicles [veh]');
 
 %% DQ-PQ comparison
 plot_p_DQ = plot_p;

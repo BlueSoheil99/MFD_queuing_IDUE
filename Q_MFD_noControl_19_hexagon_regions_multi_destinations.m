@@ -72,38 +72,26 @@ for t=1:T:T*N
         % assume iii does not form any queue
         for i=1:1:num_reg
             n_regioni = sum(n.val(i,d)); % ni
-            if n_regioni < n_bar(i)
-                m_regioni = sum(m.val(i,d)); % mi
-                % p_iiit = niiit*Pit / (mit*li) <-- completion rate
-                % assume qiiit = 0: no queue for iii
-                p(i,i,i,t) = (mfd_common(1)*m_regioni^2+mfd_common(2)*m_regioni+mfd_common(3))...
-                                            /mfd_diff(i)*n_div.val(i,i,i);
-                p_all(i,i,t) = sum(p(i,i,d,t));
-            end
+            m_regioni = sum(m.val(i,d)); % mi_t-1
+            % p_iiit = niiit*Pit / (mit*li) <-- completion rate
+            % assume qiiit = 0: no queue for iii
+            p(i,i,i,t) = (mfd_common(1)*m_regioni^2+mfd_common(2)*m_regioni+mfd_common(3))...
+                                        /mfd_diff(i)*n_div.val(i,i,i);
+            p_all(i,i,t) = sum(p(i,i,d,t));
         end
 
         % distribute pijst
         for i=1:1:size(region_communi,1)
             pairi = region_communi(i,1);
             pairj = region_communi(i,2);
-            n_regioni = sum(n.val(pairi,d)); % ni_t-1:
-            % calculate Qijt
-            flow_waiting_i = sum(p_all(pairi,:,t) * T + sum(q_all(pairi,:,t-1)));
-            flow_waiting_ij = p_all(pairi,pairj,t) * T + q_all(pairi,pairj,t-1);
-            if flow_waiting_i == 0
-                Qij = ( n_bar(pairi) - n_regioni ); % just to give a random value
-            else
-                Qij = ( n_bar(pairi) - n_regioni ) * flow_waiting_ij / flow_waiting_i;
-            end
-            % check whether queue has enough room for pijt
-            if p_all(pairi,pairj,t) >= ( Qij - q_all(pairi,pairj,t-1) ) / T
-                p_all(pairi,pairj,t) = ( Qij - q_all(pairi,pairj,t-1) ) / T;
-                % distribute pijs
-                for j=1:1:size(d,2)
-                    % pijst = pijt * mijst / (mijt)
-                    if m.val(pairi,pairj) > 0
-                        p(pairi,pairj,d(j),t) = p_all(pairi,pairj,t) * m_div.val(pairi,pairj,d(j)) / m.val(pairi,pairj);
-                    end
+            m_regioni = sum(m.val(pairi,d)); % mi_t-1:
+            % compute vehicle numbers of region pair ij
+            m_pair_ij = sum(m_div.val(pairi,pairj,d));
+            % distribute pijs
+            for j=1:1:size(d,2)
+                % pijst = pijt * mijst / (mijt)
+                if m_pair_ij > 0
+                    p(pairi,pairj,d(j),t) = p_all(pairi,pairj,t) * m_div.val(pairi,pairj,d(j)) / m_pair_ij;
                 end
             end
             p_all(pairi,pairj,t) = sum(p(pairi,pairj,d,t));
@@ -162,9 +150,11 @@ for t=1:T:T*N
             if n_bar(j) >= Cbar_up * T + n_regionj
                 % uij = Cbar_ij
                 u.val(upstreams(:,1),j) = Cbar.val(upstreams(:,1),j);
+            elseif n_regionj > n_bar(j)
+                u.val(upstreams(:,1),j) = 0;
             else
                 % uij = (Nj - njt) * w_ij / (sum_i w_ij)
-                flow_waiting_up = w_all(upstreams(:,1),j,t);
+                flow_waiting_up = sum(w_all(upstreams(:,1),j,t));
                 if flow_waiting_up == 0 % no waiting flow at upstream
                     u.val(upstreams(:,1),j) = Cbar.val(upstreams(:,1),j);
                 else
@@ -190,14 +180,16 @@ for t=1:T:T*N
             else
                 % vijt = u_ij
                 % vijst = vijt * w_ijst/w_ijt
-				for j=1:1:size(d,2)
-					% update vijst
-					v.val(pairi,pairj,d(j)) = u.val(pairi,pairj) * w(pairi,pairj,d(j)) / w_all(pairi,pairj,t);
-					if v.val(pairi,pairj,d(j)) > w(pairi,pairj,d(j))
-						v.val(pairi,pairj,d(j)) = w(pairi,pairj,d(j));
-					end
-					% update qijs
-					q.val(pairi,pairj,d(j)) = w(pairi,pairj,d(j)) - v.val(pairi,pairj,d(j));
+                if w_all(pairi,pairj,t) > 0
+				    for j=1:1:size(d,2)
+					    % update vijst
+					    v.val(pairi,pairj,d(j)) = u.val(pairi,pairj) * w(pairi,pairj,d(j)) / w_all(pairi,pairj,t);
+					    if v.val(pairi,pairj,d(j)) > w(pairi,pairj,d(j))
+						    v.val(pairi,pairj,d(j)) = w(pairi,pairj,d(j));
+                        end
+                        % update qijs
+					    q.val(pairi,pairj,d(j)) = w(pairi,pairj,d(j)) - v.val(pairi,pairj,d(j));
+                    end
 				end
             end
             q_all(pairi,pairj,t) = sum(q.val(pairi,pairj,:));

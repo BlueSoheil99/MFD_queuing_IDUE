@@ -1,7 +1,7 @@
 clear
 clc
 %% Mode
-limit_n = [20000];
+limit_n = [4000];
 %demand_choice = [0.3, 0.3, 0.2]; % 0.275, 0.275, 0.2]; %0.3, 0.2, 0.1];
 % demand_choice = [0.3, 0.3, 0.2; 0.275, 0.275, 0.2; 0.25, 0.25, 0.2];
 % demand_choice =[0.3, 0.25, 0.15; 0.325, 0.275, 0.15; 0.275, 0.225, 0.15];
@@ -13,7 +13,7 @@ limit_n = [20000];
 % demand_choice =[0.35, 0.25, 0.15; 0.3, 0.25, 0.15];
 demand_choice =[0.3, 0.25, 0.15];
 
-queueType = 'PQ_cap'; % PQ; DQ
+queueType = 'Q'; % PQ; DQ; Q (new); PQ_cap (tempopary)
 
 for ite_num =1:1:length(limit_n)
     for ite_dem =1:1:size(demand_choice,1)
@@ -62,7 +62,10 @@ for ite_num =1:1:length(limit_n)
             filename = strcat('n_19_hexagon_regions_multi_ds_withdemand_7200_',num2str(ite_dem+1),'_', num2str(limit_n(ite_num)),'_PQ.mat');
         elseif strcmp(queueType, 'PQ_cap')
             run PQ_cap_MFD_noControl_19_hexagon_regions_multi_destinations.m
-            filename = strcat('n_19_hexagon_regions_multi_ds_withdemand_7200_',num2str(ite_dem+1),'_', num2str(limit_n(ite_num)),'_PQ_cap.mat');
+            filename = strcat('n_19_hexagon_regions_multi_ds_withdemand_7200_',num2str(ite_dem+1),'_', num2str(limit_n(ite_num)),'_PQn_reduceS.mat');
+        elseif strcmp(queueType, 'Q')
+            run Q_MFD_noControl_19_hexagon_regions_multi_destinations.m
+            filename = strcat('n_19_hexagon_regions_multi_ds_withdemand_7200_',num2str(ite_dem+1),'_', num2str(limit_n(ite_num)),'_Q_redS.mat');
         end
 
         save(filename)
