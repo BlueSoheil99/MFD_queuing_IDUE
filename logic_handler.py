@@ -43,9 +43,9 @@ def preprocess_network(adj_mat, densities):
 
 def get_segments(densities, adj_mat, dist_mat, W):
     #todo
-    seg_list = logic.initial_segmentation()
-    seg_list = logic.merging()
-    seg_list = logic.boundary_adjustment()
+    seg_list = logic.initial_segmentation(W)
+    seg_list = logic.merging(seg_list, adj_mat, densities)
+    seg_list = logic.boundary_adjustment(seg_list)
     return seg_list
 
 

@@ -21,7 +21,8 @@ def get_segments(similarity_mat):
 
 def get_segments(similarity_mat):  # another way to implement.
     n = similarity_mat.shape[0]
-    labels = np.linspace(0, n-1, n)
+    labels = np.linspace(0, n-1, n)  # if you are to use this funciton multiple times you may need a mask as input to
+    # show which subregion (nodes withing have 1 value in the mask) should be partitioned
     labels = graph.cut_normalized(labels, similarity_mat, thresh=0.1, num_cuts=10, in_place=False)
     # todo set these appropriately- thresh should be low so that we get two segments each time
     # I feel you need to implement the whole thing (somehow copying skimage code) to be able to get a partition for each
