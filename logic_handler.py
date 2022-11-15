@@ -3,6 +3,7 @@ from logic import *
 import numpy as np
 
 
+
 # def get_distance_matrix(adj_mat):
 #     n = adj_mat.shape[0]
 #     A = np.copy(adj_mat)
@@ -61,11 +62,10 @@ import numpy as np
 
 
 def get_segments(graph):
-    #todo
-    logic.initial_segmentation(graph)
-    logic.merging.merge(graph)
-    seg_list = logic.boundary_adjustment(graph)
-    return seg_list
+    initial_segmentation.get_segments(graph)
+    merging.merge(graph)
+    logic.boundary_adjustment(graph)
+    return graph.labels
 
 
 def get_metrics(graph):

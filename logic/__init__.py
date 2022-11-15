@@ -1,8 +1,8 @@
 from logic import initial_segmentation, merging, boundary_adjustment, var_metrics, shape_metrics
 
 
-def initial_segmentation(similarity_mat):
-    return initial_segmentation.get_segments(similarity_mat)
+# def initial_segmentation(similarity_mat):
+#     return initial_segmentation.get_segments(similarity_mat)
 
 
 # def merging(graph):

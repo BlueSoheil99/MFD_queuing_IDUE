@@ -7,6 +7,7 @@ def merge(graph):
     num_regions = region_A.shape[0]
     region_A[region_A == 0] = np.inf
     min_index = np.argmin(region_A)
+    #or min_index = np.argmin(region_A[region_A>0]) instead of two lines above
     reg1 = min_index // num_regions
     reg2 = min_index % num_regions
     labels[labels == reg2] = reg1
