@@ -6,13 +6,11 @@ input_addresses = []
 max_number_of_clusters = 10
 
 densities, adj_mat = io.get_network(input_addresses)
-# dist_mat, W = logic.preprocess_networetwork(adj_mat, densities)
-#todo: you can make the class 'network' but I don't know if that's helpful!
 graph = Graph(adj_mat, densities)
 
 
+segments_and_metrics = logic.make_partitions(graph, max_number_of_clusters)
 for i in range(max_number_of_clusters):
-    segment_IDs, SN, TV = logic.make_partitions(densities, adj_mat, dist_mat, W)
-    print(f'for {i} clusters: SN={SN},  TV={TV}')
-    io.show_network(segment_IDs)
+    print(f'for {i} segments: SN={segments_and_metrics[i][1]},  TV={segments_and_metrics[i][2]}')
+    io.show_network(segments_and_metrics[i][0])
 
