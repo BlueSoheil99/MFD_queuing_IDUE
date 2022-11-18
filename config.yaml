@@ -1,0 +1,7 @@
+# where you put the network and density fles
+data_folder: "./data/"
+network_name: "Seattle_road_network.net.xml"
+info_name: "Edge_veh_od_psrc_convert20per.xml"
+
+# feature that you'd like to read, e.g, density
+feature: "density"
