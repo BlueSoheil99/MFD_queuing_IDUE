@@ -1,9 +1,3 @@
-
-#Hey Pranati!
-
-# I suggest that you make a new directory (name can be inout) and make other .py files related to this file.
-# Also you can have a .txt file in that folder to save the address of input files. You can hardcode the addresses or
-# input file names for now but we'll have to make it cleaner later
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -12,18 +6,21 @@ from inout import plot_network as vis
 
 
 def get_network(input_addresses="config.yaml"):
-    net_fname, info_fname, option = util.init_config(input_addresses)
+    net_fname, info_fname, option, interval_beg, interval_end = util.init_config(input_addresses)
     # read network
     net, nodes, edges = util.read_network(net_fname)
     # organize the network info into dictionaries
     node_diction = util.read_node_info(nodes)
-    edge_diction = util.read_edge_info(edges, info_fname, option)
+    edge_diction = util.read_edge_info(edges, info_fname, option, interval_beg)
     # convert the network into adjacency matrix and density list
     # now I aggregate densities of whole day
-    # TODO: revise the code if we need a specific time frame of density info
+    # Done: revised code for specific time frame
     adjacency_matrix = util.make_adjacency(net, node_diction, edge_diction)
     list_of_edges = edge_diction.keys()
     list_of_densities = edge_diction.values()
+    # print(len(list_of_edges))
+    # print(len(list_of_densities))
+    # print(list_of_densities)
     return net, list_of_edges, list_of_densities, adjacency_matrix
     # return matrix with numpy array. That should be more efficient
 
@@ -47,6 +44,8 @@ def show_network(net, edges_list, region_id, width_edge=2, alpha=0.5, mapscale=1
     plt.ylabel("y coord")
     plt.show()
 
+
+get_network(input_addresses="config.yaml")
     # plot the network with each segment defined with a color
     # the input is list with len=|V| each element shows the seg# for each link
     # ex: we have 4 segments, the list would be like: [1, 1, 1, 2, 2, 3, 4, 4, 3, 1 ,...]

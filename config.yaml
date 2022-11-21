@@ -5,3 +5,7 @@ info_name: "Edge_veh_od_psrc_convert20per.xml"
 
 # feature that you'd like to read, e.g, density
 feature: "density"
+#interval start time in seconds upto two decimal points (for eg. 8 AM = 8*3600 =28800.00)
+interval_begin: "28800.00"
+#interval end time in seconds # not used but here if required
+interval_end: "32400.00"

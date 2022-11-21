@@ -10,7 +10,10 @@ def init_config(fname="config.yaml"):
     network_name = "{}{}".format(data_folder, file["network_name"])
     feature_name = "{}{}".format(data_folder, file["info_name"])
     feature = file["feature"]
-    return network_name, feature_name, feature
+    interval_begin = file["interval_begin"]
+    interval_end = file["interval_end"]
+
+    return network_name, feature_name, feature, interval_begin, interval_end
 
 
 def get_node_pair(net, edge_id):
@@ -49,12 +52,18 @@ def read_node_info(nodes):
     return node_diction
 
 
-def read_edge_info(edges, feature_name, option):
+def read_edge_info(edges, feature_name, option, interval_begin):
     edge_diction = {edge.getID(): 0 for edge in edges}
-    edge_stats = sumoxml.parse(feature_name, "edge")
-    for edge in edge_stats:
-        try:
-            edge_diction[edge.id] += float(edge.getAttribute(option))
-        except:
-            print("{} has no attribute: {}".format(edge.id, option))
+    edge_stats = sumoxml.parse(feature_name, "interval")
+    # as we need density for specific time intervals
+    for interval in edge_stats:
+        if interval.begin == interval_begin:
+            i = 0
+            for edge in interval.edge:
+                try:
+                    edge_diction[edge.id] += float(edge.getAttribute(option))
+                except:
+                    print("{} has no attribute: {}".format(edge.id, option))
+                    i = i + 1
+            print("Total Number of Edges without {} are {}".format(option, i))
     return edge_diction
