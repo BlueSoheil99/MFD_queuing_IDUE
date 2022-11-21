@@ -58,8 +58,8 @@ for i in range(a):
     regid.append(1)
 for i in range(a+1, len(list_of_edges)):
     regid.append(2)
-print(regid)
-print(len(regid))
+# print(regid)
+# print(len(regid))
 show_network(net=net, edges_list=list_of_edges, region_id=regid)
     # plot the network with each segment defined with a color
     # the input is list with len=|V| each element shows the seg# for each link
