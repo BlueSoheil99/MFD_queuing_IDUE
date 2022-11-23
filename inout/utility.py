@@ -22,21 +22,30 @@ def get_node_pair(net, edge_id):
     return source, sink
 
 
-def get_node_index(node_diction, node_id):
-    node_list = list(node_diction.keys())
-    i = node_list.index(node_id)
+# def get_node_index(node_diction, node_id):
+#     node_list = list(node_diction.keys())
+#     i = node_list.index(node_id)
+#     return i
+
+def get_edge_index(edges_diction, edge_id):
+    edge_list = list(edges_diction.keys())
+    i = edge_list.index(edge_id)
     return i
 
 
 def make_adjacency(net, node_diction, edges_diction):
-    n_nodes = len(node_diction.keys())
-    adjacency_mat = np.zeros((n_nodes, n_nodes), dtype=int)
-
+    # n_nodes = len(node_diction.keys())
+    n_edges = len(edges_diction.keys())
+    adjacency_mat = np.zeros((n_edges, n_edges), dtype=int)
     for key, value in edges_diction.items():
-        source, sink = get_node_pair(net, key)
-        i = get_node_index(node_diction, source)
-        j = get_node_index(node_diction, sink)
-        adjacency_mat[i][j] = 1
+        source_node, sink_node = get_node_pair(net, key)
+        for i, j in edges_diction.items():
+            source_node_i, sink_node_i = get_node_pair(net, i)
+            if source_node == source_node_i or source_node == sink_node_i or sink_node == source_node_i or sink_node == sink_node_i:
+                a = get_edge_index(edges_diction, key)
+                b = get_edge_index(edges_diction, i)
+                if a != b:
+                    adjacency_mat[a][b] = 1
     return adjacency_mat
 
 
