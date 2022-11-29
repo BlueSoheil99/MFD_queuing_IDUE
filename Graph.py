@@ -20,24 +20,25 @@ class Graph:
 
 
 def preprocess_network(adj_mat, densities):
-    dist_mat = get_distance_matrix(adj_mat)
+    # dist_mat = get_distance_matrix(adj_mat)
+    # todo: uncomment the line above when calculating distance matrix really makes a difference
+    dist_mat = np.copy(adj_mat)
     W = get_similarity_matrix(dist_mat, densities)
     return dist_mat, W
 
 
 def get_distance_matrix(adj_mat):
     n = adj_mat.shape[0]
-    # A = np.copy(adj_mat)
     p = 1  # power of A
     A_p = np.copy(adj_mat)
     distance_mat = np.copy(adj_mat)
     X = np.ones((n, n)) - adj_mat - np.eye(n)
     # X(i,j) shows if we have detected the shortest path between i and j or not (if not, it's 1). X(i, i)s are 0 because
-    # I assume that distance_mat(i,i)=0. # todo Is that true?
+    # I assume that distance_mat(i,i)=0.
     # using algorithms like Dijkstra is time intensive
     while X.any():
         print(X)
-        A_p = np.dot(A_p, adj_mat)
+        A_p = np.dot(A_p, adj_mat)  #todo tiimmmeee.
         p += 1
         new_walks = np.logical_and(X, A_p)
         X -= new_walks
@@ -54,8 +55,7 @@ def get_similarity_matrix(distance_matrix, density_list):
     for row in range(n):
         for col in range(row, n):
             if distance_matrix[row, col] == 1:
-                # todo: do we really have to use distance matrix? why not adjacency matrix?
-                # the main formula is different than the one in paper. It doesn't conclude sigma
+                # todo the main formula is different than the one in paper. It doesn't include sigma
                 similarity = np.exp(-(density_list[row] - density_list[col]) ** 2 / sigma)
                 W[row, col] = similarity
                 W[col, row] = similarity
@@ -106,11 +106,9 @@ def get_rag(labels, adj_mat, densities):
                 for neighbor in neighbors:
                     if labels[neighbor] != cluster_id:
                         region_adj_mat[cluster_id, labels[neighbor]] = 1
-
     for row in range(num_regions):
         for column in range(num_regions):
             if region_adj_mat[row, column] == 1:
                 region_adj_mat[row, column] = abs(means_list[row] - means_list[column])
                 # todo: take a look at formula (18) in Ji(2012) and see if changes are needed
-
     return region_adj_mat

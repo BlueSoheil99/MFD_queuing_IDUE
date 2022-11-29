@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from inout import plot_network as pln
 from inout import utility as util
 from inout import plot_network as vis
+import pandas as pd  # for debugging
 
 
 def get_network(input_addresses="config.yaml"):
@@ -16,17 +17,22 @@ def get_network(input_addresses="config.yaml"):
     # convert the network into adjacency matrix and density list
     # now I aggregate densities of whole day
     # Done: revised code for specific time frame
-    adjacency_matrix = util.make_adjacency(net, node_diction, edge_diction)
+
+    # adjacency_matrix = util.make_adjacency(net, node_diction, edge_diction)
+    # data = pd.DataFrame(adjacency_matrix)  # debug
+    # data.to_csv('data/adjacency_matrix.csv', index=False)  # debug
+    # todo use the lines above for the first run, then use the line below for next runs
+    adjacency_matrix = read_adj('data/adjacency_matrix.csv')  # debug
+
     list_of_edges = edge_diction.keys()
-    list_of_densities = edge_diction.values()
-    # print(len(list_of_edges))
-    # print(len(list_of_densities))
-    # print(list_of_densities)
-    print(adjacency_matrix)
-    print(len(adjacency_matrix))
-    np.savetxt('Result_Network/adjacency_matrix.csv', adjacency_matrix, delimiter=',')
+    list_of_densities = np.array(list(edge_diction.values()))
     return net, list_of_edges, list_of_densities, adjacency_matrix
-    # return matrix with numpy array. That should be more efficient
+
+
+def read_adj(address):  # DEBUG
+    import pandas as pd
+    data = pd.read_csv(address)
+    return data.to_numpy()
 
 
 def show_network(net, edges_list, region_id, width_edge=2, alpha=0.5, mapscale=4.0, colormap="tab10"):
@@ -48,26 +54,26 @@ def show_network(net, edges_list, region_id, width_edge=2, alpha=0.5, mapscale=4
     plt.ylabel("y coord")
     plt.show()
 
-
-net, list_of_edges, list_of_densities, adjacency_matrix = get_network(input_addresses="config.yaml")
-
-print(len(list_of_edges))
-regid=[]
-
-## TO DO: Region Id to be updated by Soheil using algorith to visulaize map
-##TO DO: Map plot colors and details- Pranati
-
-#giving each region uniform id (manually for time being to check plot) #6 regions
-a = int(len(list_of_edges)/2)
-
-for i in range(a):
-    regid.append(1)
-for i in range(a+1, len(list_of_edges)):
-    regid.append(2)
-# print(regid)
-# print(len(regid))
-show_network(net=net, edges_list=list_of_edges, region_id=regid)
-#     # plot the network with each segment defined with a color
-#     # the input is list with len=|V| each element shows the seg# for each link
-#     # ex: we have 4 segments, the list would be like: [1, 1, 1, 2, 2, 3, 4, 4, 3, 1 ,...]
-
+#
+# net, list_of_edges, list_of_densities, adjacency_matrix = get_network(input_addresses="config.yaml")
+#
+# print(len(list_of_edges))
+# regid=[]
+#
+# ## TO DO: Region Id to be updated by Soheil using algorith to visulaize map
+# ##TO DO: Map plot colors and details- Pranati
+#
+# #giving each region uniform id (manually for time being to check plot) #6 regions
+# a = int(len(list_of_edges)/2)
+#
+# for i in range(a):
+#     regid.append(1)
+# for i in range(a+1, len(list_of_edges)):
+#     regid.append(2)
+# # print(regid)
+# # print(len(regid))
+# show_network(net=net, edges_list=list_of_edges, region_id=regid)
+# #     # plot the network with each segment defined with a color
+# #     # the input is list with len=|V| each element shows the seg# for each link
+# #     # ex: we have 4 segments, the list would be like: [1, 1, 1, 2, 2, 3, 4, 4, 3, 1 ,...]
+#

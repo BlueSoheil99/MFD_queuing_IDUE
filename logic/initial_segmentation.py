@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.linalg import eigh
+from scipy.linalg import eigh, eig
 from logic.var_metrics import segment_var
 from sklearn.cluster import KMeans
 
@@ -28,15 +28,43 @@ def get_W_and_D(graph, mask):
     return W, D
 
 
+def check(a, b):  # DEBUG
+    """
+    DEBUG
+    In  a @ vi = λ * b @ vi see if:
+    1) a is a real symmetric matrix
+    2) b is a real symmetric matrix
+    3) b is positive definite
+    https://docs.scipy.org/doc/scipy/reference/generated/scipy.linalg.eigh.html#scipy.linalg.eigh
+    :param: a and b in generalized eigenvalue system a @ vi = λ * b @ vi
+    :return: Three bools for three conditions above
+    """
+    ans1 = (a == a.T).all()
+    ans2 = (b == b.T).all()
+    eigs = np.linalg.eigvals(b)
+    ans3 = np.all(eigs > 0)
+    semi = np.all(eigs >= 0)  # do we have b as positive semi-definite?
+    indexes = np.argwhere(eigs == 0)
+    return [ans1, ans2, ans3]
+
+
 def get_segments(network):
     parent = get_parent_id(network)
     mask = (network.labels == parent)
     W, D = get_W_and_D(network, mask)
     # we should solve (D-W)y = l.D.y where y is eigenvector and equals (1+x)-b(1-x).
     # y vector will eventually come from 0=yT.D.1
-    # now how to find x? y = (1+x) - (1-x)*[(x+1)T.d_list/(1-x)T.d_list]. take another look at shi2000.
-    # Why did they change y to x in their eigenvalue system?
+    # now how to find x? y = (1+x) - (1-x)*[(x+1)T.d_list/(1-x)T.d_list].
+    # In shi2000, they changed y to x in their eigenvalue system. because by discretizing y we will simply reach x!
+
+    conditions = check((D-W), D)  # DEBUG
+    # In order to be able to use eigh function, all conditions must be True,
+    # TODO but D is gonna be semidefinite and I should see if I can get y with another function
+    #  or if the system cannot be solved
     eigvals, eigvecs = eigh((D-W), D, eigvals_only=False, subset_by_index=[0, 1])
+    # eigvals, eigvecs = eig((D-W), D) # DEBUG
+    # eigh command if for when we have symmetric matrices
+
     x = eigvecs[:, 1]
     # you should do the bi-partitioning. x values are not 0 and 1. they're real values. Is clustering OK?
     # clustering with k = 2 on nodes in parent cluster
