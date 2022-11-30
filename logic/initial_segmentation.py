@@ -24,7 +24,10 @@ def get_W_and_D(graph, mask):
     args_to_delete = np.argwhere(mask == 0)
     W = np.delete(W, args_to_delete, axis=0)
     W = np.delete(W, args_to_delete, axis=1)
-    D = np.diag(np.sum(W, axis=1))
+    D = np.sum(W, axis=1)
+    D[D==0] = 0.01  #todo better criterion
+    # To make D from a semi-definite matrix to a definite matrix
+    D = np.diag(D)
     return W, D
 
 
@@ -59,17 +62,17 @@ def get_segments(network):
 
     conditions = check((D-W), D)  # DEBUG
     # In order to be able to use eigh function, all conditions must be True,
-    # TODO but D is gonna be semidefinite and I should see if I can get y with another function
-    #  or if the system cannot be solved
+    # function check shows that matrix D is gonna be semidefinite and I should see if I can get y with another function
+    #  or if the system cannot be solved. The solution? I just changed zeros on D's diagonal into a small number!
     eigvals, eigvecs = eigh((D-W), D, eigvals_only=False, subset_by_index=[0, 1])
-    # eigvals, eigvecs = eig((D-W), D) # DEBUG
-    # eigh command if for when we have symmetric matrices
-
     x = eigvecs[:, 1]
-    # you should do the bi-partitioning. x values are not 0 and 1. they're real values. Is clustering OK?
+
+    # you should do the bi-partitioning. x values are not 0 and 1. they're real values. todo Is clustering OK?
     # clustering with k = 2 on nodes in parent cluster
     new_clusters = KMeans(n_clusters=2).fit(x.reshape(-1, 1))
     new_clusters = new_clusters.labels_
+    uniq = np.unique(new_clusters)  # DEBUG
+
     n = len(np.unique(network.labels))
     # when segments start from 0, the biggest label is n-1, so we assign label n to a new segment and keep parent label
     # for the other segment
