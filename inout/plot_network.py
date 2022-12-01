@@ -16,7 +16,7 @@ def init_colors(colormap_name, vmin, vmax):
     return scalarMap
 
 
-def get_color(colormap, i, volume=None):
+def get_color(colormap, i, volume=any):
     if volume is None:
         return "gray"
     else:
