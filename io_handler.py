@@ -1,28 +1,26 @@
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 from inout import plot_network as pln
 from inout import utility as util
 from inout import plot_network as vis
 import pandas as pd  # for debugging
 
+matplotlib.use("Qt5Agg")
+
 
 def get_network(input_addresses="config.yaml"):
-    net_fname, info_fname, option, interval_beg, interval_end = util.init_config(input_addresses)
+    net_fname, info_fname, option, net_edges_fname, interval_begin, interval_end, edges_to_remove = \
+        util.init_config(input_addresses)
     # read network
-    net, nodes, edges = util.read_network(net_fname)
+    net, edges = util.read_network(net_fname, net_edges_fname, edges_to_remove)
     # organize the network info into dictionaries
-    node_diction = util.read_node_info(nodes)
-    edge_diction = util.read_edge_info(edges, info_fname, option, interval_beg)
+    edge_diction = util.read_edge_info(edges, info_fname, option, interval_begin, interval_end)
     print(edge_diction)
-    # convert the network into adjacency matrix and density list
-    # now I aggregate densities of whole day
-    # Done: revised code for specific time frame
 
-    # adjacency_matrix = util.make_adjacency(net, node_diction, edge_diction)
-    # data = pd.DataFrame(adjacency_matrix)  # debug
-    # data.to_csv('data/adjacency_matrix.csv', index=False)  # debug
+    adjacency_matrix = util.make_adjacency(net, edge_diction)
     # todo use the lines above for the first run, then use the line below for next runs
-    adjacency_matrix = read_adj('data/adjacency_matrix.csv')  # debug
+    # adjacency_matrix = read_adj('data/adjacency_matrix.csv')  # debug
 
     list_of_edges = edge_diction.keys()
     list_of_densities = np.array(list(edge_diction.values()))
@@ -42,13 +40,25 @@ def show_network(net, edges_list, region_id, width_edge=2, alpha=0.5, mapscale=4
     vmax = max(region_id)
 
     colormap = vis.init_colors(colormap, vmin, vmax)
+    edges_list = list(edges_list)
 
-    for key, value in zip(edges_list, region_id):
-        shape = net.getEdge(key).getShape()
-        x_vec = np.array(shape)[:, 0]
-        y_vec = np.array(shape)[:, 1]
-        ax.plot(x_vec * mapscale, y_vec * mapscale, color=vis.get_color(colormap, value),
-                lw=width_edge, alpha=alpha, zorder=-100)
+    for edge in net.getEdges():
+        raw_id = edge.getID()
+        new_id = util.cleanID(raw_id)
+
+        if new_id in edges_list:
+            shape = net.getEdge(raw_id).getShape()
+            x_vec = np.array(shape)[:, 0]
+            y_vec = np.array(shape)[:, 1]
+            idx = edges_list.index(new_id)
+            ax.plot(x_vec * mapscale, y_vec * mapscale, color=vis.get_color(colormap, region_id[idx]),
+                    lw=width_edge, alpha=alpha, zorder=-100)
+        else:
+            shape = net.getEdge(raw_id).getShape()
+            x_vec = np.array(shape)[:, 0]
+            y_vec = np.array(shape)[:, 1]
+            ax.plot(x_vec * mapscale, y_vec * mapscale, color="grey",
+                    lw=width_edge, alpha=0.2, zorder=-100)
 
     plt.xlabel("x coord")
     plt.ylabel("y coord")
