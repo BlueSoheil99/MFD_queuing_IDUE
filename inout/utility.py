@@ -46,11 +46,13 @@ def make_adjacency(net, edges_diction):
             b = get_edge_index(edges_diction, new_id)
             if a != b and (a is not None and b is not None):
                 adjacency_mat[a][b] = 1
+                adjacency_mat[b][a] = 1
 
         for outgoing in outgoing_edges:
             new_id = cleanID(outgoing.getID())
             b = get_edge_index(edges_diction, new_id)
             if a != b and (a is not None and b is not None):
+                adjacency_mat[a][b] = 1
                 adjacency_mat[b][a] = 1
 
     return adjacency_mat
@@ -58,10 +60,8 @@ def make_adjacency(net, edges_diction):
 
 def read_network(net_fname, net_edges_fname, edges_to_remove):
     net = sumonet.readNet(net_fname)
-    edges = net.getEdges()
-    if len(net_edges_fname) < len(edges):
-        connected_edges = read_edgeID_subnetwork(net_edges_fname)
-        net, edges = clean_network(net, connected_edges, edges_to_remove)
+    connected_edges = read_edgeID_subnetwork(net_edges_fname)
+    net, edges = clean_network(net, connected_edges, edges_to_remove)
     return net, edges
 
 

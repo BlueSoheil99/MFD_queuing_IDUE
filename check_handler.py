@@ -13,7 +13,20 @@ net_fname, info_fname, option, net_edges_fname, interval_begin, interval_end, ed
 io_check.connectivity(input_addresses, out_folder=out_folder, out_name=out_name)
 
 net, edges = util.read_network(net_fname, net_edges_fname, edges_to_remove)
-io_check.redundant_edges(edges, info_fname, option)
+io_check.zero_density_edges(edges, info_fname, option)
+
+#####
+# !!!NOTE!!! Uncomment the following if we want to
+# detect marginal links based on NCut results.
+# =================================================
+# After running 30 times of NCut,
+# we try to remove marginal links.
+# =================================================
+# Because the following won't be used anywhere else,
+# I didn't create any functions in utility.py
+#####
+# cut_result_name = out_folder + "seattle_cut1.txt"
+# io_check.detect_marginal_edges(cut_result_name)
 
 
 

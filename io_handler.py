@@ -64,26 +64,3 @@ def show_network(net, edges_list, region_id, width_edge=2, alpha=0.5, mapscale=4
     plt.ylabel("y coord")
     plt.show()
 
-#
-# net, list_of_edges, list_of_densities, adjacency_matrix = get_network(input_addresses="config.yaml")
-#
-# print(len(list_of_edges))
-# regid=[]
-#
-# ## TO DO: Region Id to be updated by Soheil using algorith to visulaize map
-# ##TO DO: Map plot colors and details- Pranati
-#
-# #giving each region uniform id (manually for time being to check plot) #6 regions
-# a = int(len(list_of_edges)/2)
-#
-# for i in range(a):
-#     regid.append(1)
-# for i in range(a+1, len(list_of_edges)):
-#     regid.append(2)
-# # print(regid)
-# # print(len(regid))
-# show_network(net=net, edges_list=list_of_edges, region_id=regid)
-# #     # plot the network with each segment defined with a color
-# #     # the input is list with len=|V| each element shows the seg# for each link
-# #     # ex: we have 4 segments, the list would be like: [1, 1, 1, 2, 2, 3, 4, 4, 3, 1 ,...]
-#

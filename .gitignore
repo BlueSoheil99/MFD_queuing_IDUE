@@ -15,3 +15,5 @@
 /output/seattlecomp15.txt
 /output/seattlecomp16.txt
 *.pyc
+/output/seattle_cut.txt
+/output/seattle_cut1.txt

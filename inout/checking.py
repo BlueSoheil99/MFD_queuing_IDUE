@@ -118,13 +118,13 @@ def connectivity(input_addresses, out_folder="./output/", out_name="seattle"):
         out_folder + "{}comp{}.txt".format(out_name, str(component_edge_count.index(max_cnt)))))
 
 
-def redundant_edges(edges, info_name, option):
+def zero_density_edges(edges, info_name, option):
     """
     Layout all the edges that never have density
     :param edges: list of all SUMO edges
     :param info_name:
     :param option: Feature that we would like to observe. e.g., density
-    :return:
+    :return: No return. Save all the edge IDs having no density by the format: edgeID
     """
     edge_diction = {edge.getID(): 0 for edge in edges}
     edge_stats = sumoxml.parse(info_name, "edge")
@@ -142,3 +142,32 @@ def redundant_edges(edges, info_name, option):
         for i, x in enumerate(edge_diction.values()):
             if x == 0:
                 f.write("{}\n".format(keys[i]))
+
+
+def detect_marginal_edges(cut_result_name, threshold=20):
+    """
+    Report all the edge IDs if those are marginal
+    :param threshold: the threshold to detect marginal links.
+            E.g., 20 means we tag those regions with fewer than 20 edges,
+            and those edge IDs will be recorded in the output file `./output/marginal_edgeID.txt`
+    :param cut_result_name: e.g., ./output/seattle_cut.txt,
+            which saves the NCut results by the format: region_ID \t edge_ID
+    :return: No return. Save all the marginal edge IDs by the format: edgeID
+    """
+    with open(cut_result_name) as f:
+        region = []
+        edge = []
+        for line in f:
+            tmp = line.rstrip().split("\t")
+            region.append(int(tmp[0]))
+            edge.append(tmp[1])
+
+    with open("./output/marginal_edgeID.txt", 'a') as r:
+        for i in range(max(region)):
+            if region.count(i+1) < threshold:
+                idx = [j for j in range(len(region)) if region[j] == i+1]
+                for j in range(len(idx)):
+                    r.write("{}\n".format(edge[idx[j]]))
+
+    print('Please add the following to config.yaml: edges_to_remove_name: "{}"'.format(
+        "./output/marginal_edgeID.txt"))

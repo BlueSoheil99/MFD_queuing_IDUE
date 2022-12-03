@@ -3,7 +3,7 @@ data_folder: "./data/"
 network_name: "Seattle_road_network.net.xml"
 edges_name: "./output/seattlecomp0.txt"
 info_name: "Edgetest_6_0411_2_0.xml"
-edges_to_remove_name: "./output/zero_density_edgeID.txt"
+edges_to_remove_name: "./output/marginal_edgeID.txt"
 
 # feature that you'd like to read, e.g, density
 feature: "density"
