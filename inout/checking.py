@@ -1,4 +1,4 @@
-import utility as util
+import inout.utility as util
 import sumolib.xml as sumoxml
 
 

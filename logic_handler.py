@@ -1,13 +1,7 @@
 import logic
 from logic import *
 import copy
-
-
-# def get_segments(graph):
-#     initial_segmentation.get_segments(graph)
-#     merging.merge(graph)
-#     # todo logic.boundary_adjustment(graph)
-#     return graph.labels
+import numpy as np
 
 
 def get_metrics(graph):
@@ -31,3 +25,16 @@ def make_partitions(graph, max_clusters):
     # todo use NSs to find the optimal number of clusters
     # todo include boundary_adjustment
     return answers
+
+
+def get_segment_IDs(graph, edgeID_list):
+    edgeID_list = np.array(edgeID_list)
+    labels = np.unique(graph.labels)
+    lookup = dict()
+    for i in labels:
+        args = np.argwhere(graph.labels==i)
+        args = args.flatten()
+        lookup[i] = list(edgeID_list[args])
+    return lookup
+
+

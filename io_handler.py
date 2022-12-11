@@ -19,6 +19,8 @@ def get_network(input_addresses="config.yaml"):
     print(edge_diction)
 
     adjacency_matrix = util.make_adjacency(net, edge_diction)
+    data = pd.DataFrame(adjacency_matrix)  # debug
+    data.to_csv('data/adjacency_matrix.csv', index=False)  # debug
     # todo use the lines above for the first run, then use the line below for next runs
     # adjacency_matrix = read_adj('data/adjacency_matrix.csv')  # debug
 
@@ -33,7 +35,7 @@ def read_adj(address):  # DEBUG
     return data.to_numpy()
 
 
-def show_network(net, edges_list, region_id, width_edge=2, alpha=0.5, mapscale=4.0, colormap="tab10"):
+def show_network(net, edges_list, region_id, width_edge=2, alpha=0.5, mapscale=4.0, colormap="tab10", save_adr=None):
     fig, ax = pln.init_plot()
 
     vmin = min(region_id)
@@ -57,10 +59,12 @@ def show_network(net, edges_list, region_id, width_edge=2, alpha=0.5, mapscale=4
             shape = net.getEdge(raw_id).getShape()
             x_vec = np.array(shape)[:, 0]
             y_vec = np.array(shape)[:, 1]
-            ax.plot(x_vec * mapscale, y_vec * mapscale, color="grey",
-                    lw=width_edge, alpha=0.2, zorder=-100)
+            ax.plot(x_vec * mapscale, y_vec * mapscale, color="white", lw=width_edge, alpha=0.2, zorder=-100)
+            # ax.plot(x_vec * mapscale, y_vec * mapscale, color="gray", lw=width_edge, alpha=0.2, zorder=-100)
 
     plt.xlabel("x coord")
     plt.ylabel("y coord")
     plt.show()
+    if save_adr is not None:
+        plt.savefig(save_adr)
 

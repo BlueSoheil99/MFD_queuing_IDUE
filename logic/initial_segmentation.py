@@ -7,15 +7,21 @@ from sklearn.cluster import KMeans
 def get_parent_id(graph):
     # todo what are parent's characteristics?
     segments = np.unique(graph.labels)
-    p = segments[0]
-    for i in range(len(segments)):
-        if segment_var(graph, segments[i]) > segment_var(graph, p):
-            p = segments[i]
-        elif segment_var(graph, segments[i]) == segment_var(graph, p):
-            n1 = np.sum(graph.labels == p)
-            n2 = np.sum(graph.labels == segments[i])
-            if n2 > n1:
-                p = segments[i]
+    variances = [segment_var(graph, i) for i in segments]
+    variances = np.sqrt(variances)
+    variances = [(variances[i] + sum(graph.labels == segments[i])) for i in range(len(segments))]
+    p = np.argmax(variances)
+
+    # segments = np.unique(graph.labels)
+    # p = segments[0]
+    # for i in range(len(segments)):
+    #     if segment_var(graph, segments[i]) > segment_var(graph, p):
+    #         p = segments[i]
+    #     elif segment_var(graph, segments[i]) == segment_var(graph, p):
+    #         n1 = np.sum(graph.labels == p)
+    #         n2 = np.sum(graph.labels == segments[i])
+    #         if n2 > n1:
+    #             p = segments[i]
     return p
 
 
