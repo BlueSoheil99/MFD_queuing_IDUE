@@ -7,7 +7,7 @@ class Graph:
         self.adjacency = adjacency_matrix
         self.densities = density_list
         self.distances, self.similarities = preprocess_network(self.adjacency, self.densities)
-        self.labels = np.zeros(self.n)
+        self.labels = np.zeros(self.n).astype(int)
         self.rag = np.zeros((1, 1))  # Region Adjacency Graph.
 
     def __len__(self):
