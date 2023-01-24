@@ -68,7 +68,7 @@ for i in range(ncut_times-1):
     # io.show_network(net, edges, graph.labels, colormap="tab10", save_adr=f'output/ncut4/ncut4-{i+2}.jpg')
     # io.show_network(net, edges, graph.labels, colormap="tab10")
     print_metrics(graph)
-io.show_network(net, edges, graph.labels, colormap="tab10")
+io.show_network(net, edges, graph.labels, colormap_name="tab10")
 
 #####
 # finding MFDs
