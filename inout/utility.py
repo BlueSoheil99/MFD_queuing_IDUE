@@ -111,18 +111,28 @@ def read_node_info(nodes):
 def read_edge_info(edges, feature_name, option, interval_begin, interval_end):
     edge_diction = {edge.getID(): 0 for edge in edges}
     edge_stats = sumoxml.parse(feature_name, "interval")
+    num_lanes_per_edge = np.zeros(len(edge_diction))
+    edge_names = list(edge_diction.keys())
     # as we need density for specific time intervals
     for interval in edge_stats:
         if interval_begin * 3600. <= float(interval.begin) <= interval_end * 3600:
-            i = 0
+            n_no_attr = 0
             for edge in interval.edge:
                 try:
                     new_id = cleanID(edge.id)
                     edge_diction[new_id] += float(edge.getAttribute(option))
+                    i = edge_names.index(new_id)
+                    num_lanes_per_edge[i] += 1
                 except:
                     # print("{} has no attribute: {}".format(edge.id, option))
-                    i = i + 1
-    print("Total number of edges without {} are {}".format(option, i))
+                    n_no_attr += n_no_attr
+
+    # take mean of the density for cases that one edge with multiple lanes
+    for i in range(len(num_lanes_per_edge)):
+        if num_lanes_per_edge[i] > 0:
+            edge_id = edge_names[i]
+            edge_diction[edge_id] = edge_diction[edge_id] / num_lanes_per_edge[i]
+    print("Total number of edges without {} are {}".format(option, n_no_attr))
     print("{} edges have zero density".format(list(edge_diction.values()).count(0)))
 
     return edge_diction

@@ -35,13 +35,18 @@ def read_adj(address):  # DEBUG
     return data.to_numpy()
 
 
-def show_network(net, edges_list, region_id, width_edge=2, alpha=0.5, mapscale=4.0, colormap="tab10", save_adr=None):
+def show_network(net, edges_list, region_id, width_edge=2, alpha=0.5, mapscale=4.0, colormap_name="tab10",
+                 save_adr=None):
     fig, ax = pln.init_plot()
 
     vmin = min(region_id)
     vmax = max(region_id)
 
-    colormap = vis.init_colors(colormap, vmin, vmax)
+    if colormap_name == "tab10":
+        colormap = vis.init_colors(colormap_name, vmin, vmax)
+    else:
+        colormap = vis.init_colors(colormap_name, vmin, vmax, normalized=True)
+
     edges_list = list(edges_list)
 
     for edge in net.getEdges():
@@ -53,8 +58,12 @@ def show_network(net, edges_list, region_id, width_edge=2, alpha=0.5, mapscale=4
             x_vec = np.array(shape)[:, 0]
             y_vec = np.array(shape)[:, 1]
             idx = edges_list.index(new_id)
-            ax.plot(x_vec * mapscale, y_vec * mapscale, color=vis.get_color(colormap, region_id[idx]),
-                    lw=width_edge, alpha=alpha, zorder=-100)
+            if colormap_name == "tab10":
+                ax.plot(x_vec * mapscale, y_vec * mapscale, color=colormap.colors[region_id[idx]],
+                        lw=width_edge, alpha=alpha, zorder=-100)
+            else:
+                ax.plot(x_vec * mapscale, y_vec * mapscale, color=vis.get_color(colormap, region_id[idx]),
+                        lw=width_edge, alpha=alpha, zorder=-100)
         else:
             shape = net.getEdge(raw_id).getShape()
             x_vec = np.array(shape)[:, 0]
@@ -64,7 +73,14 @@ def show_network(net, edges_list, region_id, width_edge=2, alpha=0.5, mapscale=4
 
     plt.xlabel("x coord")
     plt.ylabel("y coord")
+    if colormap_name == "tab10":
+        plt.text(0.0, 1.05, "Region: ", horizontalalignment='center',
+                 verticalalignment='center', transform=ax.transAxes,
+                 bbox=dict(facecolor="black", alpha=0.5))
+        for i in range(vmin, vmax + 1):
+            plt.text(0.1 * i + 0.2, 1.05, str(i), horizontalalignment='center',
+                     verticalalignment='center', transform=ax.transAxes,
+                     bbox=dict(facecolor=colormap.colors[i], alpha=0.5))
     plt.show()
     if save_adr is not None:
         plt.savefig(save_adr)
-

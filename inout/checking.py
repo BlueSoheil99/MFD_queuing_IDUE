@@ -36,8 +36,8 @@ def connectivity(input_addresses, out_folder="./output/", out_name="seattle"):
         (2) check_results_output.txt: summary of the checking
         (3) *out_name*comp#.txt: save all the link IDs in each subnetwork
     """
-    net_fname, _, _, = util.init_config(input_addresses)
-    net, nodes, edges = util.read_network(net_fname)
+    net_fname, feature_name, feature, net_edges, interval_begin, interval_end, edges_to_remove = util.init_config(input_addresses)
+    net, edges = util.read_network(net_fname, net_edges, edges_to_remove)
     components = getWeakly_connected(net)
     if len(components) != 1:
         print("Warning! Net is not connected.")
@@ -135,7 +135,7 @@ def zero_density_edges(edges, info_name, option):
         except:
             i += 1
             # print("{} has no attribute: {}".format(edge.id, option))
-    print("Total number of edges without {} are {}".format(option, i))
+    print("Total number of lanes without {} are {}".format(option, i))
 
     with open("./output/zero_{}_edgeID.txt".format(option), 'w') as f:
         keys = list(edge_diction.keys())

@@ -9,11 +9,13 @@ def init_plot():
     return fig, ax
 
 
-def init_colors(colormap_name, vmin, vmax):
+def init_colors(colormap_name, vmin, vmax, normalized=False):
     colormap = plt.cm.get_cmap(colormap_name)
-    cNorm = matplotlib.colors.Normalize(vmin=vmin, vmax=vmax)
-    scalarMap = matplotlib.cm.ScalarMappable(norm=cNorm, cmap=colormap)
-    return scalarMap
+    if normalized:
+        cNorm = matplotlib.colors.Normalize(vmin=vmin, vmax=vmax)
+        scalarMap = matplotlib.cm.ScalarMappable(norm=cNorm, cmap=colormap)
+        return scalarMap
+    return colormap
 
 
 def get_color(colormap, i, volume=any):
