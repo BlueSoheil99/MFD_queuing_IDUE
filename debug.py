@@ -48,15 +48,15 @@ def show_density_hist(density_list, title='density after deleting marginal links
 
 
 input_addresses = "config.yaml"
-ncut_times = 7
-merge_times = 5
+ncut_times = 8
+merge_times = 3
 net, edges, densities, adj_mat = io.get_network(input_addresses)
 # densities[:] = np.random.normal(10, 5)
 # for i in range(len(densities)):
 #     densities[i] = np.random.normal(10, 5)
 
 show_density_hist(densities)
-io.show_network(net, edges, densities, colormap="binary")  # density map
+io.show_network(net, edges, densities, colormap_name="binary")  # density map
 graph = Graph(adj_mat, densities)
 
 #####
@@ -69,9 +69,11 @@ for i in range(ncut_times-1):
     print('members of the new segment:', sum(graph.labels == i+1))
     # print(np.argwhere(graph.labels == i+1).flatten())  # what are the new segment's members?
     # io.show_network(net, edges, graph.labels, colormap="tab10", save_adr=f'output/ncut4/ncut4-{i+2}.jpg')
-    # io.show_network(net, edges, graph.labels, colormap="tab10")
+    io.show_network(net, edges, graph.labels, colormap_name="tab10")
     print_metrics(graph)
-# io.show_network(net, edges, graph.labels, colormap_name="tab10")
+io.show_network(net, edges, graph.labels, colormap_name="tab10")
+
+
 
 #####
 # finding MFDs
@@ -106,7 +108,7 @@ def getedgeids(root):
     return edgeid
 
 
-def plot_mfd(edge_id):
+def plot_mfd(edge_id, start_time, end_time):
     # Select the edge of interest
     # edge_id = ['-171739214#4', '-105493444#4']
     #### enter here the list of selected edges for each region ## have to ask Soheil for list
@@ -117,41 +119,56 @@ def plot_mfd(edge_id):
     speeds = []
     flows = []
 
+
     ##check number of edges less than 0 for speed alone...plot network .. to see if connected-- connectivity chevk function
     ### list of edges sith speed less than 0 or 0
 
-    # Iterate through the timestep elements
-    for interval in root:
-        # Find the edge element for the selected edge
-        for edge in edge_id:
-            edge_elem = interval.find("./edge[@id='" + edge + "']")
-            if edge_elem is not None:
-                # length = getlength(edge_elem)
-                # Extract the density and speed data for the edge
-                speed_raw = edge_elem.get('speed')
-                density_raw = edge_elem.get('density')
 
-                if density_raw is not None and float(density_raw) > 0 and speed_raw is not None and float(
-                        speed_raw) > 0:
-                    density = float(density_raw)
-                    speed = float(speed_raw)
-                    flow = float(density * speed * 3.6)  # not sure if we need to multiply length as well (length*0.001)
+    # Iterate through the timestep elements
+    # for interval in edge_stats:
+    #     if interval_begin * 3600 <= float(interval.begin) < interval_end * 3600:
+    # for interval in root:
+    #     # Find the edge element for the selected edge
+
+    for interval in root.findall('interval'):
+        begin = float(interval.get('begin'))
+        end = float(interval.get('end'))
+
+        if begin >=start_time and end <= end_time:
+            for edge in edge_id:
+                edge_elem = interval.find(".//edge[@id='" + edge + "']")
+                # edge_elem = edge
+                if edge_elem is not None:
+                    # length = getlength(edge_elem)
+                    # Extract the density and speed data for the edge
+                    speed_raw = edge_elem.get('speed')
+                    density_raw = edge_elem.get('laneDensity')
+
+                    if density_raw is not None and float(density_raw) > 0 and speed_raw is not None and float(
+                            speed_raw) > 0:
+                        density = float(density_raw)
+                        speed = float(speed_raw)
+                        flow = float(density * speed * 3.6)  # not sure if we need to multiply length as well (length*0.001)
+                # if float(density_raw) > 750:
+                #     print(f"{edge} have density {density_raw}")
+                # if flow >4000:
+                #     print(f"{edge} have flow {flow} ")
                 # else:
-                    #     if density_raw is None or float(density_raw) <= 0:
-                    #         print(f"Invalid density value {density_raw} for edge {edge_id}")
-                    # if speed_raw is None or float(speed_raw) <= 0:
-                    #     print(f"Invalid speed value {speed_raw} for edge {edge}")
-                    # if density_raw is not None and float(density_raw) > 1000:
-                    #     print(f"{edge_elem} have density {density_raw}")
+                #     #     if density_raw is None or float(density_raw) <= 0:
+                #     #         print(f"Invalid density value {density_raw} for edge {edge_id}")
+                #     # if speed_raw is None or float(speed_raw) <= 0:
+                #     #     print(f"Invalid speed value {speed_raw} for edge {edge}")
+                #     if density_raw is not None and float(density_raw) > 750:
+                #         print(f"{edge_elem} have density {density_raw}")
 
                 # Append the density and speed data to the appropriate lists
-                densities.append(density)
-                speeds.append(speed)
-                flows.append(flow)
-            if edge_elem is None:
-                print(f"edge {edge} does not exist in the edgetest file")
+                    densities.append(density)
+                    speeds.append(speed)
+                    flows.append(flow)
+                if edge_elem is None:
+                    print(f"edge {edge} does not exist in the edgetest file")
 
-            ##speed as m/sec
+        ##speed as m/sec
 
     # Plot the MFD
     plt.scatter(densities, flows, s=8, c='b', alpha=0.5)
@@ -161,14 +178,16 @@ def plot_mfd(edge_id):
 
     plt.show()
 
-
-
 # from MFD.Plot_MFD import plot_mfd
 segment_ids = logic.get_segment_IDs(graph, list(edges))
 for i in range(len(segment_ids)):
     edge_list = segment_ids[i]
     print(f"plot for the edges in {i} group ")
-    plot_mfd(edge_list)
+    start_time = 28800
+    end_time = 32400
+    print(edge_list)
+    plot_mfd(edge_list, start_time, end_time)
+    # plot_mfd(edge_list)
 #### code from Pranati ends here###############
 
 #####
@@ -180,7 +199,7 @@ for i in range(merge_times-1):
     print(np.unique(graph.labels))  # Do we have right number of segments?
     # io.show_network(net, edges, graph.labels, colormap="tab10",
     #                 save_adr=f'output/ncut4/merge-{max_number_of_clusters-i-1}.jpg')
-    io.show_network(net, edges, graph.labels, colormap="tab10")
+    io.show_network(net, edges, graph.labels, colormap_name="tab10")
     print_metrics(graph)
 
 

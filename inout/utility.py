@@ -66,12 +66,14 @@ def read_network(net_fname, net_edges_fname, edges_to_remove):
 
 
 def cleanID(edge_id):
-    hashtag_index = edge_id.find("#")
-    if hashtag_index == -1:
-        new_id = edge_id
-    else:
-        new_id = edge_id[:hashtag_index]
-    return new_id
+    # hashtag_index = edge_id.find("#")
+    # if hashtag_index == -1:
+    #     new_id = edge_id
+    # else:
+    #     new_id = edge_id[:hashtag_index]
+    # return new_id
+    return edge_id
+
 
 
 def clean_network(net, connected_edges, edges_to_remove):
@@ -102,6 +104,9 @@ def read_edgeID_subnetwork(fname):
             edge_ids.append(line.rstrip().split(":")[1])
     return edge_ids
 
+def filter_edges(net_fname):
+    net, nodes, edges = read_network(net_fname)
+
 
 def read_node_info(nodes):
     node_diction = {node.getID(): node.getCoord() for node in nodes}
@@ -115,7 +120,7 @@ def read_edge_info(edges, feature_name, option, interval_begin, interval_end):
     edge_names = list(edge_diction.keys())
     # as we need density for specific time intervals
     for interval in edge_stats:
-        if interval_begin * 3600. <= float(interval.begin) <= interval_end * 3600:
+        if interval_begin * 3600 <= float(interval.begin) < interval_end * 3600:
             n_no_attr = 0
             for edge in interval.edge:
                 try:
