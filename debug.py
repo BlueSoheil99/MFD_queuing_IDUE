@@ -48,15 +48,15 @@ def show_density_hist(density_list, title='density after deleting marginal links
 
 
 input_addresses = "config.yaml"
-ncut_times = 8
-merge_times = 3
+ncut_times =5
+merge_times =3
 net, edges, densities, adj_mat = io.get_network(input_addresses)
 # densities[:] = np.random.normal(10, 5)
 # for i in range(len(densities)):
 #     densities[i] = np.random.normal(10, 5)
 
-show_density_hist(densities)
-io.show_network(net, edges, densities, colormap_name="binary")  # density map
+# show_density_hist(densities)
+# io.show_network(net, edges, densities, colormap_name="binary")  # density map
 graph = Graph(adj_mat, densities)
 
 #####
@@ -72,6 +72,32 @@ for i in range(ncut_times-1):
     io.show_network(net, edges, graph.labels, colormap_name="tab10")
     print_metrics(graph)
 io.show_network(net, edges, graph.labels, colormap_name="tab10")
+
+
+#####
+# running Merging
+####
+print('## MERGING')
+for i in range(merge_times-1):
+    merging.merge(graph)
+    print(np.unique(graph.labels))  # Do we have right number of segments?
+    # io.show_network(net, edges, graph.labels, colormap="tab10",
+    #                 save_adr=f'output/ncut4/merge-{max_number_of_clusters-i-1}.jpg')
+    io.show_network(net, edges, graph.labels, colormap_name="tab10")
+    print_metrics(graph)
+
+
+#####
+# below is for helping detect marginal edges,
+# useless while doing NCut
+####
+# edges_tmp = list(edges)
+# for i in range(ncut_times - 1):
+#     members_id = np.argwhere(graph.labels == i+1)
+#     with open("./output/seattle_cut1.txt", 'a') as f:
+#         for k in range(len(members_id)):
+#             f.write('{}\t{}\n'.format(str(i+1), edges_tmp[members_id[k][0]]))
+
 
 
 
@@ -143,14 +169,17 @@ def plot_mfd(edge_id, start_time, end_time):
                     # Extract the density and speed data for the edge
                     speed_raw = edge_elem.get('speed')
                     density_raw = edge_elem.get('laneDensity')
+                    #begin and end time --  num of veh---- # check with Yiran calculate flow
+                    #send Yiran the edges with higher flow and then higher flow and higher density
+                    #no of vehicles
 
                     if density_raw is not None and float(density_raw) > 0 and speed_raw is not None and float(
                             speed_raw) > 0:
                         density = float(density_raw)
                         speed = float(speed_raw)
                         flow = float(density * speed * 3.6)  # not sure if we need to multiply length as well (length*0.001)
-                # if float(density_raw) > 750:
-                #     print(f"{edge} have density {density_raw}")
+                        if float(flow) > 1000:
+                            print(f"{edge} have flow {flow}")
                 # if flow >4000:
                 #     print(f"{edge} have flow {flow} ")
                 # else:
@@ -162,9 +191,9 @@ def plot_mfd(edge_id, start_time, end_time):
                 #         print(f"{edge_elem} have density {density_raw}")
 
                 # Append the density and speed data to the appropriate lists
-                    densities.append(density)
-                    speeds.append(speed)
-                    flows.append(flow)
+                        densities.append(density)
+                        speeds.append(speed)
+                        flows.append(flow)
                 if edge_elem is None:
                     print(f"edge {edge} does not exist in the edgetest file")
 
@@ -189,27 +218,3 @@ for i in range(len(segment_ids)):
     plot_mfd(edge_list, start_time, end_time)
     # plot_mfd(edge_list)
 #### code from Pranati ends here###############
-
-#####
-# running Merging
-####
-print('## MERGING')
-for i in range(merge_times-1):
-    merging.merge(graph)
-    print(np.unique(graph.labels))  # Do we have right number of segments?
-    # io.show_network(net, edges, graph.labels, colormap="tab10",
-    #                 save_adr=f'output/ncut4/merge-{max_number_of_clusters-i-1}.jpg')
-    io.show_network(net, edges, graph.labels, colormap_name="tab10")
-    print_metrics(graph)
-
-
-#####
-# below is for helping detect marginal edges,
-# useless while doing NCut
-####
-# edges_tmp = list(edges)
-# for i in range(ncut_times - 1):
-#     members_id = np.argwhere(graph.labels == i+1)
-#     with open("./output/seattle_cut1.txt", 'a') as f:
-#         for k in range(len(members_id)):
-#             f.write('{}\t{}\n'.format(str(i+1), edges_tmp[members_id[k][0]]))

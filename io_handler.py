@@ -6,7 +6,7 @@ from inout import utility as util
 from inout import plot_network as vis
 import pandas as pd  # for debugging
 
-matplotlib.use("Qt5Agg")
+# matplotlib.use("Qt5Agg")
 
 
 def get_network(input_addresses="config.yaml"):
