@@ -10,10 +10,10 @@ import pandas as pd  # for debugging
 
 
 def get_network(input_addresses="config.yaml"):
-    net_fname, info_fname, option, net_edges_fname, interval_begin, interval_end, edges_to_remove = \
-        util.init_config(input_addresses)
+    net_fname, info_fname, option, net_edges_fname, interval_begin, interval_end, edges_to_remove,\
+        minor_edges, highways = util.init_config(input_addresses)
     # read network
-    net, edges = util.read_network(net_fname, net_edges_fname, edges_to_remove)
+    net, edges = util.read_network(net_fname, net_edges_fname, edges_to_remove, minor_edges, highways)
     # organize the network info into dictionaries
     edge_diction = util.read_edge_info(edges, info_fname, option, interval_begin, interval_end)
     print(edge_diction)
@@ -26,7 +26,7 @@ def get_network(input_addresses="config.yaml"):
 
     list_of_edges = edge_diction.keys()
     list_of_densities = np.array(list(edge_diction.values()))
-    return net, list_of_edges, list_of_densities, adjacency_matrix
+    return net, list_of_edges, list_of_densities, adjacency_matrix, interval_begin, interval_end
 
 
 def read_adj(address):  # DEBUG

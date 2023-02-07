@@ -14,8 +14,11 @@ def init_config(fname="config.yaml"):
     interval_end = file["interval_end"]
     net_edges = file["edges_name"]
     edges_to_remove = file["edges_to_remove_name"]
+    minor_links = file["minor_links"]
+    highways_tunnels = file["highways_and_tunnels"]
 
-    return network_name, feature_name, feature, net_edges, interval_begin, interval_end, edges_to_remove
+    return network_name, feature_name, feature, net_edges, interval_begin, interval_end,\
+        edges_to_remove, minor_links, highways_tunnels
 
 
 def get_node_pair(net, edge_id):
@@ -58,10 +61,10 @@ def make_adjacency(net, edges_diction):
     return adjacency_mat
 
 
-def read_network(net_fname, net_edges_fname, edges_to_remove):
+def read_network(net_fname, net_edges_fname, edges_to_remove, minor_links, highways_tunnels):
     net = sumonet.readNet(net_fname)
     connected_edges = read_edgeID_subnetwork(net_edges_fname)
-    net, edges = clean_network(net, connected_edges, edges_to_remove)
+    net, edges = clean_network(net, connected_edges, edges_to_remove, minor_links, highways_tunnels)
     return net, edges
 
 
@@ -76,11 +79,16 @@ def cleanID(edge_id):
 
 
 
-def clean_network(net, connected_edges, edges_to_remove):
-    with open(edges_to_remove) as f:
-        remove_edge_ids = []
-        for line in f:
-            remove_edge_ids.append(line.rstrip())
+def clean_network(net, connected_edges, edges_to_remove, minor_links, highways_tunnels):
+    remove_edge_ids = []
+    for file in [edges_to_remove, minor_links, highways_tunnels]:
+        with open(file) as f:
+            for line in f:
+                remove_edge_ids.append(line.rstrip())
+    # with open(edges_to_remove) as f:
+    #     remove_edge_ids = []
+    #     for line in f:
+    #         remove_edge_ids.append(line.rstrip())
 
     clean_net = sumonet.Net()
     clean_edges = set()
