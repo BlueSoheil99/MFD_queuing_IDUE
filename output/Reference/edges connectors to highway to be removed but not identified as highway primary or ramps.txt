@@ -1,0 +1,6 @@
+edges which are connectors to highway and are supposed to be removed but not identified as highway primary or ramps added after line 185
+these are just here for reference purpose and are added after line 185 of file highway_tunnel_edgeID to remove
+4712882.10
+428246934
+123889278.406
+-207998916
