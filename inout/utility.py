@@ -133,19 +133,20 @@ def read_edge_info(edges, feature_name, option, interval_begin, interval_end):
             for edge in interval.edge:
                 try:
                     new_id = cleanID(edge.id)
-                    edge_diction[new_id] += float(edge.getAttribute(option))
-                    i = edge_names.index(new_id)
-                    num_lanes_per_edge[i] += 1
+                    if new_id in list(edge_diction.keys()):
+                        edge_diction[new_id] = float(edge.getAttribute(option))
+                        # i = edge_names.index(new_id)
+                        # num_lanes_per_edge[i] += 1
                 except:
                     # print("{} has no attribute: {}".format(edge.id, option))
-                    n_no_attr += n_no_attr
+                    n_no_attr += 1
 
     # take mean of the density for cases that one edge with multiple lanes
-    for i in range(len(num_lanes_per_edge)):
-        if num_lanes_per_edge[i] > 0:
-            edge_id = edge_names[i]
-            edge_diction[edge_id] = edge_diction[edge_id] / num_lanes_per_edge[i]
+    # for i in range(len(num_lanes_per_edge)):
+    #     if num_lanes_per_edge[i] > 0:
+    #         # edge_id = edge_names[i]
+            # edge_diction[edge_id] = edge_diction[edge_id] / num_lanes_per_edge[i]
     print("Total number of edges without {} are {}".format(option, n_no_attr))
-    print("{} edges have zero density".format(list(edge_diction.values()).count(0)))
+    print("{} edges have missing or zero density".format(list(edge_diction.values()).count(0.00)))
 
     return edge_diction
