@@ -2,9 +2,19 @@ import os
 import numpy as np
 from Graph import Graph
 import logic_handler as logic
+from logic import var_metrics
 import io_handler as io
 from MFD import Plot_MFD as MFD
-import debug
+
+
+def print_metrics(graph):
+    labels = np.unique(graph.labels)
+    print('mean densities:', str([round(var_metrics.segment_mean(graph, i), 3) for i in labels]))
+    print('mean variance:', str([round(var_metrics.segment_var(graph, i), 3) for i in labels]))
+    print('NSs:', str([round(var_metrics.NS(graph, i), 4) for i in labels]))
+    print('average NS:', str(round(var_metrics.average_NS(graph), 4)))
+    print('TV:', str(round(var_metrics.TV(graph))))
+    print('')
 
 
 def files_to_dict(dir_path):
@@ -46,7 +56,7 @@ graph = Graph(adj_mat, densities)
 segment_ids = files_to_dict(path_to_file)
 graph.set_labels(_get_manual_segment_labels(np.array(list(edges)), segment_ids))
 
-debug.print_metrics(graph)
+print_metrics(graph)
 io.show_network(net, edges, graph.labels)
 
 segment_ids = logic.get_segment_IDs(graph, list(edges))
