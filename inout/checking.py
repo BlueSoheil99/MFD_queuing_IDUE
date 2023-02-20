@@ -36,8 +36,9 @@ def connectivity(input_addresses, out_folder="./output/", out_name="seattle"):
         (2) check_results_output.txt: summary of the checking
         (3) *out_name*comp#.txt: save all the link IDs in each subnetwork
     """
-    net_fname, feature_name, feature, net_edges, interval_begin, interval_end, edges_to_remove = util.init_config(input_addresses)
-    net, edges = util.read_network(net_fname, net_edges, edges_to_remove)
+    net_fname, feature_name, feature, net_edges, interval_begin, interval_end, edges_to_remove, \
+                                         minor_links, highways_tunnels = util.init_config(input_addresses)
+    net, edges = util.read_network(net_fname, net_edges, edges_to_remove, minor_links, highways_tunnels)
     components = getWeakly_connected(net)
     if len(components) != 1:
         print("Warning! Net is not connected.")
