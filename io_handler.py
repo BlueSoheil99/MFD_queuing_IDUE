@@ -26,7 +26,7 @@ def get_network(input_addresses="config.yaml"):
 
     list_of_edges = edge_diction.keys()
     list_of_densities = np.array(list(edge_diction.values()))
-    return net, list_of_edges, list_of_densities, adjacency_matrix, interval_begin, interval_end
+    return net, list_of_edges, list_of_densities, adjacency_matrix
 
 
 def read_adj(address):  # DEBUG

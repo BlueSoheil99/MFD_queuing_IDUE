@@ -30,9 +30,11 @@ def get_W_and_D(graph, mask):
     args_to_delete = np.argwhere(mask == 0)
     W = np.delete(W, args_to_delete, axis=0)
     W = np.delete(W, args_to_delete, axis=1)
+    # W = graph.get_similarity_matrix(mask)  # todo W correction (this will regenerate W in every step with a new sigma)
     D = np.sum(W, axis=1)
-    D[D==0] = 0.01  #todo better criterion
-    # To make D from a semi-definite matrix to a definite matrix
+    D[D==0] = 0.01
+    # To make D from a semi-definite matrix to a definite matrix.
+    # It is redundant since we have already taken care of zero densities (with density smoothing and cleaning the input)
     D = np.diag(D)
     return W, D
 
@@ -59,6 +61,10 @@ def check(a, b):  # DEBUG
 
 def get_segments(network):
     parent = get_parent_id(network)
+    _get_segments(network, parent)
+
+
+def _get_segments(network, parent):
     mask = (network.labels == parent)
     W, D = get_W_and_D(network, mask)
     # we should solve (D-W)y = l.D.y where y is eigenvector and equals (1+x)-b(1-x).

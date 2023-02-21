@@ -59,7 +59,7 @@ def plot_mfd(group_dict, start_time, end_time):
     # Define markers and colors for each group
     markers = ["o", "s", "^", "D", "P", "X"]
     sizes = [8, 8, 8, 8, 8, 8]
-    colors = ["blue", "green", "red", "cyan", "magenta", "yellow"]
+    colors = ["blue", "orange", "green", "purple", "brown", "pink", "gray", "olive", "cyan"]
 
     for i, (group_id, edge_list) in enumerate(group_dict.items()):
         tnvehs_group = []
@@ -88,7 +88,7 @@ def plot_mfd(group_dict, start_time, end_time):
         size = sizes[i % len(sizes)]
         color = colors[i % len(colors)]
 
-        ax.scatter(tnvehs_group, tvkpm_group, label=f"Group {group_id}", marker=marker, s=size, c=color)
+        ax.scatter(tnvehs_group, tvkpm_group, label=f"Region {group_id}", marker=marker, s=size, c=color)
 
     # Set x and y axis label font size and weight
     ax.set_xlabel("Total Number of Vehicles", fontsize=14, fontweight="bold")
