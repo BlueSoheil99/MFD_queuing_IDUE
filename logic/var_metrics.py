@@ -17,12 +17,19 @@ def segment_mean(graph, segment_id):
     return np.sum(densities) / n
 
 
-def find_b(graph, a_id):
-    neighbors = np.argwhere(graph.rag[a_id] != 0)
-    b = neighbors[0]
+def find_b(graph, a_id, min_boundary=0):
+    # neighbors = np.argwhere(graph.rag[a_id] != 0)
+    # todo we should consider that neighbors with very few boundary links can severely affect this
+    neighbors_all = np.argwhere(graph.rag[a_id, :, 0] != 0).flatten()
+    neighbors_n = [graph.rag[a_id, i, 0] for i in neighbors_all]
+    b = neighbors_all[0]
+    neighbors = [neighbors_all[i] for i in range(len(neighbors_all)) if neighbors_n[i] >= min_boundary]
+    if len(neighbors) > 0:
+        b = neighbors[0]
     if len(neighbors) > 1:
         min_NS = NS_ab(graph, a_id, b)
-        for neighbor in neighbors[1:]:
+        # for neighbor in neighbors[1:]:
+        for neighbor in neighbors:
             if min_NS > NS_ab(graph, a_id, neighbor):
                 b = neighbor
                 min_NS = NS_ab(graph, a_id, b)
@@ -37,21 +44,22 @@ def NS_ab(graph, a, b):
 # todo def update_graph_NSs(graph):  ?
 
 
-def NS(graph, a_id):
-    b_id = find_b(graph, a_id)
+def NS(graph, a_id, limit_boundary=0):
+    b_id = find_b(graph, a_id, limit_boundary)
     return NS_ab(graph, a_id, a_id)/NS_ab(graph, a_id, b_id)
 
 
-def average_NS(graph):
+def average_NS(graph, limit_boundary=0):
     '''
     average NS which is used in evaluation of a given partitioning. Refer to Ji(2012) formula (11)
     :param graph:
+    :param limit_boundary: max number of boundaries that exclude a neighbor from being considered as B
     :return: Average NS
     '''
     IDs = np.unique(graph.labels)
     summation = 0
     for id in IDs:
-        summation += NS(graph, id)
+        summation += NS(graph, id, limit_boundary)
     return summation/len(IDs)
 
 
