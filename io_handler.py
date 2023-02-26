@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
@@ -6,12 +8,13 @@ from inout import utility as util
 from inout import plot_network as vis
 import pandas as pd  # for debugging
 
+
 # matplotlib.use("Qt5Agg")
 
 
 def get_network(input_addresses="config.yaml"):
-    net_fname, info_fname, option, net_edges_fname, interval_begin, interval_end, edges_to_remove,\
-        minor_edges, highways = util.init_config(input_addresses)
+    net_fname, info_fname, option, net_edges_fname, interval_begin, interval_end, edges_to_remove, \
+    minor_edges, highways = util.init_config(input_addresses)
     # read network
     net, edges = util.read_network(net_fname, net_edges_fname, edges_to_remove, minor_edges, highways)
     # organize the network info into dictionaries
@@ -42,7 +45,7 @@ def show_network(net, edges_list, region_id, width_edge=2, alpha=0.5, mapscale=4
     vmin = min(region_id)
     vmax = max(region_id)
 
-    if colormap_name == "tab10":
+    if "tab" in colormap_name:
         colormap = vis.init_colors(colormap_name, vmin, vmax)
     else:
         colormap = vis.init_colors(colormap_name, vmin, vmax, normalized=True)
@@ -58,7 +61,7 @@ def show_network(net, edges_list, region_id, width_edge=2, alpha=0.5, mapscale=4
             x_vec = np.array(shape)[:, 0]
             y_vec = np.array(shape)[:, 1]
             idx = edges_list.index(new_id)
-            if colormap_name == "tab10":
+            if "tab" in colormap_name:
                 ax.plot(x_vec * mapscale, y_vec * mapscale, color=colormap.colors[region_id[idx]],
                         lw=width_edge, alpha=alpha, zorder=-100)
             else:
@@ -73,14 +76,21 @@ def show_network(net, edges_list, region_id, width_edge=2, alpha=0.5, mapscale=4
 
     plt.xlabel("x coord")
     plt.ylabel("y coord")
-    if colormap_name == "tab10":
-        plt.text(0.0, 1.05, "Region: ", horizontalalignment='center',
+    if "tab" in colormap_name:
+        h_layers = math.ceil(len(range(vmin, vmax + 1)) / 10)
+        plt.text(0.0, 1.03 + 0.1 * h_layers, "Region: ", horizontalalignment='center',
                  verticalalignment='center', transform=ax.transAxes,
-                 bbox=dict(facecolor="black", alpha=0.5))
+                 bbox=dict(facecolor="none", alpha=0.5))
         for i in range(vmin, vmax + 1):
-            plt.text(0.1 * i + 0.2, 1.05, str(i), horizontalalignment='center',
-                     verticalalignment='center', transform=ax.transAxes,
-                     bbox=dict(facecolor=colormap.colors[i], alpha=0.5))
+            if i < 10:
+                plt.text(0.1 * i + 0.2, 1.03 + 0.1 * h_layers, str(i), horizontalalignment='center',
+                         verticalalignment='center', transform=ax.transAxes,
+                         bbox=dict(facecolor=colormap.colors[i], alpha=0.5))
+            else:
+                plt.text(0.1 * (i - 10) + 0.2, 1.03 + 0.1 * (h_layers - 1), str(i), horizontalalignment='center',
+                         verticalalignment='center', transform=ax.transAxes,
+                         bbox=dict(facecolor=colormap.colors[i], alpha=0.5))
+    plt.tight_layout()
     plt.show()
     if save_adr is not None:
-        plt.savefig(save_adr)
+        plt.savefig(save_adr, dpi=400)
