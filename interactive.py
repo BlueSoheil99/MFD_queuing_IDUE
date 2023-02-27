@@ -25,8 +25,6 @@ def print_metrics(graph):
 
 
 input_addresses = "config.yaml"
-ncut_times = 10
-merge_times = 7
 NS_boundary_limit = 8
 Merge_boundary_limit = 8
 MERGING_alpha = 0  # DO NOT change it. it's not useful anymore. I should remove it later.
@@ -38,20 +36,29 @@ graph = Graph(adj_mat, densities)
 graph.smooth_densities(median=False, gaussian=False)
 densities = graph.densities
 
-io.show_network(net, edges, graph.labels, colormap_name="tab10")
+io.show_network(net, edges, graph.labels)
 while True:
-    IN = input('\nWhat is your command?(examples: cut 0, cut 5x, merge 2,3, merge 4x, mfd, show, exit)\n').lower()
+    IN = input('\nWhat is your command?(examples: cut 0, cut 5x, merge 2,3, merge 4x, mfd(   , separated, separated normalized), show, exit)\n').lower()
     command = IN.split()[0]
 
     if command == 'exit':
         break
 
     elif command == 'show':
-        io.show_network(net, edges, graph.labels, colormap_name="tab10")
+        io.show_network(net, edges, graph.labels)
 
     elif command == 'mfd':
         segment_ids = logic.get_segment_IDs(graph, list(edges))
-        MFD.plot_mfd(segment_ids, MFD_start_time, MFD_end_time)
+        IN = IN.split()
+        if len(IN) > 1:
+            if len(IN) == 2 or len(IN) == 3:
+                if IN[1] == 'separated':
+                    if IN[-1] == 'normalized':
+                        MFD.plot_mfd(segment_ids, MFD_start_time, MFD_end_time, separated=True, normalized=True)
+                    else:
+                        MFD.plot_mfd(segment_ids, MFD_start_time, MFD_end_time, separated=True, normalized=False)
+        else:
+            MFD.plot_mfd(segment_ids, MFD_start_time, MFD_end_time)
 
     elif command == 'cut':
         command2 = IN.split()[1]
@@ -62,11 +69,11 @@ while True:
                 print(np.unique(graph.labels))
                 print('members of the new segment:', sum(graph.labels == i + 1))
                 print_metrics(graph)
-            io.show_network(net, edges, graph.labels, colormap_name="tab10")
         else:
             parent = int(command2)
             _get_segments(graph, parent)
             print_metrics(graph)
+        io.show_network(net, edges, graph.labels)
 
     elif command == 'merge':
         command2 = IN.split()[1]
@@ -76,9 +83,24 @@ while True:
                 merging.merge(graph, alpha=MERGING_alpha, min_boundary=Merge_boundary_limit)
                 print(np.unique(graph.labels))
                 print_metrics(graph)
-            io.show_network(net, edges, graph.labels, colormap_name="tab10")
         else:
             indices = IN.split()[1]
             indices = indices.split(',')
+            if len(indices) < 2:
+                print('INPUT ERROR')
+                continue
             _merge_segments(graph, int(indices[0]), int(indices[1]))
             print_metrics(graph)
+        io.show_network(net, edges, graph.labels)
+
+    elif command == 'marginal':
+        edges_tmp = list(edges)
+        ncut_times = len(np.unique(graph.labels))
+        for i in range(ncut_times):
+            members_id = np.argwhere(graph.labels == i)
+            with open("./output/seattle_cut1.txt", 'a') as f:
+                for k in range(len(members_id)):
+                    f.write('{}\t{}\n'.format(str(i), edges_tmp[members_id[k][0]]))
+                    print("running %i")
+        f.close()
+

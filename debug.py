@@ -53,8 +53,8 @@ def show_density_hist(density_list, title='density after deleting marginal links
 
 
 input_addresses = "config.yaml"
-ncut_times = 10
-merge_times = 7
+ncut_times = 12
+merge_times = 8
 NS_boundary_limit = 8
 Merge_boundary_limit = 8
 MERGING_alpha = 0  # DO NOT change it. it's not useful anymore. I should remove it later.
@@ -74,7 +74,7 @@ densities = graph.densities
 ## SHOW DISTRIBUTION(HISTOGRAM) OF DENSITIES
 # show_density_hist(densities, title=f'density after deleting marginal links ({start_time} - {end_time})')
 
-## SHOW DENSITY MAP
+## SHOW FEATURE(e.g., density) MAP
 # io.show_network(net, edges, np.abs(graph.densities - densities), colormap_name="binary")
 # io.show_network(net, edges, densities, colormap_name="binary")
 
@@ -84,7 +84,7 @@ densities = graph.densities
 # zeros[densities < 0.5] = 2
 # zeros[densities == 0] = 3
 # # zeros[densities > 150] = 3
-# io.show_network(net, edges, zeros, colormap_name="tab10")
+# io.show_network(net, edges, zeros)
 
 ## SHOW DISTRIBUTION OF <5 DENSITIES
 # plt.hist(densities[densities < 5], edgecolor='white', bins=20)
@@ -100,11 +100,10 @@ for i in range(ncut_times-1):
     print(np.unique(graph.labels))
     print('members of the new segment:', sum(graph.labels == i+1))
     # print(np.argwhere(graph.labels == i+1).flatten())  # what are the new segment's members?
-    # io.show_network(net, edges, graph.labels, colormap="tab10", save_adr=f'output/ncut4/ncut4-{i+2}.jpg')
+    # io.show_network(net, edges, graph.labels, save_adr=f'output/ncut4/ncut4-{i+2}.jpg')
     print_metrics(graph)
-    # io.show_network(net, edges, graph.labels, colormap_name="tab10")
-# io.show_network(net, edges, graph.labels, colormap_name="tab10")
-io.show_network(net, edges, graph.labels, colormap_name="tab10")
+    # io.show_network(net, edges, graph.labels)
+io.show_network(net, edges, graph.labels)
 
 #####
 # running Merging
@@ -115,11 +114,11 @@ for i in range(merge_times-1):
     # alpha accounts for the degree we consider number of boundaries into merging algo
     # min_boundary drops neighbors with fewer boundaries from consideration
     print(np.unique(graph.labels))  # Do we have right number of segments?
-    # io.show_network(net, edges, graph.labels, colormap="tab10",
+    # io.show_network(net, edges, graph.labels,
     #                 save_adr=f'output/ncut4/merge-{max_number_of_clusters-i-1}.jpg')
     print_metrics(graph)
-    io.show_network(net, edges, graph.labels, colormap_name="tab10")
-io.show_network(net, edges, graph.labels, colormap_name="tab10")
+    # io.show_network(net, edges, graph.labels)
+io.show_network(net, edges, graph.labels)
 
 
 #####
@@ -127,6 +126,8 @@ io.show_network(net, edges, graph.labels, colormap_name="tab10")
 #####
 segment_ids = logic.get_segment_IDs(graph, list(edges))
 MFD.plot_mfd(segment_ids, MFD_start_time, MFD_end_time)
+MFD.plot_mfd(segment_ids, MFD_start_time, MFD_end_time, separated=True)
+MFD.plot_mfd(segment_ids, MFD_start_time, MFD_end_time, separated=True, normalized=False)
 
 
 #####
@@ -140,3 +141,4 @@ MFD.plot_mfd(segment_ids, MFD_start_time, MFD_end_time)
 #         for k in range(len(members_id)):
 #             f.write('{}\t{}\n'.format(str(i+1), edges_tmp[members_id[k][0]]))
 #             print("running %i")
+#     f.close()

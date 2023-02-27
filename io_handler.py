@@ -46,6 +46,10 @@ def show_network(net, edges_list, region_id, width_edge=2, alpha=0.5, mapscale=4
     vmax = max(region_id)
 
     if "tab" in colormap_name:
+        if len(np.unique(region_id)) > 10:
+            colormap_name = 'tab20'
+        else:
+            colormap_name = 'tab10'
         colormap = vis.init_colors(colormap_name, vmin, vmax)
     else:
         colormap = vis.init_colors(colormap_name, vmin, vmax, normalized=True)
