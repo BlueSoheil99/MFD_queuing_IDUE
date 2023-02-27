@@ -57,8 +57,7 @@ segment_ids = files_to_dict(path_to_file)
 graph.set_labels(_get_manual_segment_labels(np.array(list(edges)), segment_ids))
 
 print_metrics(graph)
-io.show_network(net, edges, graph.labels)
+io.show_network(net, edges, graph.labels,colormap_name='tab20')
 
-segment_ids = logic.get_segment_IDs(graph, list(edges))
 MFD.plot_mfd(segment_ids, MFD_start_time, MFD_end_time)
-
+print(segment_ids)
