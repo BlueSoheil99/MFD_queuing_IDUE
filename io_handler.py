@@ -22,9 +22,9 @@ def get_network(input_addresses="config.yaml"):
     print(edge_diction)
 
     adjacency_matrix = util.make_adjacency(net, edge_diction)
-    data = pd.DataFrame(adjacency_matrix)  # debug
-    data.to_csv('data/adjacency_matrix.csv', index=False)  # debug
-    # todo use the lines above for the first run, then use the line below for next runs
+    # data = pd.DataFrame(adjacency_matrix)  # debug
+    # data.to_csv('data/adjacency_matrix.csv', index=False)  # debug
+    # use the lines above for the first run, then use the line below for next runs
     # adjacency_matrix = read_adj('data/adjacency_matrix.csv')  # debug
 
     list_of_edges = edge_diction.keys()
@@ -39,7 +39,7 @@ def read_adj(address):  # DEBUG
 
 
 def show_network(net, edges_list, region_id, width_edge=2, alpha=0.5, mapscale=4.0, colormap_name="tab10",
-                 save_adr=None):
+                 save_adr=None, title=''):
     fig, ax = pln.init_plot()
 
     vmin = min(region_id)
@@ -95,6 +95,8 @@ def show_network(net, edges_list, region_id, width_edge=2, alpha=0.5, mapscale=4
                          verticalalignment='center', transform=ax.transAxes,
                          bbox=dict(facecolor=colormap.colors[i], alpha=0.5))
     plt.tight_layout()
-    plt.show()
-    if save_adr is not None:
+    plt.title(title)
+    if save_adr is None:
+        plt.show()
+    else:
         plt.savefig(save_adr, dpi=400)
