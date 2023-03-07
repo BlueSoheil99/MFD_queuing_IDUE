@@ -1,0 +1,16 @@
+# where you put the network and density files
+data_folder: "./data/"
+network_name: "Seattle_road_network.net.xml"
+edges_name: "./output/seattlecomp0.txt"
+#info_name: "edge_data_output._1min_interval.xml"
+#info_name: "uniques_interval_data.pickle"
+info_name: "uniques_interval_data_occupancy.pickle"
+
+highways_and_tunnels: "./output/highway_tunnel_edgeID.txt"
+minor_links: "./output/minor_edgeID.txt"
+edges_to_remove_name: "./output/marginal_edgeID3.txt"
+
+# feature that you'd like to read, e.g, density
+feature: "speed"
+interval_begin: 18000
+interval_end: 36000

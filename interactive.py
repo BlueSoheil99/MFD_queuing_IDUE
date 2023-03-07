@@ -1,27 +1,11 @@
 import numpy as np
 from Graph import Graph
-from logic import var_metrics, initial_segmentation, merging
+from logic import initial_segmentation, merging
 import io_handler as io
 import logic_handler as logic
 from MFD import Plot_MFD as MFD
 from logic.merging import _merge_segments
 from logic.initial_segmentation import _get_segments
-
-
-def print_metrics(graph):
-    labels = np.unique(graph.labels)
-    print('mean densities:', str([round(var_metrics.segment_mean(graph, i), 3) for i in labels]))
-    print('mean variance:', str([round(var_metrics.segment_var(graph, i), 3) for i in labels]))
-    print('"b"s: ', str([var_metrics.find_b(graph, i) for i in labels]))
-    print('NSs:', str([round(var_metrics.NS(graph, i), 4) for i in labels]))
-    print('average NS:', str(round(var_metrics.average_NS(graph), 4)))
-    print('new NSs:', str([round(var_metrics.NS(graph, i, NS_boundary_limit), 4) for i in labels]))
-    print('average new NS:', str(round(var_metrics.average_NS(graph, NS_boundary_limit), 4)))
-    print('new "b"s: ', str([var_metrics.find_b(graph, i,NS_boundary_limit) for i in labels]))
-    print('TV:', str(round(var_metrics.TV(graph))))
-    print('#of links: ', str([sum(graph.labels == i) for i in labels]))
-    print(graph.rag[:, :, 0])
-    print('')
 
 
 input_addresses = "config.yaml"
@@ -33,8 +17,8 @@ MFD_end_time = 36000.00
 
 net, edges, densities, adj_mat = io.get_network(input_addresses)
 graph = Graph(adj_mat, densities)
-graph.smooth_densities(median=False, gaussian=False)
-densities = graph.densities
+# graph.smooth_densities(median=True, gaussian=True)
+# densities = graph.densities
 
 io.show_network(net, edges, graph.labels)
 while True:
@@ -68,11 +52,11 @@ while True:
                 initial_segmentation.get_segments(graph)
                 print(np.unique(graph.labels))
                 print('members of the new segment:', sum(graph.labels == i + 1))
-                print_metrics(graph)
+                logic.print_metrics(graph, new_NS=True, NS_boundary_limit=NS_boundary_limit)
         else:
             parent = int(command2)
             _get_segments(graph, parent)
-            print_metrics(graph)
+            logic.print_metrics(graph, new_NS=True, NS_boundary_limit=NS_boundary_limit)
         io.show_network(net, edges, graph.labels)
 
     elif command == 'merge':
@@ -82,7 +66,7 @@ while True:
             for i in range(times):
                 merging.merge(graph, alpha=MERGING_alpha, min_boundary=Merge_boundary_limit)
                 print(np.unique(graph.labels))
-                print_metrics(graph)
+                logic.print_metrics(graph, new_NS=True, NS_boundary_limit=NS_boundary_limit)
         else:
             indices = IN.split()[1]
             indices = indices.split(',')
@@ -90,7 +74,7 @@ while True:
                 print('INPUT ERROR')
                 continue
             _merge_segments(graph, int(indices[0]), int(indices[1]))
-            print_metrics(graph)
+            logic.print_metrics(graph, new_NS=True, NS_boundary_limit=NS_boundary_limit)
         io.show_network(net, edges, graph.labels)
 
     elif command == 'marginal':

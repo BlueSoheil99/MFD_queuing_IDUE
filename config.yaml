@@ -1,4 +1,4 @@
-# where you put the network and density fles
+# where you put the network and density files
 data_folder: "./data/"
 network_name: "Seattle_road_network.net.xml"
 edges_name: "./output/seattlecomp0.txt"
@@ -7,6 +7,8 @@ info_name: "Edgetest_6_0411_2_0.xml"
 highways_and_tunnels: "./output/highway_tunnel_edgeID.txt"
 minor_links: "./output/minor_edgeID.txt"
 edges_to_remove_name: "./output/marginal_edgeID.txt"
+#edges_to_remove_name: "./output/marginal_edgeID_smaller_network.txt"
+
 #minor_links: "./output/marginal_edgeID3.txt"
 #highways_and_tunnels: "./output/marginal_edgeID3.txt"
 #edges_to_remove_name: "./output/marginal_edgeID_for_abstract.txt"
@@ -14,7 +16,8 @@ edges_to_remove_name: "./output/marginal_edgeID.txt"
 
 # feature that you'd like to read, e.g, density
 feature: "laneDensity"
-# interval start time in seconds upto two decimal points (for eg. 8 AM => 8)
+#feature: "occupancy"
+# interval start time in seconds up to two decimal points (for eg. 8 AM => 8)
 interval_begin: 8
 # interval end time in seconds # not used but here if required (for eg. 8 PM => 20)
 interval_end: 9

@@ -7,7 +7,7 @@ import io
 import os
 
 
-def get_network(input_addresses="plotter_config.yaml"):
+def get_network(input_addresses="feature_plotter_config.yaml"):
     net_fname, info_fname, feature_name, net_edges_fname, interval_begin, interval_end, edges_to_remove, \
             minor_edges, highways = util.init_config(input_addresses)
     net, edges = util.read_network(net_fname, net_edges_fname, edges_to_remove, minor_edges, highways)
@@ -54,23 +54,23 @@ def get_features(edge_list, start_time, end_time, feature_name, data_adr):
     return feature_matrix, time_intervals
 
 
-def buffer_plots(feature_matrix, time_titles):
+def buffer_plots(feature_matrix, time_titles, feature_name):
     buffers = []
     for i in range(len(feature_matrix)):
         img_buf = io.BytesIO()
         io_handler.show_network(net, edges, feature_matrix[i], colormap_name='binary',
-                                title=f'speed distribution of:{time_titles[i]}',
+                                title=f'{feature_name} distribution of:{time_titles[i]}',
                                 save_adr=img_buf)
         buffers.append(img_buf)
         print(f'image done:{time_titles[i]}')
     return buffers
 
 
-def generate_images(feature_matrix, time_titles, output_address):
+def generate_images(feature_matrix, time_titles, output_address, feature_name):
     for i in range(len(feature_matrix)):
         io_handler.show_network(net, edges, feature_matrix[i], colormap_name='binary',
                                  alpha=0.5, mapscale=8.0,
-                                title=f'speed distribution of:{time_titles[i]}',
+                                title=f'{feature_name} distribution of:{time_titles[i]}',
                                 save_adr=output_address+f'/{time_titles[i]}.JPG')
         print(f'image done:{time_titles[i]}')
 
@@ -79,7 +79,7 @@ def make_gif(frame_folder, output_path):
     frames = [Image.open(image) for image in frame_folder]
     frame_one = frames[0]
     frame_one.save(output_path, format="GIF", append_images=frames,
-                   save_all=True, duration=10*len(frames), loop=0)
+                   save_all=True, duration=100, loop=0)
 
 
 if __name__ == "__main__":
@@ -88,7 +88,7 @@ if __name__ == "__main__":
     output_path = f'output/{feature_name}_{interval_begin}_{interval_end}.gif'
 
     ## making a buffer of plots and NOT saving each plot
-    # buffers = buffer_plots(matrix, time_titles)
+    # buffers = buffer_plots(matrix, time_titles, feature_name)
     # make_gif(buffers, output_path)
 
     ## making the gif using saved images and NOT using an io buffer

@@ -3,51 +3,8 @@ from matplotlib import pyplot as plt
 import pickle
 
 address = "Data/uniques_interval_data.pickle"
-# uncomment these when need to create another list of dictionary with data
 
-#
-# def edge_return_dict():
-#     tree = ET.parse('../edge_data_output._1min_interval.xml')
-#     root = tree.getroot()
-#
-#     unique_intervals = {}
-#
-#     for interval in root.findall('./interval'):
-#         interval_id = interval.get("begin")
-#         unique_edges = {}
-#
-#         for edge in interval.iter("edge"):
-#             edge_id = edge.get("id")
-#
-#             if edge_id in unique_edges:
-#                 unique_edges[edge_id] = {
-#                     "sampledSeconds": edge.get("sampledSeconds"),
-#                     "laneDensity": edge.get("laneDensity"),
-#                     "speed": edge.get("speed")
-#                 }
-#             else:
-#                 unique_edges[edge_id] = {
-#                     "sampledSeconds": edge.get("sampledSeconds"),
-#                     "laneDensity": edge.get("laneDensity"),
-#                     "speed": edge.get("speed")
-#                 }
-#
-#         unique_intervals[interval_id] = unique_edges
-#
-#     return unique_intervals
-
-
-#
-# #
-# #
-# # ##saving above created dictionary
-# # Dictionary to be stored
-# uniq_intervals = edge_return_dict()
-# print(uniq_intervals)
-#
-# # Write dictionary to file
-# with open("../uniques_interval_data.pickle", "wb") as f:
-#     pickle.dump(uniq_intervals, f)
+# codes for creating .pickle files are transferred into pickle_creator.py
 
 
 def plot_mfd(group_dict, start_time, end_time, data_adr=address, separated=False, normalized=True):

@@ -1,5 +1,4 @@
 import math
-
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
@@ -27,15 +26,15 @@ def get_network(input_addresses="config.yaml"):
     # use the lines above for the first run, then use the line below for next runs
     # adjacency_matrix = read_adj('data/adjacency_matrix.csv')  # debug
 
-    list_of_edges = edge_diction.keys()
-    list_of_densities = np.array(list(edge_diction.values()))
-    return net, list_of_edges, list_of_densities, adjacency_matrix
+    array_of_edges = np.array(list(edge_diction.keys()))
+    array_of_densities = np.array(list(edge_diction.values()))
+    return net, array_of_edges, array_of_densities, adjacency_matrix
 
 
-def read_adj(address):  # DEBUG
-    import pandas as pd
-    data = pd.read_csv(address)
-    return data.to_numpy()
+# def read_adj(address):  # DEBUG
+#     import pandas as pd
+#     data = pd.read_csv(address)
+#     return data.to_numpy()
 
 
 def show_network(net, edges_list, region_id, width_edge=2, alpha=0.5, mapscale=4.0, colormap_name="tab10",
