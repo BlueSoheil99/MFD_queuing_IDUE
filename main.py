@@ -2,7 +2,7 @@ import io_handler as io
 import logic_handler as logic
 from Graph import Graph
 
-input_addresses = "config.yaml"
+input_addresses = "config files/config.yaml"
 max_number_of_clusters = 10
 
 net, edges, densities, adj_mat = io.get_network(input_addresses)

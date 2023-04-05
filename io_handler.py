@@ -11,7 +11,7 @@ import pandas as pd  # for debugging
 # matplotlib.use("Qt5Agg")
 
 
-def get_network(input_addresses="config.yaml"):
+def get_network(input_addresses="config files/config.yaml"):
     net_fname, info_fname, option, net_edges_fname, interval_begin, interval_end, edges_to_remove, \
     minor_edges, highways = util.init_config(input_addresses)
     # read network
@@ -59,7 +59,7 @@ def show_network(net, edges_list, region_id, width_edge=2, alpha=0.5, mapscale=4
         raw_id = edge.getID()
         new_id = util.cleanID(raw_id)
 
-        if new_id in edges_list:
+        if new_id in edges_list:  # in this case, we will draw that edge
             shape = net.getEdge(raw_id).getShape()
             x_vec = np.array(shape)[:, 0]
             y_vec = np.array(shape)[:, 1]
@@ -74,8 +74,8 @@ def show_network(net, edges_list, region_id, width_edge=2, alpha=0.5, mapscale=4
             shape = net.getEdge(raw_id).getShape()
             x_vec = np.array(shape)[:, 0]
             y_vec = np.array(shape)[:, 1]
-            ax.plot(x_vec * mapscale, y_vec * mapscale, color="white", lw=width_edge, alpha=0.2, zorder=-100)
-            # ax.plot(x_vec * mapscale, y_vec * mapscale, color="gray", lw=width_edge, alpha=0.2, zorder=-100)
+            # ax.plot(x_vec * mapscale, y_vec * mapscale, color="white", lw=width_edge, alpha=0.2, zorder=-100)
+            # ax.plot(x_vec * mapscale, y_vec * mapscale, color="magenta", lw=width_edge, alpha=0.2, zorder=-100)
 
     plt.xlabel("x coord")
     plt.ylabel("y coord")

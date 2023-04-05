@@ -8,7 +8,7 @@ from logic.merging import _merge_segments
 from logic.initial_segmentation import _get_segments
 
 
-input_addresses = "config.yaml"
+input_addresses = "config files/config.yaml"
 NS_boundary_limit = 8
 Merge_boundary_limit = 8
 MERGING_alpha = 0  # DO NOT change it. it's not useful anymore. I should remove it later.

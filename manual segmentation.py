@@ -7,6 +7,12 @@ from MFD import Plot_MFD as MFD
 
 
 def files_to_dict(dir_path):
+    '''
+    For reading manual segments
+    :param dir_path: where you have .txt files of manually separated segments
+    :return: a dictionary with segment_id as keys and each segment's links as values
+    '''
+
     if not os.path.exists(dir_path):
         raise ValueError(f"Directory {dir_path} does not exist.")
 
@@ -37,7 +43,7 @@ def _get_manual_segment_labels(edges, segment_ids):
 
 if __name__ == '__main__':
     path_to_file = 'Data/manual detected edges in regions'
-    input_addresses = "config.yaml"
+    input_addresses = "config files/config.yaml"
     MFD_start_time = 18000.00
     MFD_end_time = 36000.00
 

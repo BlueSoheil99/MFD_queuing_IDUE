@@ -35,7 +35,7 @@ def show_density_hist(density_list, title='density after deleting marginal links
     plt.show()
 
 
-input_addresses = "config.yaml"
+input_addresses = "config files/config.yaml"
 ncut_times = 10
 merge_times = 8
 NS_boundary_limit = 8

@@ -4,7 +4,7 @@ import sumolib.xml as sumoxml
 import numpy as np
 
 
-def init_config(fname="config.yaml"):
+def init_config(fname="config files/config.yaml"):
     file = yaml.safe_load(open(fname))
     data_folder = file["data_folder"]
     network_name = "{}{}".format(data_folder, file["network_name"])
@@ -34,6 +34,7 @@ def get_edge_index(edges_diction, edge_id):
 
 
 def make_adjacency(net, edges_diction):
+    # todo needs double checking
     n_edges = len(edges_diction.keys())
     adjacency_mat = np.zeros((n_edges, n_edges), dtype=int)
     raw_edges = net.getEdges()

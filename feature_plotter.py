@@ -7,7 +7,7 @@ import io
 import os
 
 
-def get_network(input_addresses="feature_plotter_config.yaml"):
+def get_network(input_addresses="config files/feature_plotter_config.yaml"):
     net_fname, info_fname, feature_name, net_edges_fname, interval_begin, interval_end, edges_to_remove, \
             minor_edges, highways = util.init_config(input_addresses)
     net, edges = util.read_network(net_fname, net_edges_fname, edges_to_remove, minor_edges, highways)
@@ -25,14 +25,17 @@ def get_name(interval_id):
     return f'{hour}{minute}'
 
 
-def get_features(edge_list, start_time, end_time, feature_name, data_adr):
+def get_features(edge_list, start_time, end_time,feature_name, data_adr, step_size=1):
     with open(data_adr, "rb") as f:
         edge_stats = pickle.load(f)
         f.close()
-    feature_matrix = np.zeros(((end_time-start_time)//60, len(edge_list)))
+    feature_matrix = np.zeros(((end_time-start_time)//(60*step_size), len(edge_list)))
     time_intervals = []
+    times = [i for i in range(start_time, end_time, step_size*60)]
+    # edge_stats2 = {interval_id: edges_data for interval_id, edges_data in edge_stats.items()
+    #                if start_time <= float(interval_id) < end_time}
     edge_stats2 = {interval_id: edges_data for interval_id, edges_data in edge_stats.items()
-                   if start_time <= float(interval_id) < end_time}
+                   if float(interval_id) in times}
 
     for i, (interval_id, edges_data) in enumerate(edge_stats2.items()):
         feature_list = []
@@ -47,18 +50,28 @@ def get_features(edge_list, start_time, end_time, feature_name, data_adr):
         feature_list = np.array(feature_list)
         interval = get_name(interval_id)
         print(f'{i}: interval {interval} has {sum(np.array(feature_list)==None)} None {feature_name} values out of {len(feature_list)} edges')
-        feature_list[feature_list==None] = 0
+        nones = (feature_list==None)
+        feature_list[feature_list==None] = 2
+        feature_list=feature_list.astype(np.float)
+
+        feature_list[feature_list>=1] = 2  # including None values
+        feature_list[feature_list<0.2] = 3
+        feature_list[feature_list<1] = 1
+        feature_list[nones] = 0
+        feature_list = feature_list.astype(int)
+        # feature_list[feature_list==None] = 0
+
         feature_matrix[i, :] = feature_list
         time_intervals.append(interval)
-
+    feature_matrix = feature_matrix.astype(int)
     return feature_matrix, time_intervals
 
 
-def buffer_plots(feature_matrix, time_titles, feature_name):
+def buffer_plots(feature_matrix, time_titles, feature_name, colormap='binary'):
     buffers = []
     for i in range(len(feature_matrix)):
         img_buf = io.BytesIO()
-        io_handler.show_network(net, edges, feature_matrix[i], colormap_name='binary',
+        io_handler.show_network(net, edges, feature_matrix[i], colormap_name=colormap,
                                 title=f'{feature_name} distribution of:{time_titles[i]}',
                                 save_adr=img_buf)
         buffers.append(img_buf)
@@ -66,9 +79,9 @@ def buffer_plots(feature_matrix, time_titles, feature_name):
     return buffers
 
 
-def generate_images(feature_matrix, time_titles, output_address, feature_name):
+def generate_images(feature_matrix, time_titles, output_address, feature_name, colormap='binary'):
     for i in range(len(feature_matrix)):
-        io_handler.show_network(net, edges, feature_matrix[i], colormap_name='binary',
+        io_handler.show_network(net, edges, feature_matrix[i], colormap_name=colormap,
                                  alpha=0.5, mapscale=8.0,
                                 title=f'{feature_name} distribution of:{time_titles[i]}',
                                 save_adr=output_address+f'/{time_titles[i]}.JPG')
@@ -83,16 +96,20 @@ def make_gif(frame_folder, output_path):
 
 
 if __name__ == "__main__":
+    '''
+    This file uses 1-min outputs(for each 5 minute) to create .gif files and show changes 
+    in the given feature (in the corresponding config file) 
+    '''
     net, edges, feature_name, interval_begin, interval_end, data_adr = get_network()
-    matrix, time_titles = get_features(edges, interval_begin, interval_end, feature_name, data_adr)
-    output_path = f'output/{feature_name}_{interval_begin}_{interval_end}.gif'
+    matrix, time_titles = get_features(edges, interval_begin, interval_end, feature_name, data_adr, step_size=5)
+    output_path = f'output/{feature_name}_{interval_begin}_{interval_end}_5.gif'
 
     ## making a buffer of plots and NOT saving each plot
     # buffers = buffer_plots(matrix, time_titles, feature_name)
     # make_gif(buffers, output_path)
 
     ## making the gif using saved images and NOT using an io buffer
-    source_folder = f'output/{feature_name}_gif_source'
-    generate_images(matrix, time_titles, source_folder)
-    l = [f'output/{feature_name}_gif_source/'+name for name in sorted(os.listdir(source_folder))]
+    source_folder = f'output/{feature_name}_5_gif_source'
+    generate_images(matrix, time_titles, source_folder, feature_name, colormap='tab10')
+    l = [f'output/{feature_name}_5_gif_source/'+name for name in sorted(os.listdir(source_folder))]
     make_gif(l, output_path)
