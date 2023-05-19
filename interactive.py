@@ -22,8 +22,19 @@ graph = Graph(adj_mat, densities)
 
 io.show_network(net, edges, graph.labels)
 while True:
-    IN = input('\nWhat is your command?(examples: cut 0, cut 5x, merge 2,3, merge 4x, mfd(   , separated, separated normalized), show, exit)\n').lower()
-    command = IN.split()[0]
+    IN = input('\nWhat is your command?(examples: cut 0, cut 5x, merge 2,3, merge 4x, '
+               'mfd(   , separated, separated normalized), density_speed, density_flow, show, exp, exit)\n').lower()
+    IN = IN.split()
+    command = IN[0]
+
+    sep, norm = False, False
+    if len(IN) > 1:
+        if len(IN) == 2 or len(IN) == 3:
+            if IN[1] == 'separated':
+                sep = True
+                if IN[-1] == 'normalized':
+                    norm = True
+
 
     if command == 'exit':
         break
@@ -33,19 +44,18 @@ while True:
 
     elif command == 'mfd':
         segment_ids = logic.get_segment_IDs(graph, list(edges))
-        IN = IN.split()
-        if len(IN) > 1:
-            if len(IN) == 2 or len(IN) == 3:
-                if IN[1] == 'separated':
-                    if IN[-1] == 'normalized':
-                        MFD.plot_mfd(segment_ids, MFD_start_time, MFD_end_time, separated=True, normalized=True)
-                    else:
-                        MFD.plot_mfd(segment_ids, MFD_start_time, MFD_end_time, separated=True, normalized=False)
-        else:
-            MFD.plot_mfd(segment_ids, MFD_start_time, MFD_end_time)
+        MFD.MFD_plotter(segment_ids, MFD_start_time, MFD_end_time, separated=sep, normalized=norm, mfd=True)
+
+    elif command == 'density_speed':
+        segment_ids = logic.get_segment_IDs(graph, list(edges))
+        MFD.MFD_plotter(segment_ids, MFD_start_time, MFD_end_time, separated=sep, normalized=norm, speed_vs_den=True)
+
+    elif command == 'density_flow':
+        segment_ids = logic.get_segment_IDs(graph, list(edges))
+        MFD.MFD_plotter(segment_ids, MFD_start_time, MFD_end_time, separated=sep, normalized=norm, flow_vs_den=True)
 
     elif command == 'cut':
-        command2 = IN.split()[1]
+        command2 = IN[1]
         if command2[-1] == 'x':
             times = int(command2[:-1])
             for i in range(times):
@@ -60,7 +70,7 @@ while True:
         io.show_network(net, edges, graph.labels)
 
     elif command == 'merge':
-        command2 = IN.split()[1]
+        command2 = IN[1]
         if command2[-1] == 'x':
             times = int(command2[:-1])
             for i in range(times):
@@ -68,7 +78,7 @@ while True:
                 print(np.unique(graph.labels))
                 logic.print_metrics(graph, new_NS=True, NS_boundary_limit=NS_boundary_limit)
         else:
-            indices = IN.split()[1]
+            indices = IN[1]
             indices = indices.split(',')
             if len(indices) < 2:
                 print('INPUT ERROR')

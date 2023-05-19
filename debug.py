@@ -36,7 +36,7 @@ def show_density_hist(density_list, title='density after deleting marginal links
 
 
 input_addresses = "config files/config.yaml"
-ncut_times = 10
+ncut_times = 12
 merge_times = 8
 NS_boundary_limit = 8
 Merge_boundary_limit = 8
@@ -48,18 +48,18 @@ net, edges, densities, adj_mat = io.get_network(input_addresses)
 graph = Graph(adj_mat, densities)
 
 ## APPLYING MEDIAN FILTER TO EXTREME VALUES AND GAUSSIAN FILTER TO ALL OF LINKS
-graph.smooth_densities(median=True, gaussian=True)
+# graph.smooth_densities(median=True, gaussian=True)
 densities = graph.densities
 # note that in the second smoothing function (Graph._smooth()) we make a new list for densities
 
 # todo highways should be somehow implemented separately
 
 ## SHOW DISTRIBUTION(HISTOGRAM) OF DENSITIES
-show_density_hist(densities, title=f'density after deleting marginal links (8-9)')
+# show_density_hist(densities, title=f'density after deleting marginal links (8-9)')
 
 ## SHOW FEATURE(e.g., density) MAP
 # io.show_network(net, edges, np.abs(graph.densities - densities), colormap_name="binary")
-io.show_network(net, edges, densities, colormap_name="binary")
+# io.show_network(net, edges, densities, colormap_name="binary")
 
 ## SHOW ZERO DENSITY MAP
 zeros = np.zeros(len(densities)).astype(int)
@@ -67,12 +67,12 @@ zeros[densities < 1] = 1
 zeros[densities < 0.5] = 2
 zeros[densities == 0] = 3
 # # zeros[densities > 150] = 3
-io.show_network(net, edges, zeros)
+# io.show_network(net, edges, zeros)
 
 ## SHOW DISTRIBUTION OF <5 DENSITIES
 plt.hist(densities[densities < 5], edgecolor='white', bins=20)
 plt.title(f'with handling 0s and >q95 values + smoothing, total = {len(densities[densities < 5])}')
-plt.show()
+# plt.show()
 
 #####
 # running NCut
@@ -82,10 +82,9 @@ for i in range(ncut_times-1):
     initial_segmentation.get_segments(graph)
     print(np.unique(graph.labels))
     print('members of the new segment:', sum(graph.labels == i+1))
-    # print(np.argwhere(graph.labels == i+1).flatten())  # what are the new segment's members?
     # io.show_network(net, edges, graph.labels, save_adr=f'output/ncut4/ncut4-{i+2}.jpg')
     logic.print_metrics(graph, new_NS=True, NS_boundary_limit=NS_boundary_limit)
-    # io.show_network(net, edges, graph.labels)
+
 io.show_network(net, edges, graph.labels)
 
 #####
@@ -108,9 +107,13 @@ io.show_network(net, edges, graph.labels)
 # finding MFDs
 #####
 segment_ids = logic.get_segment_IDs(graph, list(edges))
-MFD.plot_mfd(segment_ids, MFD_start_time, MFD_end_time)
-MFD.plot_mfd(segment_ids, MFD_start_time, MFD_end_time, separated=True)
-MFD.plot_mfd(segment_ids, MFD_start_time, MFD_end_time, separated=True, normalized=False)
+MFD.MFD_plotter(segment_ids, MFD_start_time, MFD_end_time, separated=False, normalized=False, mfd=True)
+MFD.MFD_plotter(segment_ids, MFD_start_time, MFD_end_time, separated=True, normalized=False, mfd=True)
+MFD.MFD_plotter(segment_ids, MFD_start_time, MFD_end_time, separated=True, normalized=True, mfd=True)
+
+MFD.MFD_plotter(segment_ids, MFD_start_time, MFD_end_time, separated=False, normalized=False, flow_vs_den=True)
+MFD.MFD_plotter(segment_ids, MFD_start_time, MFD_end_time, separated=True, normalized=False, flow_vs_den=True)
+MFD.MFD_plotter(segment_ids, MFD_start_time, MFD_end_time, separated=True, normalized=True, flow_vs_den=True)
 
 
 #####

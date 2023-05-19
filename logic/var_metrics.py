@@ -72,3 +72,20 @@ def TV(graph):
         TV += N_i[id]*segment_var(graph, id)
     return TV
 
+
+def TVn(graph):
+    tv = TV(graph)
+    total = len(graph.labels) * np.var(graph.densities)
+    return tv/total
+
+
+def cov(graph, segment_id):
+    return np.sqrt(segment_var(graph, segment_id))/segment_mean(graph, segment_id)
+
+
+def average_cov(graph):
+    segment_ids = np.unique(graph.labels)
+    COVs = [cov(graph, i) for i in segment_ids]
+    return np.mean(COVs), COVs
+
+

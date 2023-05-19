@@ -6,24 +6,48 @@ import numpy as np
 
 def print_metrics(graph, new_NS=True, NS_boundary_limit=0):
     labels = np.unique(graph.labels)
-    print('mean densities:', str([round(var_metrics.segment_mean(graph, i), 3) for i in labels]))
-    print('mean variance:', str([round(var_metrics.segment_var(graph, i), 3) for i in labels]))
-    print('"b"s: ', str([var_metrics.find_b(graph, i) for i in labels]))
-    print('NSs:', str([round(var_metrics.NS(graph, i), 4) for i in labels]))
+    print('means:', str([round(var_metrics.segment_mean(graph, i), 3) for i in labels]))
+    # print('variances:', str([round(var_metrics.segment_var(graph, i), 3) for i in labels]))
+    print('TV:', str(round(var_metrics.TV(graph))))
+    print(f'TV_n: {round(var_metrics.TVn(graph),3)}')
+    average_cov, covs = var_metrics.average_cov(graph)
+    # print(f'list of coefficients of variation: {covs}')
+    print(f'average COV: {round(average_cov, 3)}')
+    print('#of links: ', str([sum(graph.labels == i) for i in labels]))
+
+    # print('"b"s: ', str([var_metrics.find_b(graph, i) for i in labels]))
+    # print('NSs:', str([round(var_metrics.NS(graph, i), 4) for i in labels]))
     print('average NS:', str(round(var_metrics.average_NS(graph), 4)))
     if new_NS:
-        print('new NSs:', str([round(var_metrics.NS(graph, i, NS_boundary_limit), 4) for i in labels]))
+        # print('new NSs:', str([round(var_metrics.NS(graph, i, NS_boundary_limit), 4) for i in labels]))
         print('average new NS:', str(round(var_metrics.average_NS(graph, NS_boundary_limit), 4)))
-        print('new "b"s: ', str([var_metrics.find_b(graph, i, NS_boundary_limit) for i in labels]))
-    print('TV:', str(round(var_metrics.TV(graph))))
-    print('#of links: ', str([sum(graph.labels == i) for i in labels]))
-    print(graph.rag[:, :, 0])
+        # print('new "b"s: ', str([var_metrics.find_b(graph, i, NS_boundary_limit) for i in labels]))
+    # print(graph.rag[:, :, 0])
     print('')
 
-def get_metrics(graph):
-    NS = logic.get_NS(graph)
-    TV = logic.get_TV(graph)
-    return NS, TV
+
+def get_metrics(graph, NS_boundary_limit=0):
+    labels = np.unique(graph.labels)
+    metric_dict = dict()
+    metric_dict['means'] = [round(var_metrics.segment_mean(graph, i), 3) for i in labels]
+    metric_dict['variance'] = [round(var_metrics.segment_var(graph, i), 3) for i in labels]
+    metric_dict['TV'] = round(var_metrics.TV(graph))
+    metric_dict['TV_n'] = round(var_metrics.TVn(graph), 3)
+    metric_dict['average_cov'], metric_dict['covs'] = var_metrics.average_cov(graph)
+    metric_dict['# of links'] = [sum(graph.labels == i) for i in labels]
+    metric_dict['"b"s'] = [var_metrics.find_b(graph, i) for i in labels]
+    metric_dict['NSs'] = [round(var_metrics.NS(graph, i), 4) for i in labels]
+    metric_dict['average NS'] = round(var_metrics.average_NS(graph), 4)
+    metric_dict['new NSs'] = [round(var_metrics.NS(graph, i, NS_boundary_limit), 4) for i in labels]
+    metric_dict['average new NS'] = round(var_metrics.average_NS(graph, NS_boundary_limit), 4)
+    metric_dict['new "b"s'] = [var_metrics.find_b(graph, i, NS_boundary_limit) for i in labels]
+    return metric_dict
+
+
+# def get_metrics(graph):
+#     NS = logic.get_NS(graph)
+#     TV = logic.get_TV(graph)
+#     return NS, TV
 
 
 def make_partitions(graph, max_clusters):

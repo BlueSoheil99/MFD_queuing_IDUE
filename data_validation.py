@@ -6,7 +6,7 @@ import numpy as np
 
 def get_network(input_addresses="config.yaml"):
     net_fname, info_fname, option, net_edges_fname, interval_begin, interval_end, edges_to_remove, \
-    minor_edges, highways = util.init_config(input_addresses)
+        minor_edges, highways = util.init_config(input_addresses)
     # read network
     net, edges = util.read_network(net_fname, net_edges_fname, edges_to_remove, minor_edges, highways)
     # organize the network info into dictionaries
@@ -25,7 +25,14 @@ if __name__ == '__main__':
 
     input_addresses = "config files/data_validation_config.yaml"
     net, edges, densities, speeds, adj_mat = get_network(input_addresses)
-    flows = densities*speeds*3.6
+    flows = densities * speeds * 3.6
+    flows[50 > flows] = 0
+    flows[(flows > 50) & (flows < 300)] = 2
+    flows[(flows > 300) & (flows < 600)] = 3
+    flows[(flows > 600) & (flows < 1000)] = 6
+    # flows[600>flows>300] = 2
+    # flows[1000>flows>600] = 3
+    flows[flows > 1000] = 8
     # generate flow
     graph = Graph(adj_mat, flows)
     io.show_network(net, edges, flows, colormap_name="binary")
