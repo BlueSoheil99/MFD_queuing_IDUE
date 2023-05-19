@@ -123,7 +123,7 @@ def read_node_info(nodes):
 
 
 def read_edge_info(edges, feature_name, option, interval_begin, interval_end):
-    edge_diction = {edge.getID(): 0 for edge in edges}
+    edge_diction = {edge.getID(): 0 for edge in edges}  # todo it turns None values into zero
     edge_stats = sumoxml.parse(feature_name, "interval")
     num_lanes_per_edge = np.zeros(len(edge_diction))
     edge_names = list(edge_diction.keys())
@@ -135,12 +135,12 @@ def read_edge_info(edges, feature_name, option, interval_begin, interval_end):
                 try:
                     new_id = cleanID(edge.id)
                     if new_id in list(edge_diction.keys()):
-                        edge_diction[new_id] = float(edge.getAttribute(option))
+                        edge_diction[new_id] = float(edge.getAttribute(option))  # it throws an error for None values
                         # i = edge_names.index(new_id)
                         # num_lanes_per_edge[i] += 1
                 except:
                     # print("{} has no attribute: {}".format(edge.id, option))
-                    n_no_attr += 1
+                    n_no_attr += 1  # None values are counted here, but are treated as zero in later analysis
 
     # take mean of the density for cases that one edge with multiple lanes
     # for i in range(len(num_lanes_per_edge)):

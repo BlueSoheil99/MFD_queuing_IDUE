@@ -14,7 +14,7 @@ def merge(graph, alpha=_ALPHA, min_boundary=0):
     RAG = _clean_rag(np.copy(graph.rag), min_boundary)  # region adjacency matrix
     # x = RAG[0, 0]
     # print(x)
-    region_A = -alpha * RAG[:, :, 0] + RAG[:, :, 1]
+    region_A = -alpha * RAG[:, :, 0] + RAG[:, :, 1]  # id alpha is zero you basically don't need to have rag[:, :, 0]
     # region_A = graph.rag  # the ORIGINAL method
     # print(region_A)  # DEBUG
     num_regions = region_A.shape[0]
@@ -41,6 +41,8 @@ def _merge_segments(graph, reg1, reg2):
 
 
 def _clean_rag(rag, min_boundary):
+    # we need a copy of the original RAG but with considering that neighbors with very low number of boundaries maybe
+    # shouldn't be considered as neighbors
     # it is NOT an efficient code but it's ok as we have small 'n's.
     n = len(rag)
     RAG = np.zeros(rag.shape)

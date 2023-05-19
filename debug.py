@@ -43,6 +43,8 @@ Merge_boundary_limit = 8
 MERGING_alpha = 0  # DO NOT change it. it's not useful anymore. I should remove it later.
 MFD_start_time = 18000.00
 MFD_end_time = 36000.00
+# priority_metric = 'TV_n'   # todo work with different metrics
+priority_metric = 'average new NS'
 
 net, edges, densities, adj_mat = io.get_network(input_addresses)
 graph = Graph(adj_mat, densities)
@@ -55,19 +57,18 @@ densities = graph.densities
 # todo highways should be somehow implemented separately
 
 ## SHOW DISTRIBUTION(HISTOGRAM) OF DENSITIES
-# show_density_hist(densities, title=f'density after deleting marginal links (8-9)')
+show_density_hist(densities, title=f'density after deleting marginal links (8-9)')
 
 ## SHOW FEATURE(e.g., density) MAP
 # io.show_network(net, edges, np.abs(graph.densities - densities), colormap_name="binary")
-# io.show_network(net, edges, densities, colormap_name="binary")
+io.show_network(net, edges, densities, colormap_name="binary")
 
 ## SHOW ZERO DENSITY MAP
-zeros = np.zeros(len(densities)).astype(int)
-zeros[densities < 1] = 1
-zeros[densities < 0.5] = 2
-zeros[densities == 0] = 3
+zeros = np.ones(len(densities)).astype(int)*2
+zeros[densities < 5] = 1
+zeros[densities == 0] = 3  # zero or None values
 # # zeros[densities > 150] = 3
-# io.show_network(net, edges, zeros)
+io.show_network(net, edges, zeros)
 
 ## SHOW DISTRIBUTION OF <5 DENSITIES
 plt.hist(densities[densities < 5], edgecolor='white', bins=20)
@@ -79,11 +80,27 @@ plt.title(f'with handling 0s and >q95 values + smoothing, total = {len(densities
 ####
 print('\n## INITIAL PARTITIONING\nTV for 1 big segment:', str(round(var_metrics.TV(graph))), '\n', 'mean density:', str(round(var_metrics.segment_mean(graph, 0), 2)), '\n')
 for i in range(ncut_times-1):
-    initial_segmentation.get_segments(graph)
+    ## traditional method
+    # initial_segmentation.get_segments(graph)
+    ##new method
+    from copy import deepcopy
+    decision_criteria = list()
+    labels = np.unique(graph.labels)
+    for id in labels:
+        copy = deepcopy(graph)
+        initial_segmentation._get_segments(copy, id)
+        metrics = logic.get_metrics(copy, NS_boundary_limit=NS_boundary_limit)
+        decision_criteria.append(metrics[priority_metric])
+    id = labels[np.argmin(np.array(decision_criteria))]
+    print(f'segment {id} is being cut')
+    initial_segmentation._get_segments(graph, id)
+    #####
+
     print(np.unique(graph.labels))
     print('members of the new segment:', sum(graph.labels == i+1))
     # io.show_network(net, edges, graph.labels, save_adr=f'output/ncut4/ncut4-{i+2}.jpg')
     logic.print_metrics(graph, new_NS=True, NS_boundary_limit=NS_boundary_limit)
+    io.show_network(net, edges, graph.labels)
 
 io.show_network(net, edges, graph.labels)
 
@@ -92,14 +109,37 @@ io.show_network(net, edges, graph.labels)
 ####
 print('## MERGING')
 for i in range(merge_times-1):
-    merging.merge(graph, alpha=MERGING_alpha, min_boundary=Merge_boundary_limit)
+    ## traditional method
+    # merging.merge(graph, alpha=MERGING_alpha, min_boundary=Merge_boundary_limit)
     # alpha accounts for the degree we consider number of boundaries into merging algo
     # min_boundary drops neighbors with fewer boundaries from consideration
-    print(np.unique(graph.labels))  # Do we have right number of segments?
-    # io.show_network(net, edges, graph.labels,
-    #                 save_adr=f'output/ncut4/merge-{max_number_of_clusters-i-1}.jpg')
+    ## new method
+    from copy import deepcopy
+    decision_criteria = []
+    labels = np.unique(graph.labels)  # todo change to valid combinations
+    valid_combinations = []
+    RAG = (merging._clean_rag(np.copy(graph.rag), Merge_boundary_limit))[:, :, 1]
+        # rag[0] and rag[1] shouldn't make a difference
+    for i in labels[:-1]:
+        for j in labels[i+1:]:
+            id1, id2 = labels[i], labels[j]
+            if RAG[id1, id2]>0:
+                # todo we still shouldn't merge regions with tiny boundary links
+                valid_combinations.append((id1, id2))
+                copy = deepcopy(graph)
+                merging._merge_segments(copy, id1, id2)
+                metrics = logic.get_metrics(copy, NS_boundary_limit=NS_boundary_limit)
+                decision_criteria.append(metrics[priority_metric])
+    selected_comb = valid_combinations[np.argmin(np.array(decision_criteria))]
+    id1 = selected_comb[0]
+    id2 = selected_comb[1]
+    print(f'--segments {id1} and {id2} are merging---')
+    merging._merge_segments(graph, id1, id2)
+    #####
+    print(np.unique(graph.labels))
+    # io.show_network(net, edges, graph.labels, save_adr=f'output/ncut4/merge-{max_number_of_clusters-i-1}.jpg')
     logic.print_metrics(graph, new_NS=True, NS_boundary_limit=NS_boundary_limit)
-    # io.show_network(net, edges, graph.labels)
+    io.show_network(net, edges, graph.labels)
 io.show_network(net, edges, graph.labels)
 
 
