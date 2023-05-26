@@ -123,7 +123,10 @@ def _plot_mfd(group_dict, start_time, end_time, axs, separated=False, normalized
         size = sizes[i % len(sizes)]
         # color = colors[i % len(colors)]
         if separated:
-            ax = axs[i//2, i % 2]
+            if len(axs)>2:
+                ax = axs[i // 2, i % 2]
+            else:
+                ax = axs[i % 2]
         else:
             ax = axs
 
@@ -324,7 +327,10 @@ def _plot_speed_density_curve(group_dict, start_time, end_time, axs, separated=F
         # color = colors[i % len(colors)]
         # size = sizes[i]
         if separated:
-            ax = axs[i//2, i % 2]
+            if len(axs) > 2:
+                ax = axs[i // 2, i % 2]
+            else:
+                ax = axs[i % 2]
         else:
             ax = axs
 
@@ -428,7 +434,10 @@ def _plot_flow_density_curve(group_dict, start_time, end_time, axs, separated=Fa
         # color = colors[i % len(colors)]
         # size = sizes[i]
         if separated:
-            ax = axs[i//2, i % 2]
+            if len(axs) > 2:
+                ax = axs[i // 2, i % 2]
+            else:
+                ax = axs[i % 2]
         else:
             ax = axs
 
@@ -542,7 +551,10 @@ def _plot_mfd_type1(group_dict, start_time, end_time, axs, separated=False, norm
         # color = colors[i % len(colors)]
         # size = sizes[i]
         if separated:
-            ax = axs[i//2, i % 2]
+            if len(axs) > 2:
+                ax = axs[i // 2, i % 2]
+            else:
+                ax = axs[i % 2]
         else:
             ax = axs
 

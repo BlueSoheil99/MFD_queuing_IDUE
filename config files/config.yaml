@@ -8,7 +8,6 @@ highways_and_tunnels: "./output/highway_tunnel_edgeID.txt"
 minor_links: "./output/minor_edgeID.txt"
 edges_to_remove_name: "./output/marginal_edgeID.txt"
 #edges_to_remove_name: "./output/marginal_edgeID_exclude_downtown.txt"
-#edges_to_remove_name: "./output/marginal_edgeID_smaller_network.txt"
 
 #minor_links: "./output/marginal_edgeID3.txt"
 #highways_and_tunnels: "./output/marginal_edgeID3.txt"
