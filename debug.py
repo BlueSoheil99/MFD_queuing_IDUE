@@ -36,28 +36,28 @@ def show_density_hist(density_list, title='density after deleting marginal links
 
 
 input_addresses = "config files/config.yaml"
-ncut_times = 11
-merge_times = 7
+ncut_times = 8
+merge_times = 8
 NS_boundary_limit = 8
 Merge_boundary_limit = 8
 MERGING_alpha = 0  # DO NOT change it. it's not useful anymore. I should remove it later.
 MFD_start_time = 18000.00
 MFD_end_time = 36000.00
-priority_metric = 'TV_n'   # todo work with different metrics
-# priority_metric = 'average new NS'
-min_num_of_links = 200
-summary_output_address = f'output/{ncut_times-1}-{merge_times-1}-min_size {min_num_of_links}-resutls-{priority_metric}.xlsx'
+# priority_metric = 'TV_n'   # todo work with different metrics
+priority_metric = 'average new NS'
+min_num_of_links = 150
+summary_output_address = f'output/{ncut_times-1}-{merge_times-1}-min_size {min_num_of_links}-results-{priority_metric}.xlsx'
+# summary_output_address = None
 
 
 net, edges, densities, adj_mat = io.get_network(input_addresses)
+#todo net, edges, densities, adj_mat, predetermined_labels = io.get_network(input_addresses)
 graph = Graph(adj_mat, densities)
 
 ## APPLYING MEDIAN FILTER TO EXTREME VALUES AND GAUSSIAN FILTER TO ALL OF LINKS
 # graph.smooth_densities(median=True, gaussian=True)
 densities = graph.densities
 # note that in the second smoothing function (Graph._smooth()) we make a new list for densities
-
-# todo highways should be somehow implemented separately
 
 ## SHOW DISTRIBUTION(HISTOGRAM) OF DENSITIES
 # show_density_hist(densities, title=f'density after deleting marginal links (8-9)')
@@ -71,7 +71,7 @@ zeros = np.ones(len(densities)).astype(int)*2
 zeros[densities < 5] = 1
 zeros[densities == 0] = 3  # zero or None values
 # # zeros[densities > 150] = 3
-# io.show_network(net, edges, zeros)
+io.show_network(net, edges, zeros)
 
 ## SHOW DISTRIBUTION OF <5 DENSITIES
 plt.hist(densities[densities < 5], edgecolor='white', bins=20)
@@ -120,6 +120,7 @@ for i in range(merge_times-1):
     if i == merge_times-2:
     ## traditional method
         merging.merge(graph, alpha=MERGING_alpha, min_boundary=Merge_boundary_limit)
+    # merging.merge(graph, alpha=MERGING_alpha, min_boundary=Merge_boundary_limit)
     # alpha accounts for the degree we consider number of boundaries into merging algo
     # min_boundary drops neighbors with fewer boundaries from consideration
     else:
@@ -150,7 +151,12 @@ for i in range(merge_times-1):
     # io.show_network(net, edges, graph.labels, save_adr=f'output/ncut4/merge-{max_number_of_clusters-i-1}.jpg')
     logic.print_metrics(graph, new_NS=True, NS_boundary_limit=NS_boundary_limit)
     logic.update_result_dict(graph, NS_boundary_limit)
-    # io.show_network(net, edges, graph.labels)
+    io.show_network(net, edges, graph.labels)
+
+    segment_ids = logic.get_segment_IDs(graph, list(edges))
+    MFD.MFD_plotter(segment_ids, MFD_start_time, MFD_end_time, separated=False, normalized=False, flow_vs_den=True)
+    # MFD.MFD_plotter(segment_ids, MFD_start_time, MFD_end_time, separated=True, normalized=True, flow_vs_den=True)
+
 io.show_network(net, edges, graph.labels)
 
 
@@ -170,6 +176,10 @@ if len(np.unique(graph.labels))>1:
     MFD.MFD_plotter(segment_ids, MFD_start_time, MFD_end_time, separated=True, normalized=False, flow_vs_den=True)
     MFD.MFD_plotter(segment_ids, MFD_start_time, MFD_end_time, separated=True, normalized=True, flow_vs_den=True)
 
+
+#todo
+# show predetermined clusters and show all MFDs
+# export output
 
 #####
 # below is for helping detect marginal edges,

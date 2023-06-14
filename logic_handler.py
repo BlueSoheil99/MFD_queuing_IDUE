@@ -19,14 +19,14 @@ def print_metrics(graph, new_NS=True, NS_boundary_limit=0):
     print(f'average COV: {round(average_cov, 3)}')
     print('#of links: ', str([sum(graph.labels == i) for i in labels]))
     if len(labels) > 1:
-        # print('"b"s: ', str([var_metrics.find_b(graph, i) for i in labels]))
+        print('"b"s: ', str([var_metrics.find_b(graph, i) for i in labels]))
         # print('NSs:', str([round(var_metrics.NS(graph, i), 4) for i in labels]))
         print('average NS:', str(round(var_metrics.average_NS(graph), 4)))
         if new_NS:
             # print('new NSs:', str([round(var_metrics.NS(graph, i, NS_boundary_limit), 4) for i in labels]))
             print('average new NS:', str(round(var_metrics.average_NS(graph, NS_boundary_limit), 4)))
-            # print('new "b"s: ', str([var_metrics.find_b(graph, i, NS_boundary_limit) for i in labels]))
-    # print(graph.rag[:, :, 0])
+            print('new "b"s: ', str([var_metrics.find_b(graph, i, NS_boundary_limit) for i in labels]))
+    print(graph.rag[:, :, 0])
     print('')
 
 

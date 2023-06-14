@@ -79,7 +79,6 @@ def cleanID(edge_id):
     return edge_id
 
 
-
 def clean_network(net, connected_edges, edges_to_remove, minor_links, highways_tunnels):
     remove_edge_ids = []
     for file in [edges_to_remove, minor_links, highways_tunnels]:
