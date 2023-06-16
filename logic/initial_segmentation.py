@@ -7,6 +7,7 @@ from sklearn.cluster import KMeans
 def get_parent_id(graph):
     # todo what are parent's characteristics?
     segments = np.unique(graph.labels)
+    segments = segments[segments >= graph.first_unfixed_region]
     variances = [segment_var(graph, i) for i in segments]
     variances = np.sqrt(variances)
     variances = [(variances[i] + sum(graph.labels == segments[i])) for i in range(len(segments))]
@@ -22,7 +23,7 @@ def get_parent_id(graph):
     #         n2 = np.sum(graph.labels == segments[i])
     #         if n2 > n1:
     #             p = segments[i]
-    return p
+    return segments[p]
 
 
 def get_W_and_D(graph, mask):

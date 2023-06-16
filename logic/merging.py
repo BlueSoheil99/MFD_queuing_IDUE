@@ -12,17 +12,14 @@ def merge(graph, alpha=_ALPHA, min_boundary=0):
     :return:
     """
     RAG = _clean_rag(np.copy(graph.rag), min_boundary)  # region adjacency matrix
-    # x = RAG[0, 0]
-    # print(x)
-    region_A = -alpha * RAG[:, :, 0] + RAG[:, :, 1]  # id alpha is zero you basically don't need to have rag[:, :, 0]
+    region_A = -alpha * RAG[:, :, 0] + RAG[:, :, 1]  # if alpha is zero you basically don't need to have rag[:, :, 0]
     # region_A = graph.rag  # the ORIGINAL method
-    # print(region_A)  # DEBUG
     num_regions = region_A.shape[0]
     region_A[region_A == 0] = np.inf
     min_index = np.argmin(region_A)
     #or min_index = np.argmin(region_A[region_A>0]) instead of two lines above
-    reg1 = min_index // num_regions
-    reg2 = min_index % num_regions
+    reg1 = (min_index // num_regions) + graph.first_unfixed_region
+    reg2 = (min_index % num_regions) + graph.first_unfixed_region
     _merge_segments(graph, reg1, reg2)
 
 

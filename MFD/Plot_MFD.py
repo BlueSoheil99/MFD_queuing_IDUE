@@ -8,7 +8,7 @@ import io_handler as io
 address = "Data/uniques_interval_data.pickle"
 
 input_addresses = "config files/config.yaml"
-net, _, _, _ = io.get_network(input_addresses)
+net, _, _, _, _ = io.get_network(input_addresses)
 
 with open(address, "rb") as f:
     edge_stats = pickle.load(f)
@@ -306,6 +306,7 @@ def _plot_flow_density_curve(group_dict, start_time, end_time, axs, separated=Fa
                             no_of_edges += 1
 
             avg_speed = total_weightedspeed / total_edge_length  # km/hr
+            # todo sometimes: ZeroDivisionError: division by zero
             avg_density = total_weighteddensity / total_edge_length  # veh/km/lane
             total_flux = avg_speed * avg_density  # veh/hr
             tnvehs_group.append(total_nvehs)

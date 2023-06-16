@@ -15,8 +15,8 @@ MERGING_alpha = 0  # DO NOT change it. it's not useful anymore. I should remove 
 MFD_start_time = 18000.00
 MFD_end_time = 36000.00
 
-net, edges, densities, adj_mat = io.get_network(input_addresses)
-graph = Graph(adj_mat, densities)
+net, edges, densities, adj_mat, labels = io.get_network(input_addresses)
+graph = Graph(adj_mat, densities, labels)
 # graph.smooth_densities(median=True, gaussian=True)
 # densities = graph.densities
 
@@ -61,7 +61,7 @@ while True:
             for i in range(times):
                 initial_segmentation.get_segments(graph)
                 print(np.unique(graph.labels))
-                print('members of the new segment:', sum(graph.labels == i + 1))
+                print('members of the new segment:', sum(graph.labels == len(graph.labels)-1))
                 logic.print_metrics(graph, new_NS=True, NS_boundary_limit=NS_boundary_limit)
         else:
             parent = int(command2)

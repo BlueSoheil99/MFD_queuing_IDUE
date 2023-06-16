@@ -12,29 +12,32 @@ import pandas as pd  # for debugging
 
 
 def get_network(input_addresses="config files/config.yaml"):
-    net_fname, info_fname, option, net_edges_fname, interval_begin, interval_end, edges_to_remove, \
-    minor_edges, highways = util.init_config(input_addresses)
+    net_fname, info_fname, option, net_edges_fname,interval_begin, interval_end, \
+    edges_to_remove, minor_edges, predetermined_regions_folder = util.init_config(input_addresses)
     # read network
-    net, edges = util.read_network(net_fname, net_edges_fname, edges_to_remove, minor_edges, highways)
+    net, edges, predetermined_regions_dict = util.read_network(net_fname, net_edges_fname,
+                                                               edges_to_remove, minor_edges, predetermined_regions_folder)
     # organize the network info into dictionaries
     edge_diction = util.read_edge_info(edges, info_fname, option, interval_begin, interval_end)
     print(edge_diction)
 
     adjacency_matrix = util.make_adjacency(net, edge_diction)
-    # data = pd.DataFrame(adjacency_matrix)  # debug
-    # data.to_csv('data/adjacency_matrix.csv', index=False)  # debug
-    # use the lines above for the first run, then use the line below for next runs
-    # adjacency_matrix = read_adj('data/adjacency_matrix.csv')  # debug
 
     array_of_edges = np.array(list(edge_diction.keys()))
     array_of_densities = np.array(list(edge_diction.values()))
-    return net, array_of_edges, array_of_densities, adjacency_matrix
+    array_of_labels = (np.ones(len(array_of_edges))*len(predetermined_regions_dict)).astype(int)
+    # if we fix n regions, number of all regions would be n+1.
+    # Previously, the initial region was labeled 0, but now, we start the segmentation from region with label = n
+    for item in predetermined_regions_dict.items():
+        seg_id = int(item[0])
+        seg_edge_IDs = item[1]
+        indices = np.searchsorted(array_of_edges, seg_edge_IDs)
+        array_of_labels[indices] = seg_id
+        # for edge_id in seg_edge_IDs:
+        #     index = np.argwhere(array_of_edges == edge_id)
+        #     array_of_labels[index] = seg_id
 
-
-# def read_adj(address):  # DEBUG
-#     import pandas as pd
-#     data = pd.read_csv(address)
-#     return data.to_numpy()
+    return net, array_of_edges, array_of_densities, adjacency_matrix, array_of_labels
 
 
 def show_network(net, edges_list, region_id, width_edge=2, alpha=0.5, mapscale=4.0, colormap_name="tab10",

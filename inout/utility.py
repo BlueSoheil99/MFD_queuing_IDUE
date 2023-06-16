@@ -2,6 +2,7 @@ import yaml
 import sumolib.net as sumonet
 import sumolib.xml as sumoxml
 import numpy as np
+import os
 
 
 def init_config(fname="config files/config.yaml"):
@@ -15,10 +16,11 @@ def init_config(fname="config files/config.yaml"):
     net_edges = file["edges_name"]
     edges_to_remove = file["edges_to_remove_name"]
     minor_links = file["minor_links"]
-    highways_tunnels = file["highways_and_tunnels"]
+    # highways_tunnels = file["highways_and_tunnels"]
+    predetermined_regions = file["predetermined_regions_folder"]
 
     return network_name, feature_name, feature, net_edges, interval_begin, interval_end,\
-        edges_to_remove, minor_links, highways_tunnels
+        edges_to_remove, minor_links, predetermined_regions
 
 
 def get_node_pair(net, edge_id):
@@ -62,11 +64,21 @@ def make_adjacency(net, edges_diction):
     return adjacency_mat
 
 
-def read_network(net_fname, net_edges_fname, edges_to_remove, minor_links, highways_tunnels):
+def read_network(net_fname, net_edges_fname, edges_to_remove, minor_links, side_regions_path):
     net = sumonet.readNet(net_fname)
     connected_edges = read_edgeID_subnetwork(net_edges_fname)
-    net, edges = clean_network(net, connected_edges, edges_to_remove, minor_links, highways_tunnels)
-    return net, edges
+    net, edges = clean_network(net, connected_edges, edges_to_remove, minor_links)
+
+    constant_regions = dict()
+    for i, file in enumerate(os.listdir(side_regions_path)):
+        # if file[-3:] == 'txt':
+        with open(side_regions_path+'/'+file) as f:
+            region_edges = []
+            for line in f:
+                region_edges.append(line.rstrip())
+        constant_regions[f'{i}'] = region_edges
+
+    return net, edges, constant_regions
 
 
 def cleanID(edge_id):
@@ -79,9 +91,9 @@ def cleanID(edge_id):
     return edge_id
 
 
-def clean_network(net, connected_edges, edges_to_remove, minor_links, highways_tunnels):
+def clean_network(net, connected_edges, edges_to_remove, minor_links):
     remove_edge_ids = []
-    for file in [edges_to_remove, minor_links, highways_tunnels]:
+    for file in [edges_to_remove, minor_links]:
         with open(file) as f:
             for line in f:
                 remove_edge_ids.append(line.rstrip())
@@ -102,7 +114,7 @@ def clean_network(net, connected_edges, edges_to_remove, minor_links, highways_t
                               edge.getPriority(), edge.getFunction(), edge.getName(), edge.getType())
             clean_edges.add(new_id)
     edges = clean_net.getEdges()
-    return net, edges
+    return net, edges  # Ohay didn't return clean_net.
 
 
 def read_edgeID_subnetwork(fname):

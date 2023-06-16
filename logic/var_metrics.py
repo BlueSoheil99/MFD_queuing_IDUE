@@ -58,9 +58,12 @@ def average_NS(graph, limit_boundary=0):
     '''
     IDs = np.unique(graph.labels)
     summation = 0
+    n=0
     for id in IDs:
-        summation += NS(graph, id, limit_boundary)
-    return summation/len(IDs)
+        if id>=graph.first_unfixed_region:
+            n+=1
+            summation += NS(graph, id-graph.first_unfixed_region, limit_boundary)
+    return summation/n
 
 
 def TV(graph):

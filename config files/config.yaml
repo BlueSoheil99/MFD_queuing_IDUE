@@ -4,15 +4,18 @@ network_name: "Seattle_road_network.net.xml"
 edges_name: "./output/seattlecomp0.txt"
 info_name: "Edgetest_6_0411_2_0.xml"
 
-highways_and_tunnels: "./output/highway_tunnel_edgeID.txt"
-minor_links: "./output/minor_edgeID.txt"
-edges_to_remove_name: "./output/marginal_edgeID.txt"
-#edges_to_remove_name: "./output/marginal_edgeID_exclude_downtown.txt"
+minor_links: "./data/config data/minor_edgeID.txt"
+## for having the whole network
+predetermined_regions_folder: "./data/config data/config for segmentation with predetermined regions/side regions"
+edges_to_remove_name: "./data/config data/config for segmentation with predetermined regions/marginal_edgeID.txt"
 
-#minor_links: "./output/marginal_edgeID3.txt"
-#highways_and_tunnels: "./output/marginal_edgeID3.txt"
-#edges_to_remove_name: "./output/marginal_edgeID_for_abstract.txt"
-#edges_to_remove_name: "./output/marginal_edgeID3.txt"
+## for having only the downtown
+#predetermined_regions_folder: "./data/config data/config for normal segmentation/side regions"
+##edges_to_remove_name: "./data/config data/config for normal segmentation/marginal_edgeID.txt"
+#edges_to_remove_name: "./data/config data/config for normal segmentation/marginal_edgeID_highways_and_tunnels.txt"
+##edges_to_remove_name: "./data/config data/config for normal segmentation/marginal_edgeID_exclude_downtown0.txt"
+##edges_to_remove_name: "./data/config data/config for normal segmentation/marginal_edgeID_exclude_downtown1.txt"
+
 
 # feature that you'd like to read, e.g, density
 feature: "laneDensity"
