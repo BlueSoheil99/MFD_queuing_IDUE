@@ -2,6 +2,7 @@ import math
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
+import mplcursors
 from inout import plot_network as pln
 from inout import utility as util
 from inout import plot_network as vis
@@ -31,17 +32,18 @@ def get_network(input_addresses="config files/config.yaml"):
     for item in predetermined_regions_dict.items():
         seg_id = int(item[0])
         seg_edge_IDs = item[1]
-        indices = np.searchsorted(array_of_edges, seg_edge_IDs)
-        array_of_labels[indices] = seg_id
-        # for edge_id in seg_edge_IDs:
-        #     index = np.argwhere(array_of_edges == edge_id)
-        #     array_of_labels[index] = seg_id
+
+        # indices = np.searchsorted(array_of_edges, seg_edge_IDs)
+        # array_of_labels[indices] = seg_id
+        for edge_id in seg_edge_IDs:
+            index = np.argwhere(array_of_edges == edge_id)
+            array_of_labels[index] = seg_id
 
     return net, array_of_edges, array_of_densities, adjacency_matrix, array_of_labels
 
 
 def show_network(net, edges_list, region_id, width_edge=2, alpha=0.5, mapscale=4.0, colormap_name="tab10",
-                 save_adr=None, title=''):
+                 save_adr=None, title='', interactive=False):
     fig, ax = pln.init_plot()
 
     vmin = min(region_id)
@@ -58,6 +60,7 @@ def show_network(net, edges_list, region_id, width_edge=2, alpha=0.5, mapscale=4
         colormap = vis.init_colors(colormap_name, vmin, vmax, normalized=True)
 
     edges_list = list(edges_list)
+    links=[]
 
     for edge in net.getEdges():
         raw_id = edge.getID()
@@ -69,11 +72,12 @@ def show_network(net, edges_list, region_id, width_edge=2, alpha=0.5, mapscale=4
             y_vec = np.array(shape)[:, 1]
             idx = edges_list.index(new_id)
             if "tab" in colormap_name:
-                ax.plot(x_vec * mapscale, y_vec * mapscale, color=colormap.colors[region_id[idx]],
-                        lw=width_edge, alpha=alpha, zorder=-100)
+                link, = ax.plot(x_vec * mapscale, y_vec * mapscale, color=colormap.colors[region_id[idx]],
+                        lw=width_edge, alpha=alpha, zorder=-100, label=new_id)
             else:
-                ax.plot(x_vec * mapscale, y_vec * mapscale, color=vis.get_color(colormap, region_id[idx]),
-                        lw=width_edge, alpha=alpha, zorder=-100)
+                link, = ax.plot(x_vec * mapscale, y_vec * mapscale, color=vis.get_color(colormap, region_id[idx]),
+                        lw=width_edge, alpha=alpha, zorder=-100, label=new_id)
+            links.append(link)
         else:
             shape = net.getEdge(raw_id).getShape()
             x_vec = np.array(shape)[:, 0]
@@ -100,6 +104,18 @@ def show_network(net, edges_list, region_id, width_edge=2, alpha=0.5, mapscale=4
     plt.tight_layout()
     plt.title(title)
     plt.axis('off')
+    if interactive:
+        print('interactive map ON')
+        # # mplcursors.cursor(links)
+        # mplcursors.cursor().connect(
+        #     "add", lambda sel: sel.annotation.set_text(sel.artist.get_label()))
+        cursor = mplcursors.cursor(links)
+        @cursor.connect("add")
+        def _(sel):
+            txt = sel.artist.get_label()
+            sel.annotation.set_text(txt)
+            print(txt)
+
     if save_adr is None:
         plt.show()
     else:

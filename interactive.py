@@ -21,6 +21,7 @@ graph = Graph(adj_mat, densities, labels)
 # densities = graph.densities
 
 io.show_network(net, edges, graph.labels)
+
 while True:
     IN = input('\nWhat is your command?(examples: cut 0, cut 5x, merge 2,3, merge 4x, '
                'mfd(   , separated, separated normalized), density_speed, density_flow, show, exp, exit)\n').lower()
@@ -35,12 +36,13 @@ while True:
                 if IN[-1] == 'normalized':
                     norm = True
 
-
     if command == 'exit':
         break
 
     elif command == 'show':
-        io.show_network(net, edges, graph.labels)
+        interactive = False
+        if IN[-1] == 'interactive': interactive = True
+        io.show_network(net, edges, graph.labels, interactive=interactive)
 
     elif command == 'mfd':
         segment_ids = logic.get_segment_IDs(graph, list(edges))
@@ -61,7 +63,7 @@ while True:
             for i in range(times):
                 initial_segmentation.get_segments(graph)
                 print(np.unique(graph.labels))
-                print('members of the new segment:', sum(graph.labels == len(graph.labels)-1))
+                print('members of the new segment:', sum(graph.labels == max(graph.labels)))
                 logic.print_metrics(graph, new_NS=True, NS_boundary_limit=NS_boundary_limit)
         else:
             parent = int(command2)
