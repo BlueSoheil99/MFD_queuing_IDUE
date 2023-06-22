@@ -1,4 +1,6 @@
 import numpy as np
+
+import logic_handler
 from Graph import Graph
 from logic import initial_segmentation, merging
 import io_handler as io
@@ -40,9 +42,16 @@ while True:
         break
 
     elif command == 'show':
-        interactive = False
-        if IN[-1] == 'interactive': interactive = True
-        io.show_network(net, edges, graph.labels, interactive=interactive)
+        func = None
+        # if IN[-1] == 'interactive': func = lambda x: logic_handler.cursor_sdhow_segment_ID(x)
+        if IN[-1] == 'interactive': func = (lambda x: print(x))
+        io.show_network(net, edges, graph.labels, interactive_func=func)
+
+    elif command == 'adjustment':
+        io.show_network(net, edges, graph.labels,
+                        interactive_func=lambda x:
+                        logic_handler.cursor_update_segment_ID(graph, edges, x,
+                                                               new_NS=True, NS_boundary_limit=NS_boundary_limit))
 
     elif command == 'mfd':
         segment_ids = logic.get_segment_IDs(graph, list(edges))

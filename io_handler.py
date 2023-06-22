@@ -43,7 +43,7 @@ def get_network(input_addresses="config files/config.yaml"):
 
 
 def show_network(net, edges_list, region_id, width_edge=2, alpha=0.5, mapscale=4.0, colormap_name="tab10",
-                 save_adr=None, title='', interactive=False):
+                 save_adr=None, title='', interactive_func=None):
     fig, ax = pln.init_plot()
 
     vmin = min(region_id)
@@ -104,7 +104,7 @@ def show_network(net, edges_list, region_id, width_edge=2, alpha=0.5, mapscale=4
     plt.tight_layout()
     plt.title(title)
     plt.axis('off')
-    if interactive:
+    if interactive_func is not None:
         print('interactive map ON')
         # # mplcursors.cursor(links)
         # mplcursors.cursor().connect(
@@ -112,9 +112,11 @@ def show_network(net, edges_list, region_id, width_edge=2, alpha=0.5, mapscale=4
         cursor = mplcursors.cursor(links)
         @cursor.connect("add")
         def _(sel):
-            txt = sel.artist.get_label()
-            sel.annotation.set_text(txt)
-            print(txt)
+            label = sel.artist.get_label()
+            sel.annotation.set_text(label)
+            interactive_func(label)
+            # txt = interactive_func(label)
+            # print(txt)
 
     if save_adr is None:
         plt.show()

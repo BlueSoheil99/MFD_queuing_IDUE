@@ -13,19 +13,22 @@ def print_metrics(graph, new_NS=True, NS_boundary_limit=0):
     print('means:', str([round(var_metrics.segment_mean(graph, i), 3) for i in labels]))
     # print('variances:', str([round(var_metrics.segment_var(graph, i), 3) for i in labels]))
     print('TV:', str(round(var_metrics.TV(graph))))
-    print(f'TV_n: {round(var_metrics.TVn(graph),3)}')
+    print(f'TV_n: {round(var_metrics.TVn(graph), 3)}')
     average_cov, covs = var_metrics.average_cov(graph)
     # print(f'list of coefficients of variation: {covs}')
     print(f'average COV: {round(average_cov, 3)}')
     print('#of links: ', str([sum(graph.labels == i) for i in labels]))
-    if len(labels)-graph.first_unfixed_region > 1:
-        print('"b"s: ', str([var_metrics.find_b(graph, i-graph.first_unfixed_region) for i in labels if i>=graph.first_unfixed_region]))
+    if len(labels) - graph.first_unfixed_region > 1:
+        print('"b"s: ', str([var_metrics.find_b(graph, i - graph.first_unfixed_region) for i in labels if
+                             i >= graph.first_unfixed_region]))
         # print('NSs:', str([round(var_metrics.NS(graph, i), 4) for i in labels]))
         print('average NS:', str(round(var_metrics.average_NS(graph), 4)))
         if new_NS:
             # print('new NSs:', str([round(var_metrics.NS(graph, i, NS_boundary_limit), 4) for i in labels]))
             print('average new NS:', str(round(var_metrics.average_NS(graph, NS_boundary_limit), 4)))
-            print('new "b"s: ', str([var_metrics.find_b(graph, i-graph.first_unfixed_region, NS_boundary_limit) for i in labels if i >=graph.first_unfixed_region]))
+            print('new "b"s: ',
+                  str([var_metrics.find_b(graph, i - graph.first_unfixed_region, NS_boundary_limit) for i in labels if
+                       i >= graph.first_unfixed_region]))
     print(graph.rag[:, :, 0])
     print('')
 
@@ -39,13 +42,17 @@ def get_metrics(graph, NS_boundary_limit=0):
     metric_dict['TV_n'] = round(var_metrics.TVn(graph), 3)
     metric_dict['average_cov'], metric_dict['covs'] = var_metrics.average_cov(graph)
     metric_dict['# of links'] = [sum(graph.labels == i) for i in labels]
-    if len(labels)-graph.first_unfixed_region > 1:
-        metric_dict['"b"s'] = [var_metrics.find_b(graph, i-graph.first_unfixed_region) for i in labels if i>=graph.first_unfixed_region]
-        metric_dict['NSs'] = [round(var_metrics.NS(graph, i-graph.first_unfixed_region), 4) for i in labels if i>=graph.first_unfixed_region]
+    if len(labels) - graph.first_unfixed_region > 1:
+        metric_dict['"b"s'] = [var_metrics.find_b(graph, i - graph.first_unfixed_region) for i in labels if
+                               i >= graph.first_unfixed_region]
+        metric_dict['NSs'] = [round(var_metrics.NS(graph, i - graph.first_unfixed_region), 4) for i in labels if
+                              i >= graph.first_unfixed_region]
         metric_dict['average NS'] = round(var_metrics.average_NS(graph), 4)
-        metric_dict['new NSs'] = [round(var_metrics.NS(graph, i-graph.first_unfixed_region, NS_boundary_limit), 4) for i in labels if i>=graph.first_unfixed_region]
+        metric_dict['new NSs'] = [round(var_metrics.NS(graph, i - graph.first_unfixed_region, NS_boundary_limit), 4) for
+                                  i in labels if i >= graph.first_unfixed_region]
         metric_dict['average new NS'] = round(var_metrics.average_NS(graph, NS_boundary_limit), 4)
-        metric_dict['new "b"s'] = [var_metrics.find_b(graph, i-graph.first_unfixed_region, NS_boundary_limit) for i in labels if i>=graph.first_unfixed_region]
+        metric_dict['new "b"s'] = [var_metrics.find_b(graph, i - graph.first_unfixed_region, NS_boundary_limit) for i in
+                                   labels if i >= graph.first_unfixed_region]
     return metric_dict
 
 
@@ -61,7 +68,7 @@ def update_result_dict(graph, NS_boundary_limit=0):
             l.append(round(metric, 3))
         except:
             l.append('-')
-    result_dict[str(n+1)] = l
+    result_dict[str(n + 1)] = l
 
 
 def report_results_summary(address=None):
@@ -74,7 +81,7 @@ def report_results_summary(address=None):
 
 
 def make_partitions(graph, max_clusters):
-    for i in range(max_clusters-1):
+    for i in range(max_clusters - 1):
         initial_segmentation.get_segments(graph)
     graphs = list()
     graphs.append(copy.deepcopy(graph))
@@ -84,7 +91,7 @@ def make_partitions(graph, max_clusters):
     answers = dict()
     for i in range(len(graphs)):
         NS, TV = get_metrics(graphs[i])
-        answers[max_clusters-i] = graphs[i].labels, NS, TV
+        answers[max_clusters - i] = graphs[i].labels, NS, TV
     # todo use NSs to find the optimal number of clusters
     # todo include boundary_adjustment
     return answers
@@ -95,9 +102,39 @@ def get_segment_IDs(graph, edgeID_list):
     labels = np.unique(graph.labels)
     lookup = dict()
     for i in labels:
-        args = np.argwhere(graph.labels==i)
+        args = np.argwhere(graph.labels == i)
         args = args.flatten()
         lookup[i] = list(edgeID_list[args])
     return lookup
 
+
+def cursor_update_segment_ID(graph, edge_list, edge_id, new_NS=True, NS_boundary_limit=0):
+    index = list(edge_list).index(edge_id)
+    labels_list = np.copy(graph.labels)
+    label = labels_list[index]
+    print(f'{"~.~."*5}\n id: {edge_id}, label : {label}')
+    neighbors = graph.get_neighbor_indices_and_regions(index)  # contains neighbor_index: neighbor_region_id pairs
+    neighbors = {edge_list[idx]: neighbors[idx] for idx in neighbors.keys()}
+    # contains neighbor_edge_id: neighbor_region_id pairs
+    print(f'neighbor edges and their region IDs: {neighbors}')
+
+    valid_options = list(np.unique(list(neighbors.values())))  # our options are the neighbor_IDs of selected link
+    # todo maybe we simply need this: valid_options = list(np.unique(graph.labels))
+    if label in valid_options: valid_options.remove(label)  # current label is not an option
+    valid_options.append(np.max(graph.labels) + 1)  # in case of building a new segment
+
+    IN = input(f' -- Enter the new region number from {valid_options} or anything else to cancel: ')
+
+    try:
+        IN = int(IN)
+        if IN in valid_options:
+            labels_list[index] = IN
+            graph.set_labels(labels_list)
+            print(f'Change in the label of {edge_id}: {label} -> {IN} \n   ----- NEW METRICS----')
+            print_metrics(graph, new_NS=new_NS, NS_boundary_limit=NS_boundary_limit)
+        else:
+            print(f'No action on edge: {edge_id}')
+    except:
+        print(f'No action on edge: {edge_id}')
+    print(' -- Select a new edge or close the window -- ')
 

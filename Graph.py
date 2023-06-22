@@ -39,6 +39,10 @@ class Graph:
             den = np.delete(den, args_to_delete)
             return _get_similarity_matrix(dis, den)
 
+    def get_neighbor_indices_and_regions(self, edge_id):
+        neighbors_idx = np.argwhere(self.adjacency[edge_id] == 1).flatten()
+        return {index: self.labels[index] for index in neighbors_idx}
+
 
 def _preprocess_network(adj_mat, densities):
     # dist_mat = _get_distance_matrix(adj_mat)
