@@ -150,7 +150,7 @@ def detect_marginal_edges(cut_result_name, threshold=20):
     Report all the edge IDs if those are marginal
     :param threshold: the threshold to detect marginal links.
             E.g., 20 means we tag those regions with fewer than 20 edges,
-            and those edge IDs will be recorded in the output file `./output/marginal_edgeID.txt`
+            and those edge IDs will be recorded in the output file `./output/marginal_edgeID_new_simulation.txt`
     :param cut_result_name: e.g., ./output/seattle_cut.txt,
             which saves the NCut results by the format: region_ID \t edge_ID
     :return: No return. Save all the marginal edge IDs by the format: edgeID
@@ -163,7 +163,7 @@ def detect_marginal_edges(cut_result_name, threshold=20):
             region.append(int(tmp[0]))
             edge.append(tmp[1])
 
-    with open("./output/marginal_edgeID.txt", 'a') as r:
+    with open("./output/marginal_edgeID_new_simulation.txt", 'a') as r:
         for i in range(max(region)):
             if region.count(i+1) < threshold:
                 idx = [j for j in range(len(region)) if region[j] == i+1]
@@ -171,4 +171,4 @@ def detect_marginal_edges(cut_result_name, threshold=20):
                     r.write("{}\n".format(edge[idx[j]]))
 
     print('Please add the following to config.yaml: edges_to_remove_name: "{}"'.format(
-        "./output/marginal_edgeID.txt"))
+        "./output/marginal_edgeID_new_simulation.txt"))

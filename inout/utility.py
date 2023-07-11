@@ -36,7 +36,6 @@ def get_edge_index(edges_diction, edge_id):
 
 
 def make_adjacency(net, edges_diction):
-    # todo needs double checking
     n_edges = len(edges_diction.keys())
     adjacency_mat = np.zeros((n_edges, n_edges), dtype=int)
     raw_edges = net.getEdges()

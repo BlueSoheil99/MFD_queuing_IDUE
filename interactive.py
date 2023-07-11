@@ -11,16 +11,37 @@ from logic.initial_segmentation import _get_segments
 
 
 input_addresses = "config files/config.yaml"
-NS_boundary_limit = 8
-Merge_boundary_limit = 8
+NS_boundary_limit = 0
+Merge_boundary_limit = 0
 MERGING_alpha = 0  # DO NOT change it. it's not useful anymore. I should remove it later.
 MFD_start_time = 18000.00
 MFD_end_time = 36000.00
+
+summary_output_address = f'output/results-interactive.xlsx'
+
 
 net, edges, densities, adj_mat, labels = io.get_network(input_addresses)
 graph = Graph(adj_mat, densities, labels)
 # graph.smooth_densities(median=True, gaussian=True)
 # densities = graph.densities
+
+# labels = []
+# for i in range(len(edges)):
+#     edge = edges[i]
+#     neighbors = graph.get_neighbor_indices_and_regions(i)
+#     if len(neighbors)>1:
+#         labels.append(0)
+#     if len(neighbors) == 1:
+#         labels.append(1)
+#     if len(neighbors) == 0:
+#         labels.append(2)
+# graph.labels = labels
+
+# import datetime
+# date_time = str(datetime.datetime.now())
+# with open(f'data/config data/valid_edges_{date_time}.txt', 'w') as f:
+#     for edge in edges:
+#         f.write(edge+'\n')
 
 io.show_network(net, edges, graph.labels)
 
@@ -65,6 +86,11 @@ while True:
         segment_ids = logic.get_segment_IDs(graph, list(edges))
         MFD.MFD_plotter(segment_ids, MFD_start_time, MFD_end_time, separated=sep, normalized=norm, flow_vs_den=True)
 
+    elif command == 'number_production':
+        boundary_ids = logic.get_boundary_IDs(graph, edges, get_neighbors=True)
+        segment_ids = logic.get_segment_IDs(graph, list(edges))
+        MFD.MFD_plotter((segment_ids, boundary_ids), MFD_start_time, MFD_end_time, separated=sep, normalized=norm, num_vs_prod=True)
+
     elif command == 'cut':
         command2 = IN[1]
         if command2[-1] == 'x':
@@ -74,6 +100,8 @@ while True:
                 print(np.unique(graph.labels))
                 print('members of the new segment:', sum(graph.labels == max(graph.labels)))
                 logic.print_metrics(graph, new_NS=True, NS_boundary_limit=NS_boundary_limit)
+                logic.update_result_dict(graph, NS_boundary_limit)
+
         else:
             parent = int(command2)
             _get_segments(graph, parent)
@@ -88,6 +116,8 @@ while True:
                 merging.merge(graph, alpha=MERGING_alpha, min_boundary=Merge_boundary_limit)
                 print(np.unique(graph.labels))
                 logic.print_metrics(graph, new_NS=True, NS_boundary_limit=NS_boundary_limit)
+                logic.update_result_dict(graph, NS_boundary_limit)
+
         else:
             indices = IN[1]
             indices = indices.split(',')
@@ -108,4 +138,13 @@ while True:
                     f.write('{}\t{}\n'.format(str(i), edges_tmp[members_id[k][0]]))
                     print("running %i")
         f.close()
+
+    elif command == 'results':
+        if len(IN) ==2:
+            if IN[1] == 'update':
+                logic.update_result_dict(graph, NS_boundary_limit)
+                print('results updated')
+            elif IN[1] == 'write':
+                results = logic.report_results_summary(summary_output_address)
+                print('results written')
 

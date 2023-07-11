@@ -127,7 +127,8 @@ def _smooth(feature_names, edge_data, neighbor_data, median, gaussian):
 
 if __name__ == '__main__':
     ## making simple picke file
-    create_simple_pickle_file()
+    create_simple_pickle_file(src_adr='data/edge_data_output_min.xml',
+                              out_adr="data/edge_data_output_min.pickle")
 
     ## making smoothed pickle file
     # _, list_of_edges, _, adjacency_matrix = io_handler.get_network()

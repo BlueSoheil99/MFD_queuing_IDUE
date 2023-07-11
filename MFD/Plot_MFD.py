@@ -5,14 +5,17 @@ import pickle
 import io_handler as io
 
 # codes for creating .pickle files are transferred into pickle_creator.py
-address = "Data/uniques_interval_data.pickle"
+# address_edge_data = "Data/uniques_interval_data.pickle" this is the older simulation
+# address_edge_data = "Data/uniques_interval_data_new.pickle"  this is the old simulation!
+# address_edge_vehicles = "data/edge_vehicle_output_min_old.pickle" # for the old simulation
+address_edge_data = "Data/edge_data_output_min.pickle"
+address_edge_vehicles = "data/edge_vehicle_output_min.pickle"
 
 input_addresses = "config files/config.yaml"
 net, _, _, _, _ = io.get_network(input_addresses)
 
-with open(address, "rb") as f:
-    edge_stats = pickle.load(f)
-    f.close()
+edge_stats = None  # it contains edge_data output
+edge_vehicle_stats = None  # it contains my traci output. shows the vehicles included in each link in each minute
 
 # Define markers and colors for each group
 markers = ["*", "s", "^", "D", "x", "+", "o", "^"]
@@ -20,10 +23,18 @@ sizes = [3, 3, 3, 3, 3, 3]
 cmap = plt.cm.tab10  # Define the colormap
 
 
+def open_pickle(address: str):
+    with open(address, "rb") as f:
+        file = pickle.load(f)
+        f.close()
+    return file
+
+
 def MFD_plotter(group_dict, start_time, end_time, separated=False, normalized=True,
-                mfd=False, mfd1=False, speed_vs_den=False, flow_vs_den=False):
+                mfd=False, mfd1=False, speed_vs_den=False, flow_vs_den=False, num_vs_prod=False):
     if separated:
-        r = (len(group_dict.keys())+1) // 2
+        if num_vs_prod: r = (len(group_dict[0].keys())+1) // 2
+        else: r = (len(group_dict.keys())+1) // 2
         if normalized:
             fig = plt.figure()
             gs = fig.add_gridspec(r, 2, hspace=0, wspace=0)
@@ -45,14 +56,16 @@ def MFD_plotter(group_dict, start_time, end_time, separated=False, normalized=Tr
         _plot_speed_density_curve(group_dict, start_time, end_time, axs=axs, separated=separated, normalized=normalized)
     if flow_vs_den:
         fig.suptitle("Aggregated Flow Rate (q) vs. Aggregated Density (k)")
-        # plt.xlabel('veh/km/lane')
-        # plt.ylabel('veh/hr')
         _plot_flow_density_curve(group_dict, start_time, end_time, axs=axs, separated=separated, normalized=normalized)
-
+    if num_vs_prod:
+        fig.suptitle("production rate vs. number of vehicles")
+        _plot_number_production_curve(group_dict, start_time, end_time, axs=axs, separated=separated, normalized=normalized)
     plt.show()
 
 
 def MFD_plotter_combined(segment_ids, MFD_start_time, MFD_end_time):
+    # todo it's not complete and not working
+
     # fig, axs = plt.subplots(2, 3, figsize=(24, 4))
     # fig.subplots_adjust(left=0.05, right=0.955, wspace=0.4, hspace=0.25, bottom=0.14, top=0.85)
     # fig, axs = plt.subplots(1, 4, figsize=(28, 6))
@@ -80,7 +93,39 @@ def MFD_plotter_combined(segment_ids, MFD_start_time, MFD_end_time):
     plt.show()
 
 
+def _modify_appearance(axs, number_of_plots, separated, normalized, xlabel, ylabel):
+    if separated:
+        if number_of_plots % 2 == 1:
+            axs[number_of_plots//2, 1].remove()
+        for i, ax in enumerate(axs.flat):
+            ax.legend()
+            ax.set_xlim(left=0)
+            ax.set_ylim(bottom=0)
+            if i%2 == 0:
+                ax.set(ylabel=ylabel)
+            if i in [number_of_plots-1, number_of_plots-2]:
+                ax.set(xlabel=xlabel)
+            if normalized:
+                ax.label_outer()
+    else:
+        ax = axs
+        # Set x and y axis label font size and weight
+        ax.set_xlabel(xlabel, fontsize=14, fontweight="bold")
+        ax.set_ylabel(ylabel, fontsize=14, fontweight="bold")
+        # Set x and y axis tick font size and weight
+        ax.tick_params(axis="x", labelsize=12, which="both", direction="in", bottom=True, top=True, left=True,
+                       right=True)
+        ax.tick_params(axis="y", labelsize=12, which="both", direction="in", bottom=True, top=True, left=True,
+                       right=True)
+        ax.set_xlim(left=0)
+        ax.set_ylim(bottom=0)
+        ax.legend()
+
+
 def _plot_mfd(group_dict, start_time, end_time, axs, separated=False, normalized=True):
+    global edge_stats
+    if edge_stats is None:edge_stats = open_pickle(address_edge_data)
+
     for i, (group_id, edge_list) in enumerate(group_dict.items()):
         tnvehs_group = []
         tvkpm_group = []
@@ -145,36 +190,10 @@ def _plot_mfd(group_dict, start_time, end_time, axs, separated=False, normalized
     _modify_appearance(axs, len(group_dict), separated, normalized, xlabel='Number of Vehicles', ylabel='veh-km/min')
 
 
-def _modify_appearance(axs, number_of_plots, separated, normalized, xlabel, ylabel):
-    if separated:
-        if number_of_plots % 2 == 1:
-            axs[number_of_plots//2, 1].remove()
-        for i, ax in enumerate(axs.flat):
-            ax.legend()
-            ax.set_xlim(left=0)
-            ax.set_ylim(bottom=0)
-            if i%2 == 0:
-                ax.set(ylabel=ylabel)
-            if i in [number_of_plots-1, number_of_plots-2]:
-                ax.set(xlabel=xlabel)
-            if normalized:
-                ax.label_outer()
-    else:
-        ax = axs
-        # Set x and y axis label font size and weight
-        ax.set_xlabel(xlabel, fontsize=14, fontweight="bold")
-        ax.set_ylabel(ylabel, fontsize=14, fontweight="bold")
-        # Set x and y axis tick font size and weight
-        ax.tick_params(axis="x", labelsize=12, which="both", direction="in", bottom=True, top=True, left=True,
-                       right=True)
-        ax.tick_params(axis="y", labelsize=12, which="both", direction="in", bottom=True, top=True, left=True,
-                       right=True)
-        ax.set_xlim(left=0)
-        ax.set_ylim(bottom=0)
-        ax.legend()
-
-
 def _plot_speed_density_curve(group_dict, start_time, end_time, axs, separated=False, normalized=True):
+    global edge_stats
+    if edge_stats is None: edge_stats = open_pickle(address_edge_data)
+
     for i, (group_id, edge_list) in enumerate(group_dict.items()):
         tnvehs_group = []
         tvkpm_group = []
@@ -257,6 +276,9 @@ def _plot_speed_density_curve(group_dict, start_time, end_time, axs, separated=F
 
 
 def _plot_flow_density_curve(group_dict, start_time, end_time, axs, separated=False, normalized=True):
+    global edge_stats
+    if edge_stats is None: edge_stats = open_pickle(address_edge_data)
+
     for i, (group_id, edge_list) in enumerate(group_dict.items()):
         tnvehs_group = []
         tvkpm_group = []
@@ -351,6 +373,8 @@ def _plot_flow_density_curve(group_dict, start_time, end_time, axs, separated=Fa
 
 
 def _plot_mfd_type1(group_dict, start_time, end_time, axs, separated=False, normalized=True):
+    global edge_stats
+    if edge_stats is None: edge_stats = open_pickle(address_edge_data)
 
     for i, (group_id, edge_list) in enumerate(group_dict.items()):
         tnvehs_group = []
@@ -438,5 +462,109 @@ def _plot_mfd_type1(group_dict, start_time, end_time, axs, separated=False, norm
 
     _modify_appearance(axs, len(group_dict), separated, normalized,
                        xlabel='No of vehicles (n)', ylabel='Aggregated Flow Rate (q) - veh/hr')
+
+
+def _plot_number_production_curve(data, start_time, end_time, axs, separated=False, normalized=True):
+    """
+    :param data: it's (group_dict, seg_boundary_dict)
+    seg_dict = {segment_id: edge_IDs included}
+    seg_boundary_dict = {seg id: {boundary edge id: {neighbors of that edge: seg_id for each neighbor}}
+
+    :param start_time:
+    :param end_time:
+    :param axs:
+    :param separated:
+    :param normalized:
+    :return:
+
+    OBJECTIVES:
+        for each region:
+            for each minute:
+                find number of all vehicles inside
+                find production rate (number of vehicles going out of the region)
+            draw a (number,production) point
+
+    PROCEDURE:
+        for each region
+            for minute, edge_vehicle_dict in edge_vehicle_stats:
+                production = set()
+                total_vehicles = set()
+                for edge in region:
+                    total vehicles.add(unseen edge_vehicle_dict[edge])
+                    if edge in boundaries_of_region:
+                        production.add(trips/vehicle IDs going from segment TO its neighbor)
+    """
+
+    global edge_vehicle_stats
+    if edge_vehicle_stats is None: edge_vehicle_stats = open_pickle(address_edge_vehicles)
+
+    seg_dict = data[0]
+    seg_boundary_dict = data[1]
+
+    for i, (group_id, segment_edges) in enumerate(seg_dict.items()):  # for each region
+        tnvehs_segment = []
+        tproduction_segment = []
+
+        for interval_id, edges_data in edge_vehicle_stats.items():  # for each minute
+            if float(interval_id)*60+18000 <= start_time or float(interval_id)*60+18000 > end_time:
+                continue
+            total_vehicles = list()  # todo make it a set later.
+            total_production = list()
+
+            for edge_id in segment_edges:
+                if edge_id in edges_data.keys():  # if vehicles have been existed on this edge in this time interval
+                    edge_vehicles = edges_data[edge_id]  # vehicles that traveled in this edge in this time interval
+                    total_vehicles.extend(edge_vehicles)  # todo remove duplicates here instead of later
+###########################
+                    if edge_id in seg_boundary_dict[group_id].keys():  # if this edge is a boundary link
+                        neighbors = seg_boundary_dict[group_id].get(edge_id)  # contains dict of neighbors and seg_IDs
+                        outgoing_neighbors = [e.getID() for e in net.getEdge(edge_id).getOutgoing().keys()]
+
+                        # finding the outgoing neighbors into other regions and save the trips they were involved in
+                        outgoing_trips = list()
+                        for neighbor in outgoing_neighbors:
+                            if neighbors.get(neighbor) is not None:  # if the neighbor is not a minor/deleted street
+                                neighbor_seg = neighbors[neighbor]
+                                if neighbor_seg != group_id:  # if the neighbor is in another region
+                                    if edges_data.get(neighbor) is not None:
+                                        outgoing_trips.extend(edges_data[neighbor])
+                        outgoing_trips = set(outgoing_trips)
+
+                        # finding the trips that involved both our boundary link and a link in a neighbor region
+                        edge_production = list()  # edge_outgoing_vehicles
+                        for trip in edge_vehicles:
+                            if trip in outgoing_trips:
+                                edge_production.append(trip)
+                        total_production.extend(edge_production)
+###########################
+            # remove duplicates from total_vehicles and adding the number vs. production pair into our segment lists
+            total_vehicles = set(total_vehicles)
+            tnvehs_segment.append(len(total_vehicles))
+            tproduction_segment.append(len(total_production))
+
+
+        # todo double check the units - production is not currently veh/hr
+        # Use different marker and size for each group
+        marker = markers[i % len(markers)]
+        size = sizes[i % len(sizes)]
+        if separated:
+            if len(axs) >= 2:
+                ax = axs[i // 2, i % 2]
+            else:
+                ax = axs[i % 2]
+        else:
+            ax = axs
+
+        # fit a polynomial -number of vehicles vs. production rate
+        polyfit_s_d = np.polyfit(tnvehs_segment, tproduction_segment, 3)  # third order
+        x_curve = np.linspace(min(tnvehs_segment), max(tnvehs_segment)+10, 1000)
+        y_curve = np.polyval(polyfit_s_d, x_curve)
+        ax.scatter(tnvehs_segment, tproduction_segment, label=f"Region {group_id}", marker=marker, s=size, color=cmap(i))
+        ax.plot(x_curve, y_curve, color=cmap(i), linewidth=0.6)
+        # ax.plot(tdensity, polyline_s_d + std_dev_s_d, '--', color='k')
+        # ax.plot(tdensity, polyline_s_d - std_dev_s_d, '--', color='k')
+
+    _modify_appearance(axs, len(seg_dict), separated, normalized,
+                       xlabel='# of vehicles', ylabel='production rate - veh/hr')
 
 

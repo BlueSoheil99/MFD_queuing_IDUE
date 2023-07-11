@@ -39,9 +39,32 @@ class Graph:
             den = np.delete(den, args_to_delete)
             return _get_similarity_matrix(dis, den)
 
-    def get_neighbor_indices_and_regions(self, edge_id):
-        neighbors_idx = np.argwhere(self.adjacency[edge_id] == 1).flatten()
+    def get_neighbor_indices_and_regions(self, edge_index):
+        neighbors_idx = np.argwhere(self.adjacency[edge_index] == 1).flatten()
         return {index: self.labels[index] for index in neighbors_idx}
+
+    def get_boundary_indices(self, get_neighbors=False):
+        # returns a dictionary: keys: segment IDs,
+        #                       values: {boundary edges for each segment:their neighbors and their segments}
+        # if you want neighbors of boundaries: get_neighbors=True
+        labels = np.unique(self.labels)
+        boundaries_and_neighbors = dict()
+        for i in labels:
+            region_boundaries_neighbors = dict()
+            region_edges = np.argwhere(self.labels == i).flatten()
+            for edge_index in region_edges:
+                neighbors = self.get_neighbor_indices_and_regions(edge_index)
+                # contains "neighbor_index: neighbor_region_id" pairs
+                for k, v in neighbors.items():
+                    if v != i:
+                        region_boundaries_neighbors[edge_index] = neighbors
+                        break
+            boundaries_and_neighbors[i] = region_boundaries_neighbors.copy()
+
+        if get_neighbors:
+            return boundaries_and_neighbors
+        else:
+            return {key: list(value.keys()) for key, value in boundaries_and_neighbors.items()}
 
 
 def _preprocess_network(adj_mat, densities):

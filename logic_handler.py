@@ -108,6 +108,22 @@ def get_segment_IDs(graph, edgeID_list):
     return lookup
 
 
+def get_boundary_IDs(graph, edgeID_array, get_neighbors=False):
+    old_dict = graph.get_boundary_indices(get_neighbors=get_neighbors)
+    new_dict = dict()
+    for seg_id, seg_boundary_indices in old_dict.items():
+        if get_neighbors:
+            # seg_boundary_indices -> set of "boundary index: {its neighbors: their region ids}" pairs
+            replacement = dict()
+            for boundary_index, neighbors in seg_boundary_indices.items():
+                replacement[edgeID_array[boundary_index]] = {edgeID_array[idx]:neighbors[idx] for idx in neighbors.keys()}
+        else:
+            # seg_boundary_indices -> just a list of  "boundary indices"
+            replacement = [edgeID_array[idx] for idx in seg_boundary_indices]
+        new_dict[seg_id] = replacement
+    return new_dict
+
+
 def cursor_update_segment_ID(graph, edge_list, edge_id, new_NS=True, NS_boundary_limit=0):
     index = list(edge_list).index(edge_id)
     labels_list = np.copy(graph.labels)
