@@ -8,7 +8,7 @@ Gaussian_Edge_Weight = 3
 Gaussian_Neighbor_Weight = 1
 
 
-def create_simple_pickle_file(src_adr='data/edge_data_output._1min_interval.xml',
+def create_simple_pickle_file(src_adr='data/edge_data_output.xml',
                               out_adr="data/uniques_interval_data_occupancy.pickle"):
     create_smoothed_pickle_file(None, None, src_adr, out_adr, False, False)
     # tree = ET.parse(src_adr)
@@ -58,7 +58,19 @@ def create_smoothed_pickle_file(adjacency_mat, edge_array, src_adr='data/edge_da
         features = ["sampledSeconds", "laneDensity", "speed", "occupancy"]
         for edge in interval.iter("edge"):
             edge_id = edge.get("id")
-            edge_data = {feature: 0.0 if edge.get(feature) is None else float(edge.get(feature)) for feature in features}
+
+            # # 136 MB
+            # edge_data = {feature: 0.0 if edge.get(feature) is None else float(edge.get(feature)) for feature in features}
+
+            # # 25 MB
+            edge_data = {feature: None if edge.get(feature) is None else float(edge.get(feature)) for feature in features}
+
+            # # 30 MB
+            # edge_data = {feature: 0.0 if edge.get(feature) is None else edge.get(feature) for feature in features}
+
+            # # similar to Pranati, 93 MB
+            # edge_data = {feature: edge.get(feature) for feature in features}
+
             unique_edges[edge_id] = edge_data
 
         # smoothing the data for each interval
@@ -127,10 +139,27 @@ def _smooth(feature_names, edge_data, neighbor_data, median, gaussian):
 
 if __name__ == '__main__':
     ## making simple picke file
-    create_simple_pickle_file(src_adr='data/edge_data_output_min.xml',
-                              out_adr="data/edge_data_output_min.pickle")
+    # create_simple_pickle_file(src_adr='data/edge_data_output_min.xml',
+    #                           out_adr="data/edge_data_output_min.pickle")
 
     ## making smoothed pickle file
     # _, list_of_edges, _, adjacency_matrix = io_handler.get_network()
     # print(list_of_edges)
     # create_smoothed_pickle_file(adjacency_matrix, list_of_edges, median=True, gaussian=True)
+
+
+    #
+    # with open("data/test 0.pickle", "rb") as f:
+    #     file_0 = pickle.load(f)
+    #     f.close()
+    # with open("data/test 1.pickle", "rb") as f:
+    #     file_1 = pickle.load(f)
+    #     f.close()
+    # with open("data/test 2.pickle", "rb") as f:
+    #     file_2 = pickle.load(f)
+    #     f.close()
+    with open("data/edge_vehicle_output_min.pickle", "rb") as f:
+        file_p = pickle.load(f)
+        f.close()
+    # print('done')
+
