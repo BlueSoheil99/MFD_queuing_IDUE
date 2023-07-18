@@ -9,6 +9,7 @@ import io_handler as io
 # address_edge_data = "Data/uniques_interval_data_new.pickle"  this is the old simulation!
 # address_edge_vehicles = "data/edge_vehicle_output_min_old.pickle" # for the old simulation
 address_edge_data = "Data/edge_data_output_min.pickle"
+address_vehicle_arrival_data = "Data/edge_arrived_vehicle_output_min.pickle"
 address_edge_vehicles = "data/edge_vehicle_output_min.pickle"
 
 input_addresses = "config files/config.yaml"
@@ -16,6 +17,7 @@ net, _, _, _, _ = io.get_network(input_addresses)
 
 edge_stats = None  # it contains edge_data output
 edge_vehicle_stats = None  # it contains my traci output. shows the vehicles included in each link in each minute
+vehicle_arrival_stats = None
 
 # Define markers and colors for each group
 markers = ["*", "s", "^", "D", "x", "+", "o", "^"]
@@ -122,7 +124,13 @@ def _modify_appearance(axs, number_of_plots, separated, normalized, xlabel, ylab
         ax.legend()
 
 
-def get_total_nvehs(minute: int, edge_list: list):
+def _get_total_nvehs(minute: int, edge_list: list):
+    '''
+    Not used. number of vehicles should be continuous and not discrete. Should be removed actually
+    :param minute:
+    :param edge_list:
+    :return:
+    '''
     global edge_vehicle_stats
     if edge_vehicle_stats is None: edge_vehicle_stats = open_pickle(address_edge_vehicles)
 
@@ -511,9 +519,9 @@ def _plot_number_production_curve(data, start_time, end_time, axs, separated=Fal
                         production.add(trips/vehicle IDs going from segment TO its neighbor)
     """
 
-    global edge_vehicle_stats, edge_stats
+    global edge_vehicle_stats, vehicle_arrival_stats
     if edge_vehicle_stats is None: edge_vehicle_stats = open_pickle(address_edge_vehicles)
-    if edge_stats is None: edge_stats = open_pickle(address_edge_data)
+    if vehicle_arrival_stats is None: vehicle_arrival_stats = open_pickle(address_vehicle_arrival_data)
 
     seg_dict = data[0]
     seg_boundary_dict = data[1]
@@ -521,25 +529,27 @@ def _plot_number_production_curve(data, start_time, end_time, axs, separated=Fal
     for i, (group_id, segment_edges) in enumerate(seg_dict.items()):  # for each region
         tnvehs_segment = []
         tproduction_segment = []
+        arrived = 0  # debug
 
         for interval_id, edges_data in edge_vehicle_stats.items():  # for each minute
             if float(interval_id)*60-60+18000 < start_time or float(interval_id)*60+18000 > end_time:
                 continue
-            total_vehicles = list()  # todo make it a set later.
             total_production = list()
 
+            # # finding out the production of the edge
             for edge_id in segment_edges:
                 if edge_id in edges_data.keys():  # if vehicles have been existed on this edge in this time interval
-                    # # finding out the total number of vehicles on this edge
                     edge_vehicles = edges_data[edge_id]  # vehicles that traveled in this edge in this time interval
-                    total_vehicles.extend(edge_vehicles)  # todo remove duplicates here instead of later
-
-                    # # finding out the production of the edge
                     edge_production = list()  # edge_outgoing_vehicles
-                    # # todo the trips being ended here in this edge
-                    # for veh in edge_vehicles:
-                    #     if veh in trip_ended[edge_id]:
-                    #         edge_production.append(veh)
+
+                    # # adding the trips being ended here in this edge in this minute
+                    if vehicle_arrival_stats.get(edge_id) is not None:
+                        for veh in vehicle_arrival_stats[edge_id]:
+                            if veh in edge_vehicles:
+                                # print(f'{veh} is arrived and included in production')
+                                edge_production.append(veh)
+                                arrived += 1
+
                     # can we have duplicates between here and vehicles going out of region?
 
                     if edge_id in seg_boundary_dict[group_id].keys():  # if this edge is a boundary link
@@ -562,13 +572,12 @@ def _plot_number_production_curve(data, start_time, end_time, axs, separated=Fal
                                 edge_production.append(trip)
                         total_production.extend(edge_production)
             ###########################
-            # remove duplicates from total_vehicles and adding the number vs. production pair into our segment lists
-            # total_vehicles = set(total_vehicles)
-            # tnvehs_segment.append(len(total_vehicles))
-            # #
-            tnvehs_segment.append(_get_cont_tnvehs(interval_id, segment_edges))
-            tproduction_segment.append(len(total_production)/60.0)
+            tnvehs_segment.append(_get_continuous_tnvehs(interval_id, segment_edges))
+            # tproduction_segment.append(len(total_production)/60.0)
+            tproduction_segment.append(len(total_production))
             # todo double check the units - production should be veh/s right?
+
+        # print(f'arrived vehicles in segment {group_id} = {arrived}')
 
         # Use different marker and size for each group
         marker = markers[i % len(markers)]
@@ -591,10 +600,10 @@ def _plot_number_production_curve(data, start_time, end_time, axs, separated=Fal
         # ax.plot(tdensity, polyline_s_d - std_dev_s_d, '--', color='k')
 
     _modify_appearance(axs, len(seg_dict), separated, normalized,
-                       xlabel='# of vehicles', ylabel='production rate - veh/s')
+                       xlabel='# of vehicles', ylabel='production rate - veh/min')
 
 
-def _get_cont_tnvehs(interval, edge_list):
+def _get_continuous_tnvehs(interval, edge_list):
     global edge_stats
     if edge_stats is None: edge_stats = open_pickle(address_edge_data)
     # import pdb
