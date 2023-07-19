@@ -47,7 +47,8 @@ io.show_network(net, edges, graph.labels)
 
 while True:
     IN = input('\nWhat is your command?(examples: cut 0, cut 5x, merge 2,3, merge 4x, '
-               'mfd(   , separated, separated normalized), density_speed, density_flow, show, exp, exit)\n').lower()
+               'mfd(   , separated, separated normalized), density_speed, density_flow, '
+               'number_speed, number_production, show, exp, exit)\n').lower()
     IN = IN.split()
     command = IN[0]
 
@@ -85,6 +86,10 @@ while True:
     elif command == 'density_flow':
         segment_ids = logic.get_segment_IDs(graph, list(edges))
         MFD.MFD_plotter(segment_ids, MFD_start_time, MFD_end_time, separated=sep, normalized=norm, flow_vs_den=True)
+
+    elif command == 'number_speed':
+            segment_ids = logic.get_segment_IDs(graph, list(edges))
+            MFD.MFD_plotter(segment_ids, MFD_start_time, MFD_end_time, separated=sep, normalized=norm, num_vs_speed=True)
 
     elif command == 'number_production':
         boundary_ids = logic.get_boundary_IDs(graph, edges, get_neighbors=True)
