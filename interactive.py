@@ -91,6 +91,10 @@ while True:
             segment_ids = logic.get_segment_IDs(graph, list(edges))
             MFD.MFD_plotter(segment_ids, MFD_start_time, MFD_end_time, separated=sep, normalized=norm, num_vs_speed=True)
 
+    elif command == 'time_number':
+            segment_ids = logic.get_segment_IDs(graph, list(edges))
+            MFD.MFD_plotter(segment_ids, MFD_start_time, MFD_end_time, separated=sep, normalized=norm, time_vs_num=True)
+
     elif command == 'number_production':
         boundary_ids = logic.get_boundary_IDs(graph, edges, get_neighbors=True)
         segment_ids = logic.get_segment_IDs(graph, list(edges))
