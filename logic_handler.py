@@ -80,6 +80,17 @@ def report_results_summary(address=None):
     return df
 
 
+def export_results(labels, edge_IDs, folder_adr='./output/segmentation results/'):
+    for label in np.unique(labels):
+        mask = np.argwhere(labels==label).flatten()
+        edges = edge_IDs[mask]
+        with open(folder_adr+f'{label}.txt', 'w') as f:
+            for edge in edges:
+                f.write(f'{edge}\n')
+            f.close()
+    print()
+
+
 def make_partitions(graph, max_clusters):
     for i in range(max_clusters - 1):
         initial_segmentation.get_segments(graph)

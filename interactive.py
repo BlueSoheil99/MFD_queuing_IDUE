@@ -48,7 +48,7 @@ io.show_network(net, edges, graph.labels)
 while True:
     IN = input('\nWhat is your command?(examples: cut 0, cut 5x, merge 2,3, merge 4x, '
                'mfd(   , separated, separated normalized), density_speed, density_flow, '
-               'number_speed, number_production, show, exp, exit)\n').lower()
+               'number_speed, number_production, show, export, exit)\n').lower()
     IN = IN.split()
     command = IN[0]
 
@@ -157,3 +157,5 @@ while True:
                 results = logic.report_results_summary(summary_output_address)
                 print('results written')
 
+    elif command == 'export':
+        logic.export_results(graph.labels, edges)
