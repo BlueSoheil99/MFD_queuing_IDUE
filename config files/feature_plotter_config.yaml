@@ -2,15 +2,17 @@
 data_folder: "./data/"
 network_name: "Seattle_road_network.net.xml"
 edges_name: "./output/seattlecomp0.txt"
-#info_name: "edge_data_output._1min_interval.xml"
-#info_name: "uniques_interval_data.pickle"
-info_name: "uniques_interval_data_occupancy.pickle"
+info_name: "edge_data_output_min.pickle"
 
-highways_and_tunnels: "./output/highway_tunnel_edgeID.txt"
-minor_links: "./output/minor_edgeID.txt"
-edges_to_remove_name: "./output/marginal_edgeID3.txt"
+
+#minor_links: "./data/config data/for feature plotting/minor_edgeID.txt"
+#minor_links: "./data/config data/for feature plotting/minor_edgeID empty.txt"
+minor_links: "./data/config data/for feature plotting/major_edgeID.txt"
+predetermined_regions_folder: "./data/config data/for feature plotting/side regions"
+edges_to_remove_name: "./data/config data/for feature plotting/marginal_edgeID.txt"
+
 
 # feature that you'd like to read, e.g, density
-feature: "speed"
+feature: "sampledSeconds"
 interval_begin: 18000
 interval_end: 36000

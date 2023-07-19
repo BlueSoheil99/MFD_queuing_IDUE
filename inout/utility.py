@@ -9,7 +9,7 @@ def init_config(fname="config files/config.yaml"):
     file = yaml.safe_load(open(fname))
     data_folder = file["data_folder"]
     network_name = "{}{}".format(data_folder, file["network_name"])
-    feature_name = "{}{}".format(data_folder, file["info_name"])
+    info_name = "{}{}".format(data_folder, file["info_name"])
     feature = file["feature"]
     interval_begin = file["interval_begin"]
     interval_end = file["interval_end"]
@@ -19,7 +19,7 @@ def init_config(fname="config files/config.yaml"):
     # highways_tunnels = file["highways_and_tunnels"]
     predetermined_regions = file["predetermined_regions_folder"]
 
-    return network_name, feature_name, feature, net_edges, interval_begin, interval_end,\
+    return network_name, info_name, feature, net_edges, interval_begin, interval_end,\
         edges_to_remove, minor_links, predetermined_regions
 
 

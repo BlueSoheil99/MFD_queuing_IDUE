@@ -2,6 +2,7 @@ import math
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 import mplcursors
 from inout import plot_network as pln
 from inout import utility as util
@@ -43,11 +44,15 @@ def get_network(input_addresses="config files/config.yaml"):
 
 
 def show_network(net, edges_list, region_id, width_edge=2, alpha=0.5, mapscale=4.0, colormap_name="tab10",
-                 save_adr=None, title='', interactive_func=None):
+                 save_adr=None, title='', interactive_func=None, colorbar_range=None):
     fig, ax = pln.init_plot()
 
-    vmin = min(region_id)
-    vmax = max(region_id)
+    if colorbar_range is None:
+        vmin = min(region_id)
+        vmax = max(region_id)
+    else:
+        vmin = colorbar_range[0]
+        vmax = colorbar_range[1]
 
     if "tab" in colormap_name:
         if colormap_name =='tab10':
@@ -101,9 +106,20 @@ def show_network(net, edges_list, region_id, width_edge=2, alpha=0.5, mapscale=4
                 plt.text(0.1 * (i - 10) + 0.2, 1.03 + 0.1 * (h_layers - 1), str(i), horizontalalignment='center',
                          verticalalignment='center', transform=ax.transAxes,
                          bbox=dict(facecolor=colormap.colors[i], alpha=0.5))
+
+    if colorbar_range is not None:
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes("bottom", size="5%", pad='20%')
+        fig.colorbar(colormap, cax=cax, orientation="horizontal")
+        # fig.colorbar(colormap, cax=cax)
+        cax.xaxis.set_ticks_position("bottom")
+    else:
+        plt.axis('off')
+
     plt.tight_layout()
     plt.title(title)
-    plt.axis('off')
+    # plt.axis('off')
+
     if interactive_func is not None:
         print('interactive map ON')
         # # mplcursors.cursor(links)
