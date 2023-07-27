@@ -550,9 +550,111 @@ def _plot_flow_density_curve(group_dict, start_time, end_time, axs, separated=Fa
         ax.plot(x_curve, y_curve, color=cmap(i), linewidth=0.6)
         # ax.plot(tdensity, polyline_s_d + std_dev_s_d, '--', color='k')
         # ax.plot(tdensity, polyline_s_d - std_dev_s_d, '--', color='k')
+    _modify_appearance(axs, len(group_dict), separated, normalized,
+                           xlabel='veh/km/lane', ylabel='veh/hr')
+
+
+def _plot_number_production_theoretical_curve(group_dict, start_time, end_time, axs, separated=False, normalized=True):
+    global edge_stats
+    if edge_stats is None: edge_stats = open_pickle(address_edge_data)
+
+    for i, (group_id, edge_list) in enumerate(group_dict.items()):
+        tnvehs_group = []
+        tvkpm_group = []
+        tspeed = []
+        tdensity = []
+        tflux = []
+        productions = []
+
+        for interval_id, edges_data in edge_stats.items():
+            if float(interval_id) <= start_time or float(interval_id) > end_time:
+                continue
+            total_nvehs = 0
+            total_vkpm = 0
+            total_weightedspeed = 0
+            total_edge_length = 0
+            total_weighteddensity = 0
+            no_of_edges = 0
+            # total_flux = 0
+
+            for edge_id in edge_list:
+                if edge_id in edges_data:
+                    edge_data = edges_data[edge_id]
+                    speed = edge_data["speed"]
+                    density = edge_data["laneDensity"]
+                    sampled_seconds = edge_data["sampledSeconds"]
+                    Edgelength = net.getEdge(edge_id).getLength()  # this is new edge length
+
+                    # weighted speed = speed*Edgelength
+                    # Sum the weighted speed values for all the edges in the region.Sum the lengths of all the edges in the region.
+                    # Divide the sum of the weighted speed values by the sum of the lengths of all the edges in the region to obtain the region's
+                    if speed is not None and density is not None:
+                        if float(density) > 0:
+                            total_nvehs += float(sampled_seconds) / 60
+                            total_vkpm += float(speed) * float(sampled_seconds) / 1000
+                            # Edgelength = ((float(sampled_seconds) / 60) * 1000) / float(density)  # in m # previous edge length
+                            total_weighteddensity = total_weighteddensity + (float(density)*(float(Edgelength) / 1000)) # in veh
+                            total_weightedspeed = total_weightedspeed + (
+                                    (float(speed) * 3600 / 1000) * (float(Edgelength) / 1000))  # in km/hr
+                            total_edge_length = total_edge_length + (float(Edgelength) / 1000)  # in km
+                            # total_weightedspeed = total_weightedspeed + (float(speed) * float(Edgelength))  # in m/s
+                            # total_edge_length = total_edge_length + (float(Edgelength))  # in m
+                            no_of_edges += 1
+                        else:
+                            Edgelength = 0  # in m
+                            total_weighteddensity = total_weighteddensity  # in veh/km/lane
+                            total_weightedspeed = total_weightedspeed
+                            total_edge_length = total_edge_length  # in km
+                            no_of_edges += 1
+
+            avg_speed = total_weightedspeed / total_edge_length  # km/hr
+            # todo sometimes: ZeroDivisionError: division by zero
+            avg_density = total_weighteddensity / total_edge_length  # veh/km/lane
+            total_flux = avg_speed * avg_density  # veh/hr
+            tnvehs_group.append(total_nvehs)
+            tvkpm_group.append(total_vkpm)
+            tdensity.append(avg_density)
+            tspeed.append(avg_speed)
+            # tflow.append(total_flow)
+            tflux.append(total_flux)
+
+            prod = avg_speed * total_nvehs
+            productions.append(prod)
+
+
+        # Use different marker and size for each group
+        marker = markers[i % len(markers)]
+        size = sizes[i % len(sizes)]
+        # color = colors[i % len(colors)]
+        # size = sizes[i]
+        if separated:
+            if len(axs) >= 2:
+                ax = axs[i // 2, i % 2]
+            else:
+                ax = axs[i % 2]
+        else:
+            ax = axs
+
+        # fit a second order ploynomial -number vs. production
+        polyfit_s_d = np.polyfit(tnvehs_group, productions, 3)
+        # todo show the production rates in terms of a 3degree equation
+        polyline_s_d = np.polyval(polyfit_s_d, tnvehs_group)
+        deviation_s_d = np.abs(polyline_s_d - productions)
+        std_dev_s_d = np.std(deviation_s_d)
+
+        x_curve = np.linspace(min(tnvehs_group), max(tnvehs_group) + 500, 1000)
+        y_curve = np.polyval(polyfit_s_d, x_curve)
+
+        # for no of veh vs veh per km ---per min
+        # ax.scatter(tnvehs_group, tvkpm_group, label=f"Region {group_id}", marker=marker, s=size, color=cmap(i))
+        # for density vs speed ---per min
+        ax.scatter(tnvehs_group, productions, label=f"Region {group_id}", marker=marker, s=size, color=cmap(i))
+        ax.plot(x_curve, y_curve, color=cmap(i), linewidth=0.6)
+        # ax.plot(tdensity, polyline_s_d + std_dev_s_d, '--', color='k')
+        # ax.plot(tdensity, polyline_s_d - std_dev_s_d, '--', color='k')
 
     _modify_appearance(axs, len(group_dict), separated, normalized,
-                       xlabel='veh/km/lane', ylabel='veh/hr')
+                       xlabel='vehicles', ylabel='veh-km/hr')
 
 
 def _plot_mfd_type1(group_dict, start_time, end_time, axs, separated=False, normalized=True):

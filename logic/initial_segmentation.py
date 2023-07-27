@@ -6,11 +6,12 @@ from sklearn.cluster import KMeans
 
 def get_parent_id(graph):
     # todo what are parent's characteristics?
+    alpha = 0.5  # weight for 'number of edges in a segment'
     segments = np.unique(graph.labels)
     segments = segments[segments >= graph.first_unfixed_region]
     variances = [segment_var(graph, i) for i in segments]
     variances = np.sqrt(variances)
-    variances = [(variances[i] + sum(graph.labels == segments[i])) for i in range(len(segments))]
+    variances = [(variances[i]*(1-alpha) + alpha*sum(graph.labels == segments[i])) for i in range(len(segments))]
     p = np.argmax(variances)
 
     # segments = np.unique(graph.labels)

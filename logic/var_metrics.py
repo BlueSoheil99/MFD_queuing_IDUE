@@ -4,17 +4,17 @@ import numpy as np
 def segment_var(graph, segment_id):
     mask = (graph.labels == segment_id)
     n = np.sum(mask > 0)
-    densities = graph.densities[mask]
-    mean = np.sum(densities)/n
-    densities = (densities - mean)**2
-    return np.sum(densities)/n
+    features = graph.densities[mask]
+    mean = np.sum(features) / n
+    features = (features - mean) ** 2
+    return np.sum(features)/n
 
 
 def segment_mean(graph, segment_id):
     mask = (graph.labels == segment_id)
     n = np.sum(mask > 0)
-    densities = graph.densities[mask]
-    return np.sum(densities) / n
+    features = graph.densities[mask]
+    return np.sum(features) / n
 
 
 def find_b(graph, a_id, min_boundary=0):
