@@ -1,0 +1,2 @@
+model_type,time_interval (s),simulation_steps,deman_stop_step
+PQ,0.1,360000,180000
