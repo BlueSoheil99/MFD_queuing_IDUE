@@ -43,8 +43,11 @@ def get_features(edge_list, start_time, end_time, feature_name, data_adr, step_s
         for edge_id in edge_list:
             if edge_id in edges_data:
                 edge_data = edges_data[edge_id]
-                feature = edge_data[feature_name]
-                feature_list.append(feature)
+                if edge_data.get(feature_name) is None:
+                    feature_list.append('0')
+                else:
+                    feature = edge_data[feature_name]
+                    feature_list.append(feature)
             else:
                 feature_list.append(None)
 
@@ -127,7 +130,7 @@ if __name__ == "__main__":
     '''
     net, edges, feature_name, interval_begin, interval_end, data_adr = get_network()
     matrix, time_titles = get_features(edges, interval_begin, interval_end, feature_name, data_adr, step_size=5)
-    output_path = f'output/{feature_name}_{interval_begin}_{interval_end}_5_just minor.gif'
+    output_path = f'output/{feature_name}_{interval_begin}_{interval_end}_5.gif'
 
     quantiles = show_statistics(matrix, int(len(matrix)/2))
     ## making a buffer of plots and NOT saving each plot
@@ -135,9 +138,12 @@ if __name__ == "__main__":
     # make_gif(buffers, output_path)
 
     ## making the gif using saved images and NOT using an io buffer
-    source_folder = f'output/{feature_name}_just_minor_5_gif_source'
+    source_folder = f'output/{feature_name}_5_gif_source'
+    # source_folder = f'output/{feature_name}_just_minor_5_gif_source'
+    # generate_images(matrix, time_titles, source_folder, feature_name,
+    #                 colormap='Wistia', colormap_range=[0, 90]) #500 was used previously
     generate_images(matrix, time_titles, source_folder, feature_name,
-                    colormap='Wistia', colormap_range=[0, 360])
+                    colormap='Wistia', colormap_range=[0, 100]) #500 was used previously
     # source_folder = f'output/{feature_name}_wo_minor_5_gif_source'
     # generate_images(matrix, time_titles, source_folder, feature_name,
     #                 colormap='Wistia', colormap_range=[0, quantiles[3]])

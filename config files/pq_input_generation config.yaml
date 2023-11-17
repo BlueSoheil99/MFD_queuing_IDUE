@@ -1,6 +1,7 @@
 # where you put the network and density files
 data_folder: "./data/"
-network_name: "Seattle_road_network.net.xml"
+#network_name: "Seattle_road_network.net.xml"
+network_name: "no_alley_Seattle_network_reformed connections.net.xml"
 edges_name: "./output/seattlecomp0.txt"
 info_name: "edge_data_output_hour.xml"
 
@@ -9,11 +10,14 @@ trip_info: "data/tripinfo_output.xml"
 veh_route: "data/vehroute_output.xml"
 pq_input_folder: "output/pq_input/"
 
-#
+# to be used in config.csv
 model_type: 'PQ'
 time_interval (s): '0.1'
-simulation_steps: '324000'
-deman_stop_step: '216000'
+simulation_steps: '324000'  #5*3600*10  basically, the end of our simulation
+deman_stop_step: '216000'  # 5*3600*10
+
+# to be used in demand.mat
+SUMO_sim_start: '18000'  # should match .sumocfg file
 
 minor_links: "./data/config data/minor_edgeID.txt"
 ## for exported results

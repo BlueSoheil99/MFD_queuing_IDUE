@@ -16,7 +16,7 @@ Merge_boundary_limit = 4
 MERGING_alpha = 0  # DO NOT change it. it's not useful anymore. I should remove it later.
 MFD_start_time = 18000.00
 # MFD_end_time = 36000.00
-MFD_end_time = 54000.00
+MFD_end_time = 36000.00
 
 summary_output_address = f'output/results-interactive.xlsx'
 

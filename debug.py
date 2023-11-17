@@ -60,18 +60,18 @@ densities = graph.densities
 # note that in the second smoothing function (Graph._smooth()) we make a new list for densities
 
 ## SHOW DISTRIBUTION(HISTOGRAM) OF DENSITIES
-# show_density_hist(densities, title=f'density after deleting marginal links (8-9)')
+# show_density_hist(densities, title=f'density after deleting marginal links (8-9 am)')
 
 ## SHOW FEATURE(e.g., density) MAP
 # io.show_network(net, edges, np.abs(graph.densities - densities), colormap_name="binary")
-# io.show_network(net, edges, densities, colormap_name="binary")
+io.show_network(net, edges, densities, colormap_name="binary")
 
 ## SHOW ZERO DENSITY MAP
 zeros = np.ones(len(densities)).astype(int)*2
 zeros[densities < 5] = 1
 zeros[densities == 0] = 3  # zero or None values
 # # zeros[densities > 150] = 3
-# io.show_network(net, edges, zeros)
+io.show_network(net, edges, zeros)
 
 ## SHOW DISTRIBUTION OF <5 DENSITIES
 plt.hist(densities[densities < 5], edgecolor='white', bins=20)

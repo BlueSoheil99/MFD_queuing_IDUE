@@ -47,6 +47,7 @@ def MFD_plotter(group_dict, start_time, end_time, separated=False, normalized=Tr
     else:
         fig, axs = plt.subplots()
 
+    fit_lines = None
     #we define number of plots needed
     if mfd:
         _plot_mfd(group_dict, start_time, end_time, axs=axs, separated=separated, normalized=normalized)
@@ -62,7 +63,8 @@ def MFD_plotter(group_dict, start_time, end_time, separated=False, normalized=Tr
         _plot_flow_density_curve(group_dict, start_time, end_time, axs=axs, separated=separated, normalized=normalized)
     if num_vs_prod:
         fig.suptitle("production rate vs. number of vehicles")
-        _plot_number_production_curve(group_dict, start_time, end_time, axs=axs, separated=separated, normalized=normalized)
+        # _plot_number_production_curve(group_dict, start_time, end_time, axs=axs, separated=separated, normalized=normalized)
+        fit_lines = _plot_number_production_theoretical_curve(group_dict, start_time, end_time, axs=axs, separated=separated, normalized=normalized)
     if num_vs_speed:
         fig.suptitle("weighted speed vs. number of vehicles")
         _plot_number_speed_curve(group_dict, start_time, end_time, axs=axs, separated=separated, normalized=normalized)
@@ -70,6 +72,7 @@ def MFD_plotter(group_dict, start_time, end_time, separated=False, normalized=Tr
         fig.suptitle("number of vehicles vs. simulation time")
         _plot_time_number_curve(group_dict, start_time, end_time, axs=axs, separated=separated, normalized=normalized)
     plt.show()
+    return fit_lines
 
 
 def MFD_plotter_combined(segment_ids, MFD_start_time, MFD_end_time):
@@ -557,6 +560,9 @@ def _plot_flow_density_curve(group_dict, start_time, end_time, axs, separated=Fa
 def _plot_number_production_theoretical_curve(group_dict, start_time, end_time, axs, separated=False, normalized=True):
     global edge_stats
     if edge_stats is None: edge_stats = open_pickle(address_edge_data)
+    # seg_boundary_dict = group_dict[1]
+    group_dict = group_dict[0]
+    fit_lines = dict()
 
     for i, (group_id, edge_list) in enumerate(group_dict.items()):
         tnvehs_group = []
@@ -636,7 +642,8 @@ def _plot_number_production_theoretical_curve(group_dict, start_time, end_time, 
             ax = axs
 
         # fit a second order ploynomial -number vs. production
-        polyfit_s_d = np.polyfit(tnvehs_group, productions, 3)
+        polyfit_s_d = np.polyfit(tnvehs_group, productions, 2)
+        fit_lines[group_id] = polyfit_s_d
         # todo show the production rates in terms of a 3degree equation
         polyline_s_d = np.polyval(polyfit_s_d, tnvehs_group)
         deviation_s_d = np.abs(polyline_s_d - productions)
@@ -655,6 +662,7 @@ def _plot_number_production_theoretical_curve(group_dict, start_time, end_time, 
 
     _modify_appearance(axs, len(group_dict), separated, normalized,
                        xlabel='vehicles', ylabel='veh-km/hr')
+    return fit_lines
 
 
 def _plot_mfd_type1(group_dict, start_time, end_time, axs, separated=False, normalized=True):

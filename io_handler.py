@@ -43,6 +43,7 @@ def get_network(input_addresses="config files/config.yaml"):
     return net, array_of_edges, array_of_densities, adjacency_matrix, array_of_labels
 
 
+# def show_network(net, edges_list, region_id, width_edge=2.5, alpha=0.15, mapscale=4.0, colormap_name="tab10",
 def show_network(net, edges_list, region_id, width_edge=2, alpha=0.5, mapscale=4.0, colormap_name="tab10",
                  save_adr=None, title='', interactive_func=None, colorbar_range=None):
     fig, ax = pln.init_plot()

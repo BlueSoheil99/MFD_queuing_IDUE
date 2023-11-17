@@ -109,6 +109,12 @@ def make_partitions(graph, max_clusters):
 
 
 def get_segment_IDs(graph, edgeID_list):
+    '''
+    returns a dictionary of labels as keys, and list of edge_IDs as values
+    :param graph:
+    :param edgeID_list:
+    :return:
+    '''
     edgeID_list = np.array(edgeID_list)
     labels = np.unique(graph.labels)
     lookup = dict()

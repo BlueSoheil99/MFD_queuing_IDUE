@@ -10,6 +10,7 @@ class Graph:
         # self.labels = np.zeros(self.n).astype(int)
         self.labels = label_list
         self.first_unfixed_region = max(label_list)
+        # self.first_unfixed_region = 0
         self.rag = np.zeros((1, 1, 2))  # Region Adjacency Graph.
         # / RAG[0]-> shows number of boundary links/ RAG[1]-> shows difference between mean densities
 
