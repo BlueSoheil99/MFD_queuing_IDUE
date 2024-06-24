@@ -1,15 +1,15 @@
 # where you put the network and density files
 data_folder: "./data/"
 #network_name: "Seattle_road_network.net.xml"
-network_name: "no_alley_Seattle_network_reformed connections.net.xml"
-edges_name: "./output/seattlecomp0.txt"
-#info_name: "Edgetest_6_0411_2_0.xml"  # old 1hour output
+network_name: "Seattle_network_reformed 24Apr02.net.xml"
+edges_name: "./output/seattlecomp0.txt"  # if network is changed run check_handler line 14
 info_name: "edge_data_output_hour.xml"
 
 
 minor_links: "./data/config data/minor_edgeID.txt"
+
 ## for having the whole network
-predetermined_regions_folder: "./data/config data/config for segmentation with predetermined regions/side regions"
+#predetermined_regions_folder: "./data/config data/config for segmentation with predetermined regions/side regions"
 edges_to_remove_name: "./data/config data/config for segmentation with predetermined regions/marginal_edgeID.txt"
 
 ## for having only the downtown/whole network without predetermined segments
@@ -20,13 +20,13 @@ edges_to_remove_name: "./data/config data/config for segmentation with predeterm
 #edges_to_remove_name: "./data/config data/config for normal segmentation/marginal_edgeID_exclude_downtown1.txt"
 
 ## for exported results
-#predetermined_regions_folder: "./data/config data/config for exported results/results"
+predetermined_regions_folder: "./data/config data/config for exported results/results"
 #edges_to_remove_name: "./data/config data/config for exported results/marginal_edgeID.txt"
 
 
-# feature that you'd like to read, e.g, density
-#feature: "laneDensity"
-feature: "occupancy"
+# feature that you'd like to read, e.g, density  ---- in the codes it's usually referred to density
+feature: "laneDensity"
+#feature: "occupancy"
 #feature: "sampledSeconds"
 # interval start time in seconds up to two decimal points (for eg. 8 AM => 8)
 interval_begin: 8

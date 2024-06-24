@@ -1,35 +1,41 @@
 # where you put the network and density files
 data_folder: "./data/"
-#network_name: "Seattle_road_network.net.xml"
-network_name: "no_alley_Seattle_network_reformed connections.net.xml"
+network_name: "Seattle_network_reformed 24Apr02.net.xml"
 edges_name: "./output/seattlecomp0.txt"
 info_name: "edge_data_output_hour.xml"
 
-#
+signal_info_adr: "data/signal_report108000_144000.csv"
+
 trip_info: "data/tripinfo_output.xml"
 veh_route: "data/vehroute_output.xml"
+demand_file: "data/adjusted_alaskanway_od2trips_psrc_vehicle_trips_converted_taz_calibrated_V3.rou.xml"
+#edge_output_minute: "data/edge_data_output_min.pickle"
+veh_route_time: "data/vehRouteTime_output.pickle"
+veh_route_time_cong: "data/vehRouteTime_output_congested.pickle"
 pq_input_folder: "output/pq_input/"
 
 # to be used in config.csv
 model_type: 'PQ'
-time_interval (s): '0.1'
-simulation_steps: '324000'  #5*3600*10  basically, the end of our simulation
-deman_stop_step: '216000'  # 5*3600*10
+time_interval (s): '1'
+simulation_steps: '19800'  # simulation end time // time interval
+demand_stop_step: '18000'  # demand stop end time // time interval
 
 # to be used in demand.mat
-SUMO_sim_start: '18000'  # should match .sumocfg file
+sim_start: '18000'  # should match .sumocfg file
 
 minor_links: "./data/config data/minor_edgeID.txt"
 ## for exported results
 predetermined_regions_folder: "./data/config data/config for exported results/results"
-edges_to_remove_name: "./data/config data/config for exported results/marginal_edgeID.txt"
+#predetermined_regions_folder: "./data/config data/test"
+#predetermined_regions_folder: "./data/config data/config for segmentation with predetermined regions/side regions"
+#edges_to_remove_name: "./data/config data/config for exported results/marginal_edgeID.txt"
+edges_to_remove_name: "./data/config data/config for segmentation with predetermined regions/marginal_edgeID.txt"
+
 
 
 # feature that you'd like to read, e.g, density
-#feature: "laneDensity"
-feature: "occupancy"
+feature: "laneDensity"
+#feature: "occupancy"
 #feature: "sampledSeconds"
-# interval start time in seconds up to two decimal points (for eg. 8 AM => 8)
 interval_begin: 8
-# interval end time in seconds # not used but here if required (for eg. 8 PM => 20)
 interval_end: 9

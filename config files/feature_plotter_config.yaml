@@ -1,8 +1,8 @@
 # where you put the network and density files
 data_folder: "./data/"
-network_name: "Seattle_road_network.net.xml"
+network_name: "Seattle_network_reformed 24Apr02.net.xml"
 edges_name: "./output/seattlecomp0.txt"
-info_name: "edge_data_output_min.pickle"
+info_name: "edge_data_output_min_congested.pickle"
 
 
 minor_links: "./data/config data/for feature plotting/minor_edgeID.txt"
@@ -15,7 +15,6 @@ edges_to_remove_name: "./data/config data/for feature plotting/marginal_edgeID.t
 # feature that you'd like to read, e.g, density
 #feature: "sampledSeconds"
 feature: "laneDensity"
-#feature: "laneDensity"
 interval_begin: 18000
 interval_end: 41400
 #interval_end: 36000
