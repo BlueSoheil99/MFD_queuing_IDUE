@@ -55,7 +55,7 @@ def create_smoothed_pickle_file(adjacency_mat, edge_array, src_adr='data/edge_da
         unique_edges = {}
 
         # reading the data for each interval
-        features = ["sampledSeconds", "laneDensity", "speed", "occupancy"]
+        features = ["sampledSeconds", "laneDensity", "speed", "occupancy", "traveltime", "overlapTraveltime"]
         for edge in interval.iter("edge"):
             edge_id = edge.get("id")
 
@@ -139,8 +139,8 @@ def _smooth(feature_names, edge_data, neighbor_data, median, gaussian):
 
 if __name__ == '__main__':
     ## making simple picke file
-    create_simple_pickle_file(src_adr='data/edge_data_output_min.xml',
-                              out_adr="data/edge_data_output_min.pickle")
+    create_simple_pickle_file(src_adr='data/edge_data_output_min_congested.xml',
+                              out_adr="data/edge_data_output_min_congested.pickle")
 
     ## making smoothed pickle file
     # _, list_of_edges, _, adjacency_matrix = io_handler.get_network()

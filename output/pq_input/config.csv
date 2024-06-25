@@ -1,2 +1,2 @@
-model_type,time_interval (s),simulation_steps,deman_stop_step
-PQ,0.1,324000,216000
+model_type,time_interval (s),simulation_steps,demand_stop_step
+PQ,1,19800,18000

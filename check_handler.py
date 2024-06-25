@@ -2,7 +2,7 @@ import inout.checking as io_check
 
 from inout import utility as util
 
-input_addresses = "config.yaml"
+input_addresses = "config files/config.yaml"
 out_folder = "./output/"
 out_name = "seattle"
 

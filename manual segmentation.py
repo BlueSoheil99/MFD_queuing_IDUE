@@ -3,7 +3,7 @@ import numpy as np
 from Graph import Graph
 import logic_handler as logic
 import io_handler as io
-from MFD import Plot_MFD as MFD
+from inout import Plot_MFD as MFD
 
 
 def files_to_dict(dir_path):

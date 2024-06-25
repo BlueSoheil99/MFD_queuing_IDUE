@@ -5,26 +5,28 @@ from Graph import Graph
 from logic import initial_segmentation, merging
 import io_handler as io
 import logic_handler as logic
-from MFD import Plot_MFD as MFD
+from inout import Plot_MFD as MFD
 from logic.merging import _merge_segments
 from logic.initial_segmentation import _get_segments
 
 
 input_addresses = "config files/config.yaml"
+summary_output_address = f'output/results-interactive.xlsx'
+
 NS_boundary_limit = 4
 Merge_boundary_limit = 4
 MERGING_alpha = 0  # DO NOT change it. it's not useful anymore. I should remove it later.
 MFD_start_time = 18000.00
-# MFD_end_time = 36000.00
 MFD_end_time = 36000.00
 
-summary_output_address = f'output/results-interactive.xlsx'
-
+fixed_regions = [0]  # you can read this from config file. Before working, make sure they're correct
 
 net, edges, densities, adj_mat, labels = io.get_network(input_addresses)
-graph = Graph(adj_mat, densities, labels)
-# graph.smooth_densities(median=True, gaussian=True)
-# densities = graph.densities
+graph = Graph(adj_mat, densities, labels, fixed_regions=fixed_regions)
+
+
+graph.smooth_densities(median=False, gaussian=False)
+io.show_network(net, edges, graph.densities, colormap_name="binary")
 
 # labels = []
 # for i in range(len(edges)):
@@ -38,11 +40,7 @@ graph = Graph(adj_mat, densities, labels)
 #         labels.append(2)
 # graph.labels = labels
 
-# import datetime
-# date_time = str(datetime.datetime.now())
-# with open(f'data/config data/valid_edges_{date_time}.txt', 'w') as f:
-#     for edge in edges:
-#         f.write(edge+'\n')
+
 
 io.show_network(net, edges, graph.labels)
 
@@ -68,6 +66,7 @@ while True:
         func = None
         # if IN[-1] == 'interactive': func = lambda x: logic_handler.cursor_sdhow_segment_ID(x)
         if IN[-1] == 'interactive': func = (lambda x: print(x))
+        logic.print_metrics(graph, new_NS=True, NS_boundary_limit=NS_boundary_limit)
         io.show_network(net, edges, graph.labels, interactive_func=func)
 
     elif command == 'adjustment':

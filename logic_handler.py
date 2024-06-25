@@ -8,7 +8,11 @@ RESULT_CRITERIA = ['average new NS', 'TV', 'TV_n', 'average_cov']
 result_dict = dict()
 
 
+
 def print_metrics(graph, new_NS=True, NS_boundary_limit=0):
+    first_unfixed_region = 0  # todo should be deleted
+    print(f'fixed regions: {graph.fixed_regions}')
+
     labels = np.unique(graph.labels)
     print('means:', str([round(var_metrics.segment_mean(graph, i), 3) for i in labels]))
     # print('variances:', str([round(var_metrics.segment_var(graph, i), 3) for i in labels]))
@@ -18,22 +22,24 @@ def print_metrics(graph, new_NS=True, NS_boundary_limit=0):
     # print(f'list of coefficients of variation: {covs}')
     print(f'average COV: {round(average_cov, 3)}')
     print('#of links: ', str([sum(graph.labels == i) for i in labels]))
-    if len(labels) - graph.first_unfixed_region > 1:
-        print('"b"s: ', str([var_metrics.find_b(graph, i - graph.first_unfixed_region) for i in labels if
-                             i >= graph.first_unfixed_region]))
+    if len(labels) - first_unfixed_region > 1:
+        print('"b"s: ', str([var_metrics.find_b(graph, i - first_unfixed_region) for i in labels if
+                             i >= first_unfixed_region]))
         # print('NSs:', str([round(var_metrics.NS(graph, i), 4) for i in labels]))
         print('average NS:', str(round(var_metrics.average_NS(graph), 4)))
         if new_NS:
             # print('new NSs:', str([round(var_metrics.NS(graph, i, NS_boundary_limit), 4) for i in labels]))
             print('average new NS:', str(round(var_metrics.average_NS(graph, NS_boundary_limit), 4)))
             print('new "b"s: ',
-                  str([var_metrics.find_b(graph, i - graph.first_unfixed_region, NS_boundary_limit) for i in labels if
-                       i >= graph.first_unfixed_region]))
+                  str([var_metrics.find_b(graph, i - first_unfixed_region, NS_boundary_limit) for i in labels if
+                       i >= first_unfixed_region]))
     print(graph.rag[:, :, 0])
     print('')
 
 
 def get_metrics(graph, NS_boundary_limit=0):
+    first_unfixed_region = 0
+
     labels = np.unique(graph.labels)
     metric_dict = dict()
     metric_dict['means'] = [round(var_metrics.segment_mean(graph, i), 3) for i in labels]
@@ -42,17 +48,17 @@ def get_metrics(graph, NS_boundary_limit=0):
     metric_dict['TV_n'] = round(var_metrics.TVn(graph), 3)
     metric_dict['average_cov'], metric_dict['covs'] = var_metrics.average_cov(graph)
     metric_dict['# of links'] = [sum(graph.labels == i) for i in labels]
-    if len(labels) - graph.first_unfixed_region > 1:
-        metric_dict['"b"s'] = [var_metrics.find_b(graph, i - graph.first_unfixed_region) for i in labels if
-                               i >= graph.first_unfixed_region]
-        metric_dict['NSs'] = [round(var_metrics.NS(graph, i - graph.first_unfixed_region), 4) for i in labels if
-                              i >= graph.first_unfixed_region]
+    if len(labels) - first_unfixed_region > 1:
+        metric_dict['"b"s'] = [var_metrics.find_b(graph, i - first_unfixed_region) for i in labels if
+                               i >= first_unfixed_region]
+        metric_dict['NSs'] = [round(var_metrics.NS(graph, i - first_unfixed_region), 4) for i in labels if
+                              i >= first_unfixed_region]
         metric_dict['average NS'] = round(var_metrics.average_NS(graph), 4)
-        metric_dict['new NSs'] = [round(var_metrics.NS(graph, i - graph.first_unfixed_region, NS_boundary_limit), 4) for
-                                  i in labels if i >= graph.first_unfixed_region]
+        metric_dict['new NSs'] = [round(var_metrics.NS(graph, i - first_unfixed_region, NS_boundary_limit), 4) for
+                                  i in labels if i >= first_unfixed_region]
         metric_dict['average new NS'] = round(var_metrics.average_NS(graph, NS_boundary_limit), 4)
-        metric_dict['new "b"s'] = [var_metrics.find_b(graph, i - graph.first_unfixed_region, NS_boundary_limit) for i in
-                                   labels if i >= graph.first_unfixed_region]
+        metric_dict['new "b"s'] = [var_metrics.find_b(graph, i - first_unfixed_region, NS_boundary_limit) for i in
+                                   labels if i >= first_unfixed_region]
     return metric_dict
 
 

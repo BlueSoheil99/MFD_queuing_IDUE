@@ -23,7 +23,7 @@ Edit the following files for configuring up the inputs
 
 - `start_region`: start region of the region link
 - `end_region`: end region of the region link
-- `max_outflow`: maximum outfloe capacity
+- `max_outflow`: maximum outflow capacity
 - `initial_n_vehs`: initially how many vehicles in each region
 
 | start_region | end_region | max_outflow | initial_n_vehs |

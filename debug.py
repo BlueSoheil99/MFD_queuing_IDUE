@@ -4,7 +4,6 @@ from logic import var_metrics, merging, initial_segmentation
 import io_handler as io
 import logic_handler as logic
 import matplotlib.pyplot as plt
-from MFD import Plot_MFD as MFD
 
 
 def show_density_hist(density_list, title='density after deleting marginal links ()'):
@@ -60,7 +59,7 @@ densities = graph.densities
 # note that in the second smoothing function (Graph._smooth()) we make a new list for densities
 
 ## SHOW DISTRIBUTION(HISTOGRAM) OF DENSITIES
-# show_density_hist(densities, title=f'density after deleting marginal links (8-9 am)')
+show_density_hist(densities, title=f'density after deleting marginal links (8-9 am)')
 
 ## SHOW FEATURE(e.g., density) MAP
 # io.show_network(net, edges, np.abs(graph.densities - densities), colormap_name="binary")

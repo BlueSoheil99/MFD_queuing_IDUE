@@ -4,6 +4,9 @@ import sumolib.xml as sumoxml
 import numpy as np
 import os
 
+from copy import deepcopy
+import xml.etree.ElementTree as ET
+
 
 def init_config(fname="config files/config.yaml"):
     file = yaml.safe_load(open(fname))
@@ -62,11 +65,31 @@ def make_adjacency(net, edges_diction):
 
     return adjacency_mat
 
+def valid_edge(network_xmlroot, edge_id):
+    element = network_xmlroot.get(edge_id)
+
+    if element is None:
+        return False
+    roadtype = element.get('type')
+    # if roadtype is None:
+        # print(element.get('id') + ' has no roadtype')
+        # return False
+    # else:
+    if roadtype is not None:
+        if 'railway' in roadtype:
+            return False
+    return True
 
 def read_network(net_fname, net_edges_fname, edges_to_remove, minor_links, side_regions_path):
     net = sumonet.readNet(net_fname)
     connected_edges = read_edgeID_subnetwork(net_edges_fname)
     net, edges = clean_network(net, connected_edges, edges_to_remove, minor_links)
+
+    netXML = ET.parse(net_fname).getroot()
+    edges_net_dict = {}
+    for edge in netXML.findall('edge'):
+        edges_net_dict[edge.get('id')] = deepcopy(edge)
+    # print(edges_net_dict)
 
     constant_regions = dict()
     for i, file in enumerate(os.listdir(side_regions_path)):
@@ -74,7 +97,9 @@ def read_network(net_fname, net_edges_fname, edges_to_remove, minor_links, side_
         with open(side_regions_path+'/'+file) as f:
             region_edges = []
             for line in f:
-                region_edges.append(line.rstrip())
+                edge = line.rstrip()
+                if valid_edge(edges_net_dict, edge):
+                    region_edges.append(edge)
         constant_regions[f'{i}'] = region_edges
 
     return net, edges, constant_regions
@@ -149,7 +174,7 @@ def read_edge_info(edges, feature_name, option, interval_begin, interval_end):
                         # i = edge_names.index(new_id)
                         # num_lanes_per_edge[i] += 1
                 except:
-                    # print("{} has no attribute: {}".format(edge.id, option))
+                    # print(f"{edge.id} has no attribute: {option}")
                     n_no_attr += 1  # None values are counted here, but are treated as zero in later analysis
 
     # take mean of the density for cases that one edge with multiple lanes

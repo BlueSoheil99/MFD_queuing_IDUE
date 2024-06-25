@@ -8,23 +8,38 @@ def get_parent_id(graph):
     # todo what are parent's characteristics?
     alpha = 0.5  # weight for 'number of edges in a segment'
     segments = np.unique(graph.labels)
-    segments = segments[segments >= graph.first_unfixed_region]
+    segments = [i for i in segments if i not in graph.fixed_regions]
     variances = [segment_var(graph, i) for i in segments]
     variances = np.sqrt(variances)
     variances = [(variances[i]*(1-alpha) + alpha*sum(graph.labels == segments[i])) for i in range(len(segments))]
     p = np.argmax(variances)
-
-    # segments = np.unique(graph.labels)
-    # p = segments[0]
-    # for i in range(len(segments)):
-    #     if segment_var(graph, segments[i]) > segment_var(graph, p):
-    #         p = segments[i]
-    #     elif segment_var(graph, segments[i]) == segment_var(graph, p):
-    #         n1 = np.sum(graph.labels == p)
-    #         n2 = np.sum(graph.labels == segments[i])
-    #         if n2 > n1:
-    #             p = segments[i]
     return segments[p]
+
+# def get_parent_id(graph, exclude_fixed_regions=True):
+#     first_unfixed_region = 0
+#     if exclude_fixed_regions: first_unfixed_region = graph.first_unfixed_region
+#
+#     # todo what are parent's characteristics?
+#
+#     alpha = 0.5  # weight for 'number of edges in a segment'
+#     segments = np.unique(graph.labels)
+#     segments = segments[segments >= first_unfixed_region]
+#     variances = [segment_var(graph, i) for i in segments]
+#     variances = np.sqrt(variances)
+#     variances = [(variances[i]*(1-alpha) + alpha*sum(graph.labels == segments[i])) for i in range(len(segments))]
+#     p = np.argmax(variances)
+#
+#     # segments = np.unique(graph.labels)
+#     # p = segments[0]
+#     # for i in range(len(segments)):
+#     #     if segment_var(graph, segments[i]) > segment_var(graph, p):
+#     #         p = segments[i]
+#     #     elif segment_var(graph, segments[i]) == segment_var(graph, p):
+#     #         n1 = np.sum(graph.labels == p)
+#     #         n2 = np.sum(graph.labels == segments[i])
+#     #         if n2 > n1:
+#     #             p = segments[i]
+#     return segments[p]
 
 
 def get_W_and_D(graph, mask):

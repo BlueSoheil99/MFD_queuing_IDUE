@@ -14,7 +14,7 @@ import pandas as pd  # for debugging
 
 
 def get_network(input_addresses="config files/config.yaml"):
-    net_fname, info_fname, option, net_edges_fname,interval_begin, interval_end, \
+    net_fname, info_fname, option, net_edges_fname, interval_begin, interval_end, \
     edges_to_remove, minor_edges, predetermined_regions_folder = util.init_config(input_addresses)
     # read network
     net, edges, predetermined_regions_dict = util.read_network(net_fname, net_edges_fname,

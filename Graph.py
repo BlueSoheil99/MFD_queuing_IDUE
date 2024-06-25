@@ -2,31 +2,41 @@ import numpy as np
 
 
 class Graph:
-    def __init__(self, adjacency_matrix, density_list, label_list):
+    def __init__(self, adjacency_matrix, density_list, label_list, fixed_regions=None, first_unfixed_region=None, last_unfixed_region=None):
         self.n = adjacency_matrix.shape[0]
         self.adjacency = adjacency_matrix
         self.densities = density_list
         self.distances, self.similarities = _preprocess_network(self.adjacency, self.densities)
         # self.labels = np.zeros(self.n).astype(int)
         self.labels = label_list
-        self.first_unfixed_region = max(label_list)
-        # self.first_unfixed_region = 0
+        self.fixed_regions = fixed_regions
+        if fixed_regions is None: self.fixed_regions = []
+
+        self.first_unfixed_region = first_unfixed_region
+        self.last_unfixed_region = last_unfixed_region
+        # if first_unfixed_region is None: self.first_unfixed_region = max(label_list)
         self.rag = np.zeros((1, 1, 2))  # Region Adjacency Graph.
+        # self.rag = _get_rag(self.labels, self.adjacency, self.densities, self.first_unfixed_region)
+        self.rag = _get_rag(self.labels, self.adjacency, self.densities)
         # / RAG[0]-> shows number of boundary links/ RAG[1]-> shows difference between mean densities
 
     def __len__(self):
         return self.n
 
     def set_labels(self, labels, calculate_rag=True):
+        self.fixed_regions = _update_fixed_labels(old_fixed_regions=self.fixed_regions,
+                                                  old_labels=self.labels, new_labels=labels)
         self.labels = labels
         if calculate_rag:
-            self.rag = _get_rag(labels, self.adjacency, self.densities, self.first_unfixed_region)
+            # self.rag = _get_rag(labels, self.adjacency, self.densities, self.first_unfixed_region)
+            self.rag = _get_rag(labels, self.adjacency, self.densities)
 
     def smooth_densities(self, median=True, gaussian=True):
-        if median:
-            self.densities = _salt_and_pepper(self.adjacency, self.densities)
         if gaussian:
             self.densities = _gaussian_smooth(self.adjacency, self.densities)
+        if median:
+            self.densities = _salt_and_pepper(self.adjacency, self.densities)
+
 
     def get_similarity_matrix(self, mask=None):
         if mask is None:
@@ -111,61 +121,7 @@ def _get_similarity_matrix(distance_matrix, density_list):
     return W
 
 
-# def _get_rag(labels, adj_mat, densities, starting_index):
-#     '''
-#         returns region adjacency matrix
-#         must be similar to skimage.future.graph.rag_mean_color
-#     :param labels:
-#     :param adj_mat:
-#     :param densities:
-#     :return: RAG
-#
-#     psudo code:
-#     n = number of clusters
-#     rag = make a zero n*n array.
-#     mean_list = list(n)
-#     for each cluster x:
-#         find mean of cluster x
-#         for node in cluster x:
-#             S[node] = 0
-#             next = 0
-#             next_found = False
-#             for neighbor in adjacency_matrix[node]:
-#                 if label[neighbor] != x:
-#                     rag[x, label[neighbor]] = 1
-#                     rag[label[neighbor], x] = 1 (maybe not needed)
-#     change 1s in rag into [#boundary links, distance of cluster means]
-#     '''
-#
-#     num_regions = len(np.unique(labels))
-#     region_adj_mat = np.zeros((num_regions, num_regions, 2))
-#     means_list = list()  # it should be filled in order
-#
-#     for cluster_id in np.unique(labels):
-#         # S = [i for i in np.unique(labels) if labels[i] == cluster_id]
-#         # n = labels.count(cluster_id)
-#         n = np.sum(labels == cluster_id)
-#         mask = (labels == cluster_id)
-#         means_list.append(sum(densities[mask]) / n)
-#         # for i in mask:
-#         for i in range(len(mask)):
-#             if mask[i] == 1:
-#                 # neighbors = adj_mat[i]
-#                 neighbors = np.argwhere(adj_mat[i] == 1).flatten()
-#                 for neighbor in neighbors:
-#                     if labels[neighbor] != cluster_id:
-#                         # region_adj_mat[cluster_id, labels[neighbor]] = 1
-#                         region_adj_mat[cluster_id, labels[neighbor], 0] += 1
-#
-#     for row in range(num_regions):
-#         for column in range(num_regions):
-#             # if region_adj_mat[row, column] == 1:
-#             if region_adj_mat[row, column, 0] != 0:
-#                 region_adj_mat[row, column, 1] = abs(means_list[row] - means_list[column])
-#                 # todo: take a look at formula (18) in Ji(2012) and see if changes are needed
-#     return region_adj_mat
-
-def _get_rag(labels, adj_mat, densities, starting_index):
+def _get_rag(labels, adj_mat, densities, starting_index=0):
     '''
         returns region adjacency matrix
         must be similar to skimage.future.graph.rag_mean_color
@@ -190,7 +146,6 @@ def _get_rag(labels, adj_mat, densities, starting_index):
                     rag[label[neighbor], x] = 1 (maybe not needed)
     change 1s in rag into [#boundary links, distance of cluster means]
     '''
-
     num_regions = len(np.unique(labels)) - starting_index
     region_adj_mat = np.zeros((num_regions, num_regions, 2))
     means_list = list()  # it should be filled in order
@@ -218,17 +173,33 @@ def _get_rag(labels, adj_mat, densities, starting_index):
                 # todo: take a look at formula (18) in Ji(2012) and see if changes are needed
     return region_adj_mat
 
+
+def _update_fixed_labels(old_fixed_regions, old_labels, new_labels):
+    new_fixed_regions = []
+    for region in old_fixed_regions:
+        # new_label = new_labels[old_labels.index(region)]
+        first_occurrence = np.where(old_labels == region)[0][0]
+        new_label = new_labels[first_occurrence]
+        new_fixed_regions.append(new_label)
+    return new_fixed_regions
+
+
 def _salt_and_pepper(adj_mat, densities):
     # to reduce noises, this function acts like a median/salt_and_pepper image kernel and deletes zeros and high vals
-    q95 = int(np.percentile(densities, 95))
-    mask = np.logical_or(densities == 0, densities > q95)
+    q99 = int(np.percentile(densities, 99))
+    # mask = np.argwhere(densities>q99).reshape(-1)
+    # densities[mask] = q99
+    q5 = np.percentile(densities, 5)
+    mask = np.logical_or(densities == 0, densities > q99)
     # mask = (densities == 0)
     for index in range(len(densities)):
         if mask[index] == 1:
             neighbors = np.argwhere(adj_mat[index] == 1)
             # x = densities[neighbors]
             median = np.median(densities[neighbors])
-            densities[index] = max(median, 0.5)  # todo is 0.5 good?
+            if median == np.nan:
+                print(f'nan for {index}')
+            densities[index] = max(median, q5)  # todo is 0.5 good?
     return densities
 
 
@@ -239,5 +210,16 @@ def _gaussian_smooth(adj_mat, densities):
     temp = np.sum(np.copy(adj_mat) * densities, axis=1)
     temp = temp*2 + 4*densities
     new_den = temp/total_weights
-    # x = densities - new_den
     return new_den
+
+    # total_weights = np.sum(adj_mat, axis=1)
+    # total_weights = total_weights * 2 + 0  # weight for each link = 1, weight for each neighbor = 2
+    # temp = np.sum(np.copy(adj_mat) * new_den, axis=1)
+    # temp = temp * 2 + 0 * new_den
+    # new_den2 = temp / total_weights
+    # q99 = int(np.percentile(densities, 99))
+    # mask = np.argwhere(new_den > q99).reshape(-1)
+    # new_den[mask] = new_den2[mask]
+    # # return new_den
+    # densities[mask] = new_den2[mask]
+    # return densities
