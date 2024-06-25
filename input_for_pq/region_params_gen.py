@@ -102,9 +102,7 @@ def generate_region_params_basic(routes_and_times, segmentation_dict, network, m
         f.write("\nedge:".join(np.unique(unrecognized_edges)))
 
     avg_trip_length = {label: round(np.average(lengths_traveled_in_regions[label],
-                                               weights=times_traveled_in_regions[label])*3, 1) for label in labels}
-    # avg_trip_length = {label: round(np.average(lengths_traveled_in_regions[label],
-    #                                            weights=times_traveled_in_regions[label]), 1) for label in labels}
+                                               weights=times_traveled_in_regions[label]), 1) for label in labels}
 
     fig, axs = plt.subplots(len(labels)//2+1, 2)
     fig.suptitle('lengths traveled in each region')
@@ -133,7 +131,6 @@ def generate_region_params_basic(routes_and_times, segmentation_dict, network, m
                        'init_vehicles': init_vehicles,
                        'if_destination': if_destination})
     return df
-
 
 
 def get_max_mfd_x(mfd_fit):
@@ -172,3 +169,25 @@ def get_travel_times(trip, route, edge_data_minute):
     travel_times = {edge: np.mean(travel_times[edge]) for edge in travel_times.keys() if len(travel_times[edge]) > 0}
     print(f'estimated travel time: {sum(travel_times.values())}')
     return travel_times
+
+
+def _get_mfd_equation(mfd_coefficients):
+    eq = ''
+    for d in range(len(mfd_coefficients)):
+        if d != 0 and mfd_coefficients[d]>0:
+            eq += '+'
+        n_str = ''
+        degree = len(mfd_coefficients) - d-1
+        if degree==1:
+            n_str = '* n '
+        elif degree>1:
+            n_str = f'* n^{degree} '
+        eq += np.format_float_scientific(mfd_coefficients[d], precision=4) + n_str
+    return eq
+
+
+def generate_equations_df(equation_lines_dict):
+    eq_str = [_get_mfd_equation(mfd) for mfd in equation_lines_dict.values()]
+    eq_dict = {'Region': list(equation_lines_dict.keys()), 'mfd': eq_str}
+    df = pd.DataFrame(data=eq_dict)
+    return df
