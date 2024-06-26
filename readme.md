@@ -1,3 +1,13 @@
+Based on the original method by 
+[Ji and Geroliminis (2012)](https://doi.org/10.1016/j.trb.2012.08.005), 
+this work tries to use the results of a [calibrated simulation of Downtown Seattle](https://github.com/BlueSoheil99/DowntownSeattleSUMO)
+traffic network in order to partition the region into homogeneous regions with well-defiend MFDs. 
+
+<p align="center" width="100%">
+<img width="75%" src="https://github.com/Ohay-Angah/mfd-queuing-idue/blob/partition/data/resultsSample.png"><br>
+Results of Downtown Seattle partitioning and MFDs for each region<br>
+</p>
+
 # How to run the program
 
 - install [SUMO](https://sumo.dlr.de/docs/Downloads.php)
