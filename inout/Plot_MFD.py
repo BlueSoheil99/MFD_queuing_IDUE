@@ -43,7 +43,6 @@ def open_over4_priorities(address: str):
     return over4_priorities
 
 
-
 def MFD_plotter(group_dict, start_time, end_time, separated=False, normalized=True,
                 mfd=False, mfd1=False, speed_vs_den=False, flow_vs_den=False,
                 num_vs_prod=False, num_vs_speed=False, time_vs_num=False):
@@ -85,36 +84,6 @@ def MFD_plotter(group_dict, start_time, end_time, separated=False, normalized=Tr
         _plot_time_number_curve(group_dict, start_time, end_time, axs=axs, separated=separated, normalized=normalized)
     plt.show()
     return fit_lines
-
-
-def MFD_plotter_combined(segment_ids, MFD_start_time, MFD_end_time):
-    # todo it's not complete and not working
-
-    # fig, axs = plt.subplots(2, 3, figsize=(24, 4))
-    # fig.subplots_adjust(left=0.05, right=0.955, wspace=0.4, hspace=0.25, bottom=0.14, top=0.85)
-    # fig, axs = plt.subplots(1, 4, figsize=(28, 6))
-
-    # MFD.plot_speed_density_curve(segment_ids, MFD_start_time, MFD_end_time, ax=axs[1, 0])
-
-    fig, axs = plt.subplots(2, 2, figsize=(12, 9))
-
-    fig.subplots_adjust(left=0.05, right=0.955, wspace=0.4, hspace=0.3, bottom=0.14, top=0.85)
-    # plt.subplots_adjust(wspace=0.4)
-
-
-    _plot_mfd_type1(segment_ids, MFD_start_time, MFD_end_time, ax=axs[0, 1])
-    axs[0, 0].set_title('MFD type 1', fontsize=14, color="blue", fontweight='bold')
-
-    _plot_mfd(segment_ids, MFD_start_time, MFD_end_time, ax=axs[0, 2])
-    axs[0, 1].set_title('MFD type 2', fontsize=14, color="blue", fontweight='bold')
-
-    _plot_speed_density_curve(segment_ids, MFD_start_time, MFD_end_time, ax=axs[1, 0])
-    axs[1, 0].set_title('Density - Speed', fontsize=14, color="blue", fontweight='bold')
-
-    _plot_flow_density_curve(segment_ids, MFD_start_time, MFD_end_time, ax=axs[1, 1])
-    axs[1, 1].set_title('Density - Flow', fontsize=14, color="blue", fontweight='bold')
-
-    plt.show()
 
 
 def _modify_appearance(axs, number_of_plots, separated, normalized, xlabel, ylabel):
@@ -592,40 +561,23 @@ def _plot_number_production_theoretical_curve(group_dict, start_time, end_time, 
     global edge_stats
     if edge_stats is None: edge_stats = open_pickle(address_edge_data)
 
-    global over4priorities
-    if over4priorities is None: over4priorities = open_over4_priorities(address_over4priorities)
-
-    # seg_boundary_dict = group_dict[1]
     group_dict = group_dict[0]
     fit_lines = dict()
-
     for i, (group_id, edge_list) in enumerate(group_dict.items()):
         tnvehs_group = []
-        tvkpm_group = []
-        tspeed = []
-        tdensity = []
-        tflux = []
         productions = []
 
         for interval_id, edges_data in edge_stats.items():
             if float(interval_id) <= start_time or float(interval_id) > end_time:
                 continue
             total_nvehs = 0
-            total_vkpm = 0
             total_weightedspeed = 0
-            total_edge_length = 0
-            total_weighteddensity = 0
             no_of_edges = 0
-            # total_flux = 0
-            sum_n_over_v = 0
 
             for edge_id in get_top_links(edge_list, edges_data, percent=80):
                 edge_data = edges_data[edge_id]
                 speed = edge_data["speed"]
-                density = edge_data["laneDensity"]
                 sampled_seconds = edge_data["sampledSeconds"]
-                Edgelength = net.getEdge(edge_id).getLength()  # this is new edge length
-                # Edgelength = ((float(sampled_seconds) / 60) * 1000) / float(density)  # in m # previous edge length
                 nvehs = float(sampled_seconds) / 60
                 s = (float(speed) * 3.6)
                 # print(edge_id + "  speed: " + str(s))
@@ -634,44 +586,21 @@ def _plot_number_production_theoretical_curve(group_dict, start_time, end_time, 
                 #     # print(edge_id + "  speed: " + str(s))
                 #     # s = 0.01
                 #     continue
-
                 total_nvehs += nvehs
-                total_vkpm += float(speed) * float(sampled_seconds) / 1000
-                total_weighteddensity = total_weighteddensity + (float(density) * (float(Edgelength) / 1000))  # in veh
-                # total_weightedspeed += s * (float(Edgelength) / 1000)  # in km/hr
                 total_weightedspeed += s * nvehs
-                total_edge_length = total_edge_length + (float(Edgelength) / 1000)  # in km
-                # total_weightedspeed = total_weightedspeed + (float(speed) * float(Edgelength))  # in m/s
                 no_of_edges += 1
-
-                # sum_n_over_v += nvehs / s
 
             if total_nvehs == 0:
                 print(f'No vehicles at f{interval_id} for region:{group_id}')
-
             else:
                 avg_speed = total_weightedspeed/total_nvehs
                 prod = avg_speed * total_nvehs
-
-                #
-                # # avg_speed = total_weightedspeed / total_edge_length  # km/hr
-                # # todo sometimes: ZeroDivisionError: division by zero
-                # avg_density = total_weighteddensity / total_edge_length  # veh/km/lane
-                # total_flux = avg_speed * avg_density  # veh/hr
-                # tvkpm_group.append(total_vkpm)
-                # tdensity.append(avg_density)
-                # tspeed.append(avg_speed)
-                # # tflow.append(total_flow)
-                # tflux.append(total_flux)
                 tnvehs_group.append(total_nvehs)
                 productions.append(prod)
-
 
         # Use different marker and size for each group
         marker = markers[i % len(markers)]
         size = sizes[i % len(sizes)]
-        # color = colors[i % len(colors)]
-        # size = sizes[i]
         if separated:
             if len(axs) >= 2:
                 ax = axs[i // 2, i % 2]

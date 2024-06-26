@@ -1,28 +1,16 @@
 # where you put the network and density files
 data_folder: "./data/"
-#network_name: "Seattle_road_network.net.xml"
 network_name: "Seattle_network_reformed 24Apr02.net.xml"
 edges_name: "./output/seattlecomp0.txt"  # if network is changed run check_handler line 14
 info_name: "edge_data_output_hour.xml"
 
-
-minor_links: "./data/config data/minor_edgeID.txt"
-
-## for having the whole network
+predetermined_regions_folder: "./data/config data/config for exported results/results" ## for exported results
+#predetermined_regions_folder: "./data/config data/config for normal segmentation/side regions" ## for having only highways as one predetermined segment
+#predetermined_regions_folder: "./data/config data/manual segmentation"
 #predetermined_regions_folder: "./data/config data/config for segmentation with predetermined regions/side regions"
+minor_links: "./data/config data/minor_edgeID.txt"  # links with very low priorities (alleys) can be removed.
 edges_to_remove_name: "./data/config data/config for segmentation with predetermined regions/marginal_edgeID.txt"
-
-## for having only the downtown/whole network without predetermined segments
-#predetermined_regions_folder: "./data/config data/config for normal segmentation/side regions"
-#edges_to_remove_name: "./data/config data/config for normal segmentation/marginal_edgeID_new_simulation.txt"
-##edges_to_remove_name: "./data/config data/config for normal segmentation/marginal_edgeID_highways_and_tunnels.txt"
-#####edges_to_remove_name: "./data/config data/config for normal segmentation/marginal_edgeID_exclude_downtown0.txt"
-#edges_to_remove_name: "./data/config data/config for normal segmentation/marginal_edgeID_exclude_downtown1.txt"
-
-## for exported results
-predetermined_regions_folder: "./data/config data/config for exported results/results"
-#edges_to_remove_name: "./data/config data/config for exported results/marginal_edgeID.txt"
-
+# Also, we might need some other edges to be removed
 
 # feature that you'd like to read, e.g, density  ---- in the codes it's usually referred to density
 feature: "laneDensity"

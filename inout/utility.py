@@ -3,6 +3,8 @@ import sumolib.net as sumonet
 import sumolib.xml as sumoxml
 import numpy as np
 import os
+import re
+
 
 from copy import deepcopy
 import xml.etree.ElementTree as ET
@@ -92,8 +94,7 @@ def read_network(net_fname, net_edges_fname, edges_to_remove, minor_links, side_
     # print(edges_net_dict)
 
     constant_regions = dict()
-    for i, file in enumerate(os.listdir(side_regions_path)):
-        # if file[-3:] == 'txt':
+    for i, file in enumerate(sorted(os.listdir(side_regions_path), key=_natural_key)):
         with open(side_regions_path+'/'+file) as f:
             region_edges = []
             for line in f:
@@ -103,6 +104,11 @@ def read_network(net_fname, net_edges_fname, edges_to_remove, minor_links, side_
         constant_regions[f'{i}'] = region_edges
 
     return net, edges, constant_regions
+
+
+def _natural_key(file_name):
+    # Split by numbers, keeping the separators
+    return [int(text) if text.isdigit() else text for text in re.split(r'(\d+)', file_name)]
 
 
 def cleanID(edge_id):

@@ -11,36 +11,6 @@ Gaussian_Neighbor_Weight = 1
 def create_simple_pickle_file(src_adr='data/edge_data_output.xml',
                               out_adr="data/uniques_interval_data_occupancy.pickle"):
     create_smoothed_pickle_file(None, None, src_adr, out_adr, False, False)
-    # tree = ET.parse(src_adr)
-    # root = tree.getroot()
-    #
-    # unique_intervals = {}
-    #
-    # for interval in root.findall('./interval'):
-    #     interval_id = interval.get("begin")
-    #     unique_edges = {}
-    #
-    #     for edge in interval.iter("edge"):
-    #         edge_id = edge.get("id")
-    #
-    #         if edge_id in unique_edges:
-    #             unique_edges[edge_id] = {
-    #                 "sampledSeconds": edge.get("sampledSeconds"),
-    #                 "laneDensity": edge.get("laneDensity"),
-    #                 "speed": edge.get("speed"),
-    #                 "occupancy": edge.get("occupancy")
-    #             }
-    #         else:
-    #             unique_edges[edge_id] = {
-    #                 "sampledSeconds": edge.get("sampledSeconds"),
-    #                 "laneDensity": edge.get("laneDensity"),
-    #                 "speed": edge.get("speed"),
-    #                 "occupancy": edge.get("occupancy")
-    #             }
-    #     unique_intervals[interval_id] = unique_edges
-    # # return unique_intervals
-    # with open(out_adr, "wb") as f:
-    #     pickle.dump(unique_intervals, f)
 
 
 def create_smoothed_pickle_file(adjacency_mat, edge_array, src_adr='data/edge_data_output._1min_interval.xml',
@@ -59,18 +29,7 @@ def create_smoothed_pickle_file(adjacency_mat, edge_array, src_adr='data/edge_da
         for edge in interval.iter("edge"):
             edge_id = edge.get("id")
 
-            # # 136 MB
-            # edge_data = {feature: 0.0 if edge.get(feature) is None else float(edge.get(feature)) for feature in features}
-
-            # # 25 MB
-            # edge_data = {feature: None if edge.get(feature) is None else float(edge.get(feature)) for feature in features}
-
-            # # 30 MB
-            # edge_data = {feature: 0.0 if edge.get(feature) is None else edge.get(feature) for feature in features}
-
-            # # similar to Pranati, 93 MB
             edge_data = {feature: edge.get(feature) for feature in features}
-
             unique_edges[edge_id] = edge_data
 
         # smoothing the data for each interval
@@ -148,18 +107,4 @@ if __name__ == '__main__':
     # create_smoothed_pickle_file(adjacency_matrix, list_of_edges, median=True, gaussian=True)
 
 
-    #
-    # with open("data/test 0.pickle", "rb") as f:
-    #     file_0 = pickle.load(f)
-    #     f.close()
-    # with open("data/test 1.pickle", "rb") as f:
-    #     file_1 = pickle.load(f)
-    #     f.close()
-    # with open("data/test 2.pickle", "rb") as f:
-    #     file_2 = pickle.load(f)
-    #     f.close()
-    # with open("data/edge_vehicle_output_min0.pickle", "rb") as f:
-    #     file_p = pickle.load(f)
-    #     f.close()
-    # print('done')
 
