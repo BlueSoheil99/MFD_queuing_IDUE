@@ -1,0 +1,4 @@
+*.pickle filter=lfs diff=lfs merge=lfs -text
+vehroute_output.xml filter=lfs diff=lfs merge=lfs -text
+edge_data_output_min.xml filter=lfs diff=lfs merge=lfs -text
+edge_data_output_min_congested.xml filter=lfs diff=lfs merge=lfs -text
