@@ -22,7 +22,8 @@ def get_original_route(trip):
         # in case there are multiple routes, the last one is the main one - The one we should consider for demand
     return final_route
 
-def generate_demand_mat(net_edges_and_labels:dict, vehroute_xml, routefile_xml,
+
+def generate_demand_mat(net_edges_and_labels:dict, vehroute_xml, routefile_xml, increase_percentage=0,
                         time_interval=1, sim_start=18000, sim_steps=180000, out_adr='output/pq_input/demand.mat'):
     # 1- MAKE EMPTY NUMPY ARRAY
     n_regions = len(np.unique(np.array(list(net_edges_and_labels.values()))))
@@ -31,12 +32,14 @@ def generate_demand_mat(net_edges_and_labels:dict, vehroute_xml, routefile_xml,
     # print(depart_lookup)
 
     # 2- READ THE DEMAND FILE
-    for vehicle in vehroute_xml.findall('./vehicle'): # todo change to .rou.xml file
+    for vehicle in vehroute_xml.findall('./vehicle'):
         if vehicle.get('type') == 'passenger':
             # the actual demand comes from the demand (route) file.
-            # The vehroute file gives us the actual departure time which could be delayed from actual demand
+            # The vehroute file gives us the actual departure time which could be delayed from
+            # the desired dep. time from actual demand
             veh_id = vehicle.get('id')
-            dep_time = depart_lookup.loc[veh_id, 'depart']
+            dep_time = depart_lookup.loc[veh_id, 'depart']  # desired departure time
+            # dep_time = vehicle.get('depart')  # actual departure time
             dep_step = int(float(dep_time) // time_interval)-int(sim_start//time_interval)
 
             if dep_step>=0 and dep_step<sim_steps:

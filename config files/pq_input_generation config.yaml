@@ -4,7 +4,8 @@ network_name: "Seattle_network_reformed 24Apr02.net.xml"
 edges_name: "./output/seattlecomp0.txt"
 info_name: "edge_data_output_hour.xml"
 minor_links: "./data/config data/minor_edgeID.txt"
-predetermined_regions_folder: "./data/config data/config for exported results/results"
+#predetermined_regions_folder: "./data/config data/config for exported results/results"
+predetermined_regions_folder: "./data/config data/manual segmentation"
 edges_to_remove_name: "./data/config data/config for segmentation with predetermined regions/marginal_edgeID.txt"
 #predetermined_regions_folder: "./data/config data/test"
 #edges_to_remove_name: "./data/config data/config for exported results/marginal_edgeID.txt"
@@ -12,7 +13,6 @@ edges_to_remove_name: "./data/config data/config for segmentation with predeterm
 feature: "laneDensity"  # or "occupancy" or "sampledSeconds"
 interval_begin: 8
 interval_end: 9
-
 
 
 pq_input_folder: "output/pq_input/"

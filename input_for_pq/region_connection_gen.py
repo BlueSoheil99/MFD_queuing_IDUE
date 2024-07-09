@@ -1,5 +1,5 @@
 import pandas as pd
-import pdb
+
 
 def _get_green_allocation_ratio(link_obj, lane_id, signal_df):
     TLS = link_obj.getTLS()
@@ -25,6 +25,13 @@ def _get_green_allocation_ratio(link_obj, lane_id, signal_df):
         return DEFAULT_g_over_C
 
 
+def _if_not_signalized(link_obj):
+    TLS = link_obj.getTLS()
+    if TLS is None:
+        return 1
+    return 0
+
+
 def generate_region_connections(network, labels, boundary_ids, signal_report, vehicle_l=4, minGap=1.4, tau=1):
 
     """
@@ -36,10 +43,12 @@ def generate_region_connections(network, labels, boundary_ids, signal_report, ve
     # tau = 1
     direction_factor_table = {'t':0.5, 'l':0.5, 'L':0.5, 'R':0.75, 'r':0.75, 's':1}
     # direction_factor_table = {'t':1, 'l':1, 'L':1, 'R':1, 'r':1, 's':1}
-    data = {'start_region':[], 'end_region':[], 'max_outflow':[], 'initial_n_vehs':[]}
+    data = {'start_region':[], 'end_region':[], 'max_outflow':[], 'initial_n_vehs':[], 'min_max_outflow':[]}
 
     for current_region, boundaries in boundary_ids.items():
         neighbors_outflows = {i: 0 for i in labels if i != current_region}
+        neighbors_min_outflows = {i: 0 for i in labels if i != current_region}
+
         for boundary, b_neighbors in boundaries.items():
             current_boundary = network.getEdge(boundary)
             current_speed = current_boundary.getSpeed()
@@ -60,18 +69,23 @@ def generate_region_connections(network, labels, boundary_ids, signal_report, ve
                 connections = outgoing[link]
                 fromLanes = {connection.getFromLane().getID():direction_factor_table[connection.getDirection()]
                              for connection in connections}
+                ### get max-outflow
                 # there should be a difference between the capacity of left, right, and through lanes
-                fromLanes = {lane:factor*_get_green_allocation_ratio(current_boundary, lane, signal_report)
+                fromLanesFull = {lane:factor*_get_green_allocation_ratio(current_boundary, lane, signal_report)
                              for lane, factor in fromLanes.items()}
                 # we also need to consider traffic lights at boundaries
-                fromLanes = {lane: finalfactor * laneCapacity for lane, finalfactor in fromLanes.items()}
+                fromLanesFull = {lane: finalfactor * laneCapacity for lane, finalfactor in fromLanesFull.items()}
                 # what is the capacity for each connection between current link and selected neighbor link
-
-                simple_capacity = len(fromLanes.keys()) * int(laneCapacity)
-                calculated_capacity = int(sum(fromLanes.values()))
+                # simple_capacity = len(fromLanesFull.keys()) * int(laneCapacity)
+                calculated_capacity = int(sum(fromLanesFull.values()))
                 neighbors_outflows[b_neighbors[link]] += calculated_capacity
                 # we add the calculated capacity to outflow between current region to adjacent region
 
+                ### get minimum of max-outflow, i.e., when only intersections w/o signal allow entering vehicles
+                fromLanesMin = {lane: factor * _if_not_signalized(current_boundary) for lane, factor in fromLanes.items()}
+                fromLanesMin = {lane: finalfactor * laneCapacity for lane, finalfactor in fromLanesMin.items()}
+                calculated_min_capacity = int(sum(fromLanesMin.values()))
+                neighbors_min_outflows[b_neighbors[link]] += calculated_min_capacity
 
         for neighbor_reg, max_outflow in neighbors_outflows.items():
             if max_outflow != 0:
@@ -79,5 +93,6 @@ def generate_region_connections(network, labels, boundary_ids, signal_report, ve
                 data['end_region'].append(neighbor_reg)
                 data['max_outflow'].append(round(max_outflow/3600, 2))  # use veh/sec for max_outflow
                 data['initial_n_vehs'].append(0)
+                data['min_max_outflow'].append(round(neighbors_min_outflows[neighbor_reg]/3600, 2))
 
     return pd.DataFrame(data=data)
