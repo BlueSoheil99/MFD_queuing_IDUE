@@ -4,8 +4,9 @@ network_name: "Seattle_network_reformed 24Apr02.net.xml"
 edges_name: "./output/seattlecomp0.txt"
 info_name: "edge_data_output_hour.xml"
 minor_links: "./data/config data/minor_edgeID.txt"
-#predetermined_regions_folder: "./data/config data/config for exported results/results"
-predetermined_regions_folder: "./data/config data/manual segmentation"
+#minor_links: "./data/config data/empty.txt"
+predetermined_regions_folder: "./data/config data/config for exported results/results-sep highways"
+#predetermined_regions_folder: "./data/config data/manual segmentation"
 edges_to_remove_name: "./data/config data/config for segmentation with predetermined regions/marginal_edgeID.txt"
 #predetermined_regions_folder: "./data/config data/test"
 #edges_to_remove_name: "./data/config data/config for exported results/marginal_edgeID.txt"
@@ -22,11 +23,13 @@ demand_file: "data/adjusted_alaskanway_od2trips_psrc_vehicle_trips_converted_taz
 veh_route_time: "data/vehRouteTime_output.pickle"
 veh_route_time_cong: "data/vehRouteTime_output_congested.pickle"
 signal_info_adr: "data/signal_report108000_144000.csv"
+
 # to be used in config.csv
 model_type: 'PQ'
 time_interval (s): '1'
-simulation_steps: '19800'  # simulation end time // time interval
+simulation_steps: '25200'  # simulation end time // time interval
 demand_stop_step: '18000'  # demand stop end time // time interval
+min_outflow_zero: '1'
 # to be used in demand.mat
 sim_start: '18000'  # should match .sumocfg file
 

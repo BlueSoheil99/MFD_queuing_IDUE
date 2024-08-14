@@ -115,7 +115,7 @@ if __name__ == '__main__':
 
     # Generate inputs for perimeter control/point queue model codes
     print('### GENERATING config.csv')
-    config_csv_keys = ['model_type', 'time_interval (s)', 'simulation_steps', 'demand_stop_step']
+    config_csv_keys = ['model_type', 'time_interval (s)', 'simulation_steps', 'demand_stop_step', 'min_outflow_zero']
     config_dict = {key: [val] for key, val in zip(config_csv_keys, _read_yaml(config_csv_keys, config_address))}
     print(config_dict)
     data = pd.DataFrame(config_dict)
@@ -124,6 +124,7 @@ if __name__ == '__main__':
     print('### GENERATING demand.mat')
     time_interval, sim_start = _read_yaml(['time_interval (s)', 'sim_start'], config_address)
     demand_matrix = generate_demand_mat(edges_and_labels, vehroute_xml, demand_xml,
+                                        increase_percentage=0,
                                         time_interval=float(time_interval),
                                         sim_start=int(sim_start),
                                         sim_steps=int(config_dict['demand_stop_step'][0]),
@@ -171,7 +172,7 @@ if __name__ == '__main__':
     mfd_fit_lines = Plot_MFD.MFD_plotter((segment_ids, boundary_ids), separated=True, normalized=False,
                                          start_time=MFD_start_time, end_time=MFD_end_time, num_vs_prod=True)
     mfd_df = generate_equations_df(mfd_fit_lines)
-    mfd_df['Region'] = mfd_df['Region']+1 # adjusting labels for PQ code use
+    mfd_df['Region'] = mfd_df['Region']+1  # adjusting labels for PQ code use
     mfd_df.to_csv(pq_input_folder+'region_params_mfd.csv', index=False)
 
 

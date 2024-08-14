@@ -59,51 +59,50 @@ def generate_demand_mat(net_edges_and_labels:dict, vehroute_xml, routefile_xml, 
                         break
 
                 if origin is not None and destination is not None:
-                    matrix[origin, destination, dep_step] += 1
+                    num_new_trips = 1
+                    matrix[origin, destination, dep_step] += num_new_trips
                 else:
                     print(f'vehicle {vehicle.get("id")} not valid origin or destination')
                     # todo make these okay
                     # one problem is with route replacements (see aug 11 slides)
 
-    # 3- SAVE THE MATRIX IN MATLAB FORMAT
+    # 3 - increase demand
+    print(f'number of trips: {matrix.sum()}')
+    matrix = _increase_demand(matrix, sample_fraction=increase_percentage/100)
+    print(f'number of trips after {increase_percentage}% increase: {matrix.sum()}')
+
+    # 4- SAVE THE MATRIX IN MATLAB FORMAT
     name = out_adr.split('/')[-1]
     name = name.split('.')[0]
     scipy.io.savemat(out_adr, mdict={name: matrix})
 
-    # 4- SHOW THE DEMAND
-    # n_origins, n_destinations, dep_steps =np.shape(matrix)
-    # window_size = 120 #seconds
-    # total_destinations = np.sum(matrix, axis=0)
-    # total_origins = np.sum(matrix, axis=1)
-    # _draw_aggregated_data(total_destinations, window_size, n_destinations, sim_start,
-    #                      label=f'generated trips for each destination. aggregation window: {window_size}s')
-    # _draw_aggregated_data(total_origins, window_size, n_destinations, sim_start,
-    #                      label=f'generated trips for each origin. aggregation window: {window_size}s')
     print('...demand generation DONE...')
     return matrix
 
-#
-# def _draw_aggregated_data(mat, window_size, n_lines, sim_start, label):
-#     for i in range(n_lines):
-#         x, data = _aggregate(mat[i, :], window_size=window_size)
-#         plt.plot(x, data, label=f'region {i}')
-#     plt.legend()
-#     plt.title(label)
-#     plt.xticks(x[::10], _get_hour(x, start=sim_start)[::10], rotation=45)
-#     plt.show()
-#
-#
-# def _aggregate(observations, window_size=10):
-#     aggregated_list = []
-#     window_start_indices = range(0, len(observations), window_size)
-#     for i in range(0, len(observations), window_size):
-#         window_end_index = min(i + window_size, len(observations))
-#         window_sum = sum(observations[i:window_end_index])
-#         aggregated_list.append(window_sum)
-#     return list(window_start_indices), aggregated_list
-#
-#
-# def _get_hour(indices, start=18000):
-#     indices = [start+i for i in indices]
-#     indices = [f'{i // 3600}:{(i%3600)//60}' for i in indices]
-#     return indices
+
+def _increase_demand(array, sample_fraction=0.2):
+    if sample_fraction == 0:
+        return array
+    # Find the indices and values of the non-zero elements
+    non_zero_indices = np.argwhere(array != 0)
+    non_zero_values = array[non_zero_indices[:, 0], non_zero_indices[:, 1], non_zero_indices[:, 2]]
+
+    # Calculate the weights based on the values
+    weights = non_zero_values
+
+    # Calculate the number of elements to sample (sample_fraction of non-zero elements)
+    # sample_size = int(sample_fraction * len(non_zero_values))
+    sample_size = int(sample_fraction * non_zero_values.sum())
+
+    # Randomly select sample_size indices from the non-zero indices with the specified weights
+    sampled_indices = np.random.choice(len(non_zero_values), size=sample_size, replace=True, p=weights / weights.sum())
+
+    # sampled_elements = non_zero_values[sampled_indices]
+    sampled_indices = non_zero_indices[sampled_indices]
+    # for idx in sampled_element_indices:
+    #     array[idx[0], idx[1], idx[2]] += 1
+    np.add.at(array, (sampled_indices[:, 0], sampled_indices[:, 1], sampled_indices[:, 2]), 1)
+    return array
+
+
+

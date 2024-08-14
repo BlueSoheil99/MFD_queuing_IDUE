@@ -25,7 +25,7 @@ def create_smoothed_pickle_file(adjacency_mat, edge_array, src_adr='data/edge_da
         unique_edges = {}
 
         # reading the data for each interval
-        features = ["sampledSeconds", "laneDensity", "speed", "occupancy", "traveltime", "overlapTraveltime"]
+        features = ["sampledSeconds", "density", "laneDensity", "speed", "occupancy", "traveltime", "overlapTraveltime"]
         for edge in interval.iter("edge"):
             edge_id = edge.get("id")
 

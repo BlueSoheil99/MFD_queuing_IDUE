@@ -4,7 +4,7 @@ network_name: "Seattle_network_reformed 24Apr02.net.xml"
 edges_name: "./output/seattlecomp0.txt"  # if network is changed run check_handler line 14
 info_name: "edge_data_output_hour.xml"
 
-#predetermined_regions_folder: "./data/config data/config for exported results/results" ## for exported results
+#predetermined_regions_folder: "./data/config data/config for exported results/results-sep highways" ## for exported results
 #predetermined_regions_folder: "./data/config data/config for normal segmentation/side regions" ## for having only highways as one predetermined segment
 predetermined_regions_folder: "./data/config data/manual segmentation"
 #predetermined_regions_folder: "./data/config data/config for segmentation with predetermined regions/side regions"
