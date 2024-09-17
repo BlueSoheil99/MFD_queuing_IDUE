@@ -19,7 +19,7 @@ MERGING_alpha = 0  # DO NOT change it. it's not useful anymore. I should remove 
 MFD_start_time = 18000.00
 MFD_end_time = 36000.00
 
-fixed_regions = [0]  # you can read this from config file. Before working, make sure they're correct
+fixed_regions = [0, 1, 2, 3, 4]  # you can read this from config file. Before working, make sure they're correct
 
 net, edges, densities, adj_mat, labels = io.get_network(input_addresses)
 graph = Graph(adj_mat, densities, labels, fixed_regions=fixed_regions)

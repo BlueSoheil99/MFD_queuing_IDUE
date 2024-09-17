@@ -23,8 +23,8 @@ over4priorities = None
 # Define markers and colors for each group
 markers = ["*", "s", "^", "D", "x", "+", "o", "^"]
 sizes = [3, 3, 3, 3, 3, 3]
-# cmap = plt.cm.tab10  # Define the colormap
-cmap = plt.cm.tab20  # Define the colormap
+cmap = plt.cm.tab10  # Define the colormap
+# cmap = plt.cm.tab20  # Define the colormap
 
 
 def open_pickle(address: str):
@@ -89,6 +89,20 @@ def MFD_plotter(group_dict, start_time, end_time, separated=False, normalized=Tr
     return fit_lines
 
 
+def _fit_line(x, y, deg: int, with_intercept:True):
+    if with_intercept:
+        int_on = np.polyfit(x, y, deg)
+        return int_on
+    else:
+        x = np.array(x)
+        y = np.array(y)
+        int_off = np.zeros(deg+1)
+        X = np.vstack([x ** i for i in range(deg, 0, -1)]).T  # X matrix without the constant term
+        # Solve for the coefficients using least squares, forcing intercept to 0
+        int_off[:deg] = np.linalg.lstsq(X, y, rcond=None)[0]
+        return int_off
+
+
 def _modify_appearance(axs, number_of_plots, separated, normalized, xlabel, ylabel):
     if separated:
         if number_of_plots % 2 == 1:
@@ -130,8 +144,12 @@ def _draw_plot(xvalues, yvalues, polyfit_s_d, extrapolation, show_deviation, ax,
         yhat = np.polyval(polyfit_s_d, xvalues)
         deviation = np.abs(yhat - yvalues)
         std_dev = np.std(deviation)
+        std_dev = np.sqrt(np.sum(deviation**2)/len(deviation))  # todo is it correctly working?
         ax.plot(xvalues, yhat + std_dev, '--', linewidth=0.5, alpha=0.75, color=color)
         ax.plot(xvalues, yhat - std_dev, '--', linewidth=0.5, alpha=0.75, color=color)
+
+        ax.plot(xvalues, yhat + 2*std_dev, '-.', linewidth=0.5, alpha=0.75, color=color)
+        ax.plot(xvalues, yhat - 2*std_dev, '-.', linewidth=0.5, alpha=0.75, color=color)
 
 
 def _get_figure_config(idx, axs, separated):
@@ -506,7 +524,7 @@ def get_top_links(region_edges, edges_data, percent=85):
 
 
 def _plot_number_production_theoretical_curve(group_dict, start_time, end_time, axs,
-                                              separated=False, normalized=True, show_deviation=True):
+                                              separated=False, normalized=True, show_deviation=False):
     global edge_stats
     if edge_stats is None: edge_stats = open_pickle(address_edge_data)
 
@@ -551,7 +569,8 @@ def _plot_number_production_theoretical_curve(group_dict, start_time, end_time, 
         ax, marker, size, color = _get_figure_config(i, axs, separated)
 
         # fit a 3rd order ploynomial -number vs. production
-        polyfit_s_d = np.polyfit(tnvehs_group, productions, 3)
+        # polyfit_s_d = np.polyfit(tnvehs_group, productions, 3)
+        polyfit_s_d = _fit_line(tnvehs_group, productions, 3, with_intercept=False)
         fit_lines[group_id] = polyfit_s_d
 
         _draw_plot(tnvehs_group, productions, polyfit_s_d, extrapolation=50, show_deviation=show_deviation, ax=ax,
@@ -621,7 +640,7 @@ def _plot_density_production_curve(group_dict, start_time, end_time, axs,
 
 
 def _plot_speed_density_curve(group_dict, start_time, end_time, axs,
-                              separated=False, normalized=True, show_deviation=False):
+                              separated=False, normalized=True, show_deviation=True):
     global edge_stats
     if edge_stats is None: edge_stats = open_pickle(address_edge_data)
 

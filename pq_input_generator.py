@@ -115,7 +115,8 @@ if __name__ == '__main__':
 
     # Generate inputs for perimeter control/point queue model codes
     print('### GENERATING config.csv')
-    config_csv_keys = ['model_type', 'time_interval (s)', 'simulation_steps', 'demand_stop_step', 'min_outflow_zero']
+    config_csv_keys = ['model_type', 'time_interval (s)', 'simulation_steps', 'demand_stop_step',
+                       'min_outflow_zero']
     config_dict = {key: [val] for key, val in zip(config_csv_keys, _read_yaml(config_csv_keys, config_address))}
     print(config_dict)
     data = pd.DataFrame(config_dict)
@@ -124,7 +125,7 @@ if __name__ == '__main__':
     print('### GENERATING demand.mat')
     time_interval, sim_start = _read_yaml(['time_interval (s)', 'sim_start'], config_address)
     demand_matrix = generate_demand_mat(edges_and_labels, vehroute_xml, demand_xml,
-                                        increase_percentage=0,
+                                        increase_percentage=12,
                                         time_interval=float(time_interval),
                                         sim_start=int(sim_start),
                                         sim_steps=int(config_dict['demand_stop_step'][0]),
@@ -147,7 +148,9 @@ if __name__ == '__main__':
     # from the congested simulation
     vehicle_accumulation, vehicle_completion = get_vehicle_accumulation_and_completion(routes_and_times_cong, edges_and_labels)
     completion_lines = draw_plots.draw_empirical_completion_rates(vehicle_accumulation, vehicle_completion, window_size,
-                                                                  label='Trips exited from/finished in each region \nempirical comp. rate')
+                                                                  label='Trips exited from/finished in each region \nempirical comp. rate',
+                                                                  with_scatter=False,
+                                                                  with_intercept=False)
 
     # Showing trip generation trends
     n_origins, n_destinations, dep_steps = np.shape(demand_matrix)
@@ -166,7 +169,7 @@ if __name__ == '__main__':
     completion_df.to_csv(pq_input_folder + 'region_params_mfd_c.csv', index=False)
 
     MFD_start_time = 18000.00
-    MFD_end_time = 36000.00  # after 5:10 hours
+    MFD_end_time = 36000.00
     boundary_ids = logic.get_boundary_IDs(graph, edges, get_neighbors=True)
     segment_ids = logic.get_segment_IDs(graph, list(edges))
     mfd_fit_lines = Plot_MFD.MFD_plotter((segment_ids, boundary_ids), separated=True, normalized=False,
@@ -178,7 +181,8 @@ if __name__ == '__main__':
 
     print('### GENERATING region_params_basic.csv')
     # capacity_n can be adjusted based on MFD investigation
-    params_df = generate_region_params_basic(routes_and_times, edges_and_labels, network=net, mfd_lines=mfd_fit_lines)
+    # params_df = generate_region_params_basic(routes_and_times, edges_and_labels, network=net, mfd_lines=mfd_fit_lines)
+    params_df = generate_region_params_basic(routes_and_times, edges_and_labels, network=net, mfd_lines=completion_lines)
     params_df['Region'] = params_df['Region']+1  # adjusting labels for PQ code use
     params_df['avg_trip_length (m)'] = round(params_df['avg_trip_length (m)']*3, 1)
     params_df.to_csv(pq_input_folder+'region_params_basic.csv', index=False)

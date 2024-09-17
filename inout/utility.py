@@ -67,6 +67,7 @@ def make_adjacency(net, edges_diction):
 
     return adjacency_mat
 
+
 def valid_edge(network_xmlroot, edge_id):
     element = network_xmlroot.get(edge_id)
 
@@ -81,6 +82,7 @@ def valid_edge(network_xmlroot, edge_id):
         if 'railway' in roadtype:
             return False
     return True
+
 
 def read_network(net_fname, net_edges_fname, edges_to_remove, minor_links, side_regions_path):
     net = sumonet.readNet(net_fname)
@@ -132,6 +134,8 @@ def clean_network(net, connected_edges, edges_to_remove, minor_links):
     #     for line in f:
     #         remove_edge_ids.append(line.rstrip())
 
+    original_edges=[]
+
     clean_net = sumonet.Net()
     clean_edges = set()
     edges = net.getEdges()
@@ -143,8 +147,10 @@ def clean_network(net, connected_edges, edges_to_remove, minor_links):
             clean_net.addEdge(new_id, edge.getFromNode(), edge.getToNode(),
                               edge.getPriority(), edge.getFunction(), edge.getName(), edge.getType())
             clean_edges.add(new_id)
+            original_edges.append(edge)
     edges = clean_net.getEdges()
-    return net, edges  # Ohay didn't return clean_net.
+    # return net, edges  # Ohay didn't return clean_net.
+    return net, original_edges  # Ohay didn't return clean_net.
 
 
 def read_edgeID_subnetwork(fname):
@@ -164,7 +170,8 @@ def read_node_info(nodes):
 
 
 def read_edge_info(edges, feature_name, option, interval_begin, interval_end):
-    edge_diction = {edge.getID(): 0 for edge in edges}  # todo it turns None values into zero
+    edge_diction = {edge.getID(): 0.0 for edge in edges}  # todo it turns None values into zero
+    edge_lookup = {edge.getID(): edge for edge in edges}
     edge_stats = sumoxml.parse(feature_name, "interval")
     num_lanes_per_edge = np.zeros(len(edge_diction))
     edge_names = list(edge_diction.keys())
@@ -176,7 +183,8 @@ def read_edge_info(edges, feature_name, option, interval_begin, interval_end):
                 try:
                     new_id = cleanID(edge.id)
                     if new_id in list(edge_diction.keys()):
-                        edge_diction[new_id] = float(edge.getAttribute(option))  # it throws an error for None values
+                        # edge_diction[new_id] = float(edge.getAttribute(option))  # it throws an error for None values
+                        edge_diction[new_id] = getAttribute(edge, edge_lookup[edge.id], option)
                         # i = edge_names.index(new_id)
                         # num_lanes_per_edge[i] += 1
                 except:
@@ -190,5 +198,17 @@ def read_edge_info(edges, feature_name, option, interval_begin, interval_end):
             # edge_diction[edge_id] = edge_diction[edge_id] / num_lanes_per_edge[i]
     print("Total number of edges without {} are {}".format(option, n_no_attr))
     print("{} edges have missing or zero density".format(list(edge_diction.values()).count(0.00)))
-
     return edge_diction
+
+
+def getAttribute(edgeStatus, edgeData, option):
+    # return float(edgeStatus.getAtrribute(option))
+    if option != 'laneDensity':
+        return float(edgeStatus.getAtrribute(option))
+    else:
+        density=float(edgeStatus.getAttribute('density'))
+        lanes = edgeData.getLanes()
+        n_lanes = len(lanes)
+        if lanes[0].allows('pedestrian'):
+            n_lanes -= 1
+        return density/n_lanes

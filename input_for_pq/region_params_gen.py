@@ -123,13 +123,15 @@ def generate_region_params_basic(routes_and_times, segmentation_dict, network, m
     plt.show()
 
     capacity_n = [round(get_max_mfd_x(mfd_lines[i])) for i in labels]
+    jam_n = [round(get_jam_mfd_x(mfd_lines[i])) for i in labels]
     init_vehicles = [1] * len(labels)
     if_destination = [1] * len(labels)
     df = pd.DataFrame({'Region': labels,
                        'capacity_n': capacity_n,
                        'avg_trip_length (m)': list(avg_trip_length.values()),
                        'init_vehicles': init_vehicles,
-                       'if_destination': if_destination})
+                       'if_destination': if_destination,
+                       'jam_n': jam_n})
     return df
 
 
@@ -141,6 +143,13 @@ def get_max_mfd_x(mfd_fit):
     # y_values = poly_function(critical_points)
     # maximum_y = max(y_values)
     # return round(maximum_y)
+
+
+def get_jam_mfd_x(mfd_fit):
+    poly_function = np.poly1d(mfd_fit)
+    poly_derivative = poly_function.deriv()
+    critical_points = np.roots(poly_derivative)
+    return max(critical_points)
 
 
 def get_travel_times(trip, route, edge_data_minute):
@@ -174,7 +183,7 @@ def get_travel_times(trip, route, edge_data_minute):
 def _get_mfd_equation(mfd_coefficients):
     eq = ''
     for d in range(len(mfd_coefficients)):
-        if d != 0 and mfd_coefficients[d]>0:
+        if d != 0 and mfd_coefficients[d]>=0:
             eq += '+'
         n_str = ''
         degree = len(mfd_coefficients) - d-1

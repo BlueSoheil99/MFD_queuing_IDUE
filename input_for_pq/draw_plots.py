@@ -48,7 +48,7 @@ def draw_aggregated_data(mat, window_size, n_lines, sim_start, label):
     plt.show()
 
 
-def draw_empirical_completion_rates(vehicle_accumulation, vehicle_completion, window_size, label, with_scatter=False):
+def draw_empirical_completion_rates(vehicle_accumulation, vehicle_completion, window_size, label, with_scatter=False, with_intercept=True):
     num_labels = vehicle_accumulation.shape[0]
     completion_lines = dict()
     for i in range(num_labels):
@@ -60,8 +60,17 @@ def draw_empirical_completion_rates(vehicle_accumulation, vehicle_completion, wi
 
         if with_scatter:
             plt.scatter(N, C, s=2, color=cmap(i))
+
         # fitting a 3rd degree line
-        polyfit_c = np.polyfit(N, C, 3)
+        if with_intercept:
+            polyfit_c = np.polyfit(N, C, 3)
+        else:
+            x = np.array(N)
+            y = np.array(C)
+            polyfit_c = np.zeros(4)
+            X = np.vstack([x ** i for i in range(3, 0, -1)]).T
+            polyfit_c[:3] = np.linalg.lstsq(X, y, rcond=None)[0]
+
         completion_lines[i] = polyfit_c
         # x_curve = np.linspace(min(N), max(N) + 500, 1000)
         y_curve = np.polyval(polyfit_c, x_curve)
