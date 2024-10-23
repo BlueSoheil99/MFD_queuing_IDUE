@@ -116,16 +116,18 @@ if __name__ == '__main__':
     # Generate inputs for perimeter control/point queue model codes
     print('### GENERATING config.csv')
     config_csv_keys = ['model_type', 'time_interval (s)', 'simulation_steps', 'demand_stop_step',
-                       'min_outflow_zero']
+                       'min_outflow_zero', 'pseudo_region_included']
     config_dict = {key: [val] for key, val in zip(config_csv_keys, _read_yaml(config_csv_keys, config_address))}
     print(config_dict)
     data = pd.DataFrame(config_dict)
     data.to_csv(pq_input_folder+'config.csv', index=False)
 
+    include_pseudo_regions = True if config_dict['pseudo_region_included']=='1' else False
+
     print('### GENERATING demand.mat')
     time_interval, sim_start = _read_yaml(['time_interval (s)', 'sim_start'], config_address)
     demand_matrix = generate_demand_mat(edges_and_labels, vehroute_xml, demand_xml,
-                                        increase_percentage=12,
+                                        increase_percentage=15,
                                         time_interval=float(time_interval),
                                         sim_start=int(sim_start),
                                         sim_steps=int(config_dict['demand_stop_step'][0]),
@@ -142,15 +144,16 @@ if __name__ == '__main__':
     draw_plots.show_vehicle_accumulation(vehicle_accumulation, np.unique(labels), int(sim_start))
     draw_plots.draw_aggregated_data(vehicle_completion, window_size, num_labels, int(sim_start),
                                     label=f'completed trips for each region. aggregation window: {window_size}s')
-    draw_plots.draw_empirical_completion_rates(vehicle_accumulation, vehicle_completion, window_size,
-                                               label='calibrated sim. Completion rates')
+    # draw_plots.draw_empirical_completion_rates(vehicle_accumulation, vehicle_completion, window_size,
+    #                                            label='calibrated sim. Completion rates')
 
     # from the congested simulation
     vehicle_accumulation, vehicle_completion = get_vehicle_accumulation_and_completion(routes_and_times_cong, edges_and_labels)
     completion_lines = draw_plots.draw_empirical_completion_rates(vehicle_accumulation, vehicle_completion, window_size,
                                                                   label='Trips exited from/finished in each region \nempirical comp. rate',
                                                                   with_scatter=False,
-                                                                  with_intercept=False)
+                                                                  with_intercept=False,
+                                                                  scale_after_peak={5: 1.2, 6: 1.5})
 
     # Showing trip generation trends
     n_origins, n_destinations, dep_steps = np.shape(demand_matrix)
@@ -192,7 +195,7 @@ if __name__ == '__main__':
     print('### GENERATING region_connection.csv')
     signal_info_adr = _read_yaml(['signal_info_adr'], config_address)[0]
     signal_info = pd.read_csv(signal_info_adr)
-    connection_df = generate_region_connections(net, labels, boundary_ids, signal_info, vehicle_l=4, minGap=1.4, tau=1)
+    connection_df = generate_region_connections(net, labels, boundary_ids, signal_info, vehicle_l=4, minGap=1.5, tau=1)
     # adjusting labels for PQ code use
     connection_df['start_region'] = connection_df['start_region']+1
     connection_df['end_region'] = connection_df['end_region']+1

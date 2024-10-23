@@ -4,7 +4,8 @@ import pandas as pd
 def _get_green_allocation_ratio(link_obj, lane_id, signal_df):
     TLS = link_obj.getTLS()
     if TLS is None:
-        return 1
+        return 0.2
+    # we used to return 1 here
 
     DEFAULT_g_over_C = 0.7 # Assumption
 
@@ -82,8 +83,9 @@ def generate_region_connections(network, labels, boundary_ids, signal_report, ve
                 # we add the calculated capacity to outflow between current region to adjacent region
 
                 ### get minimum of max-outflow, i.e., when only intersections w/o signal allow entering vehicles
-                fromLanesMin = {lane: factor * _if_not_signalized(current_boundary) for lane, factor in fromLanes.items()}
-                fromLanesMin = {lane: finalfactor * laneCapacity for lane, finalfactor in fromLanesMin.items()}
+                # fromLanesMin = {lane: factor * _if_not_signalized(current_boundary) for lane, factor in fromLanes.items()}
+                # fromLanesMin = {lane: finalfactor * laneCapacity for lane, finalfactor in fromLanesMin.items()}
+                fromLanesMin = {lane: capacity * _if_not_signalized(current_boundary) for lane, capacity in fromLanesFull.items()}
                 calculated_min_capacity = int(sum(fromLanesMin.values()))
                 neighbors_min_outflows[b_neighbors[link]] += calculated_min_capacity
 

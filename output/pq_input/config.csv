@@ -1,2 +1,2 @@
-model_type,time_interval (s),simulation_steps,demand_stop_step,min_outflow_zero
-PQ,1,25200,18000,1
+model_type,time_interval (s),simulation_steps,demand_stop_step,min_outflow_zero,pseudo_region_included
+PQ,1,25200,18000,1,1

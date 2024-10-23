@@ -6,7 +6,7 @@ info_name: "edge_data_output_hour.xml"
 
 #predetermined_regions_folder: "./data/config data/config for exported results/results-sep highways" ## for exported results
 #predetermined_regions_folder: "./data/config data/config for normal segmentation/side regions" ## for having only highways as one predetermined segment
-predetermined_regions_folder: "./data/config data/manual segmentation"
+predetermined_regions_folder: "./data/config data/manual segmentation/7regions"
 #predetermined_regions_folder: "./data/config data/config for segmentation with predetermined regions/side regions"
 minor_links: "./data/config data/minor_edgeID.txt"  # links with very low priorities (alleys) can be removed.
 edges_to_remove_name: "./data/config data/config for segmentation with predetermined regions/marginal_edgeID.txt"

@@ -5,8 +5,8 @@ edges_name: "./output/seattlecomp0.txt"
 info_name: "edge_data_output_hour.xml"
 minor_links: "./data/config data/minor_edgeID.txt"
 #minor_links: "./data/config data/empty.txt"
-predetermined_regions_folder: "./data/config data/config for exported results/results-sep highways"
-#predetermined_regions_folder: "./data/config data/manual segmentation"
+#predetermined_regions_folder: "./data/config data/config for exported results/results-sep highways"
+predetermined_regions_folder: "./data/config data/manual segmentation/7regions"
 edges_to_remove_name: "./data/config data/config for segmentation with predetermined regions/marginal_edgeID.txt"
 #predetermined_regions_folder: "./data/config data/test"
 #edges_to_remove_name: "./data/config data/config for exported results/marginal_edgeID.txt"
@@ -30,6 +30,7 @@ time_interval (s): '1'
 simulation_steps: '25200'  # simulation end time // time interval
 demand_stop_step: '18000'  # demand stop end time // time interval
 min_outflow_zero: '1'
+pseudo_region_included: '1'  # '1' means True
 # to be used in demand.mat
 sim_start: '18000'  # should match .sumocfg file
 

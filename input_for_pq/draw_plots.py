@@ -48,7 +48,8 @@ def draw_aggregated_data(mat, window_size, n_lines, sim_start, label):
     plt.show()
 
 
-def draw_empirical_completion_rates(vehicle_accumulation, vehicle_completion, window_size, label, with_scatter=False, with_intercept=True):
+def draw_empirical_completion_rates(vehicle_accumulation, vehicle_completion, window_size, label,
+                                    with_scatter=False, with_intercept=True, scale_after_peak=None):
     num_labels = vehicle_accumulation.shape[0]
     completion_lines = dict()
     for i in range(num_labels):
@@ -62,20 +63,43 @@ def draw_empirical_completion_rates(vehicle_accumulation, vehicle_completion, wi
             plt.scatter(N, C, s=2, color=cmap(i))
 
         # fitting a 3rd degree line
-        if with_intercept:
-            polyfit_c = np.polyfit(N, C, 3)
-        else:
-            x = np.array(N)
-            y = np.array(C)
-            polyfit_c = np.zeros(4)
-            X = np.vstack([x ** i for i in range(3, 0, -1)]).T
-            polyfit_c[:3] = np.linalg.lstsq(X, y, rcond=None)[0]
-
-        completion_lines[i] = polyfit_c
-        # x_curve = np.linspace(min(N), max(N) + 500, 1000)
+        polyfit_c = _get_polyfit_deg3(N, C, with_intercept)
         y_curve = np.polyval(polyfit_c, x_curve)
-        # plt.plot(x_curve, y_curve, color=cmap(i), linewidth=0.6)
         plt.plot(x_curve, y_curve, color=cmap(i), label=f'region {i + 1}')
+
+        # scaling the points after peak so that jam n goes higher (scaling N, not C)
+        if scale_after_peak is not None:
+            scale = scale_after_peak.get(i)
+            if scale!= None:
+                # find peak
+                peakx, jamx = _get_max_and_jam_x(polyfit_c)
+                # scale the N's after peak
+                N_new = [scale * i if i > peakx else i for i in N]
+                x_curve = np.linspace(min(N_new), int(max(N_new) * 0.95), 1000)
+                polyfit_c = _get_polyfit_deg3(N_new, C, with_intercept)
+                y_curve = np.polyval(polyfit_c, x_curve)
+                plt.plot(x_curve, y_curve, color=cmap(i), label=f'region {i + 1} scaled after peak', linestyle='--')
+
+                # # scale the N's after 2*peak
+                # N_new = [scale * i if i > 2*peak else i for i in N]
+                # x_curve = np.linspace(min(N_new), int(max(N_new) * 0.95), 1000)
+                # polyfit_c = _get_polyfit_deg3(N_new, C, with_intercept)
+                # y_curve = np.polyval(polyfit_c, x_curve)
+                # plt.plot(x_curve, y_curve, color=cmap(i), label=f'region {i + 1} scaled after 2peak', linestyle='dotted')
+
+                # scale the N's after peak with linear ratio
+                N_new = [i + jamx*(scale-1)*((i-peakx)/(jamx-peakx)) if i > peakx
+                         else i
+                         for i in N]
+                x_curve = np.linspace(min(N_new), int(max(N_new) * 0.95), 1000)
+                polyfit_c = _get_polyfit_deg3(N_new, C, with_intercept)
+                y_curve = np.polyval(polyfit_c, x_curve)
+                plt.plot(x_curve, y_curve, color=cmap(i), label=f'region {i + 1} scaled linearly', linestyle='dotted')
+
+                # plt.scatter(N, C, s=2, color=cmap(i), alpha=0.5)
+                # plt.scatter(N_new, C, s=2, color=cmap(i))
+        completion_lines[i] = polyfit_c
+
     plt.legend()
     plt.title(label)
     plt.xlabel('Number of vehicles')
@@ -101,3 +125,22 @@ def draw_calculated_completion_rates(vehicle_accumulation, window_size, mfd_fit_
     plt.xlabel('Number of vehicles')
     plt.ylabel('veh/second')
     plt.show()
+
+
+def _get_polyfit_deg3(x_values, y_values, with_intercept):
+    if with_intercept:
+        polyfit_c = np.polyfit(x_values, y_values, 3)
+    else:
+        x = np.array(x_values)
+        y = np.array(y_values)
+        polyfit_c = np.zeros(4)
+        X = np.vstack([x ** i for i in range(3, 0, -1)]).T
+        polyfit_c[:3] = np.linalg.lstsq(X, y, rcond=None)[0]
+    return polyfit_c
+
+
+def _get_max_and_jam_x(polyfit):
+    poly_function = np.poly1d(polyfit)
+    poly_derivative = poly_function.deriv()
+    critical_points = np.roots(poly_derivative)
+    return min(critical_points), max(critical_points)
