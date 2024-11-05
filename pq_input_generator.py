@@ -125,13 +125,16 @@ if __name__ == '__main__':
     include_pseudo_regions = True if config_dict['pseudo_region_included']=='1' else False
 
     print('### GENERATING demand.mat')
+    pseudo_regions_lookup={'5000': 1, '5001': 1, '5002': 2, '5003': 2, '5004':3, '5005': 3, '5008':4, '5009': 4,
+                           '5010': 5, '5011':5, '6001': 6, '7000':7, '7001':8, '7002':9, '7003':10,
+                           '7004':11, '7005':12}
     time_interval, sim_start = _read_yaml(['time_interval (s)', 'sim_start'], config_address)
-    demand_matrix = generate_demand_mat(edges_and_labels, vehroute_xml, demand_xml,
-                                        increase_percentage=15,
-                                        time_interval=float(time_interval),
-                                        sim_start=int(sim_start),
-                                        sim_steps=int(config_dict['demand_stop_step'][0]),
-                                        out_adr=pq_input_folder+'demand.mat')
+    demand_matrix, pseudo_demand_matrix = generate_demand_mat(edges_and_labels, pseudo_regions_lookup,
+                                                              vehroute_xml, demand_xml, increase_percentage=15,
+                                                              time_interval=float(time_interval),
+                                                              sim_start=int(sim_start),
+                                                              sim_steps=int(config_dict['demand_stop_step'][0]),
+                                                              out_dir=pq_input_folder)
 
     print('### GENERATING graphs')
     window_size = 60  # seconds
@@ -144,8 +147,6 @@ if __name__ == '__main__':
     draw_plots.show_vehicle_accumulation(vehicle_accumulation, np.unique(labels), int(sim_start))
     draw_plots.draw_aggregated_data(vehicle_completion, window_size, num_labels, int(sim_start),
                                     label=f'completed trips for each region. aggregation window: {window_size}s')
-    # draw_plots.draw_empirical_completion_rates(vehicle_accumulation, vehicle_completion, window_size,
-    #                                            label='calibrated sim. Completion rates')
 
     # from the congested simulation
     vehicle_accumulation, vehicle_completion = get_vehicle_accumulation_and_completion(routes_and_times_cong, edges_and_labels)
@@ -196,6 +197,8 @@ if __name__ == '__main__':
     signal_info_adr = _read_yaml(['signal_info_adr'], config_address)[0]
     signal_info = pd.read_csv(signal_info_adr)
     connection_df = generate_region_connections(net, labels, boundary_ids, signal_info, vehicle_l=4, minGap=1.5, tau=1)
+    #TODO: add pseudo region connections here / OR generate a new file only for pseudo regions
+
     # adjusting labels for PQ code use
     connection_df['start_region'] = connection_df['start_region']+1
     connection_df['end_region'] = connection_df['end_region']+1
